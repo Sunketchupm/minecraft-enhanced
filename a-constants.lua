@@ -1,0 +1,51 @@
+E_MODEL_COLOR_BOX = smlua_model_util_get_id("color_box_geo")
+E_MODEL_OUTLINE = smlua_model_util_get_id("exclamation_box_minecraft_outline_geo")
+
+COL_CUSTOM_BOX_DEFAULT       = smlua_collision_util_get("custom_box_collision_default")
+COL_CUSTOM_BOX_HANGABLE      = smlua_collision_util_get("custom_box_collision_hangable")
+COL_CUSTOM_BOX_LAVA          = smlua_collision_util_get("custom_box_collision_lava")
+COL_CUSTOM_BOX_NOT_SLIPPERY  = smlua_collision_util_get("custom_box_collision_not_slippery")
+COL_CUSTOM_BOX_QUICKSAND     = smlua_collision_util_get("custom_box_collision_quicksand")
+COL_CUSTOM_BOX_SHALLOWSAND   = smlua_collision_util_get("custom_box_collision_shallowsand")
+COL_CUSTOM_BOX_SLIPPERY      = smlua_collision_util_get("custom_box_collision_slippery")
+COL_CUSTOM_BOX_VERY_SLIPPERY = smlua_collision_util_get("custom_box_collision_very_slippery")
+COL_CUSTOM_BOX_DEATH         = smlua_collision_util_get("custom_box_collision_death")
+COL_CUSTOM_BOX_VANISH        = smlua_collision_util_get("custom_box_collision_vanish")
+
+MAX_ANIM_STATES = 576
+BLOCK_START_TRANSPARENT_STATES = 144
+BLOCK_START_UNSHADED_STATES = 288
+BLOCK_INVISIBLE_STATE = 576
+
+BLOCK_SURFACE_ID_NO_COLLISION = 0
+BLOCK_SURFACE_ID_DEFAULT = 1
+BLOCK_SURFACE_ID_LAVA = 2
+BLOCK_SURFACE_ID_QUICKSAND = 3
+BLOCK_SURFACE_ID_SLIPPERY = 4
+BLOCK_SURFACE_ID_VERY_SLIPPERY = 5
+BLOCK_SURFACE_ID_NOT_SLIPPERY = 6
+BLOCK_SURFACE_ID_HANGABLE = 7
+BLOCK_SURFACE_ID_SHALLOWSAND = 8
+BLOCK_SURFACE_ID_DEATH = 9
+BLOCK_SURFACE_ID_VANISH = 10
+BLOCK_SURFACE_ID_CHECKPOINT = 11
+BLOCK_SURFACE_ID_BOUNCE = 12
+BLOCK_SURFACE_ID_FIRSTY = 13
+BLOCK_SURFACE_ID_WIDE_WALLKICK = 14
+BLOCK_SURFACE_ID_BOOSTER = 15
+BLOCK_SURFACE_ID_HEAL = 16
+BLOCK_SURFACE_ID_NO_A = 17
+BLOCK_SURFACE_ID_ANY_BONK_WALLKICK = 18
+BLOCK_SURFACE_ID_NO_FALL_DAMAGE = 19
+BLOCK_SURFACE_ID_CONVEYOR = 20
+BLOCK_SURFACE_ID_BREAKABLE = 21
+BLOCK_SURFACE_ID_DISAPPEARING = 22
+BLOCK_SURFACE_ID_REMOVE_CAPS = 23
+BLOCK_SURFACE_ID_NO_WALLKICKS = 24
+BLOCK_SURFACE_ID_DASH_PANEL = 25
+BLOCK_SURFACE_ID_TOXIC_GAS = 26
+BLOCK_SURFACE_ID_JUMP_PAD = 27
+
+ITEM_ID_BLOCK = 1
+ITEM_ID_EXCLAMATION = 2
+ITEM_ID_STAR = 3
