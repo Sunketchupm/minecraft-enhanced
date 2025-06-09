@@ -1,4 +1,4 @@
--- name: Minecraft
+-- name: Minecraft Rewrite
 -- description: Y to place block
 
 local ON_GRID = true
