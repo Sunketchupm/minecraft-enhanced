@@ -13,7 +13,7 @@ local function to_grid(n)
 end
 
 --outline place
-function bhv_outlineblock_init(obj)
+local function bhv_outlineblock_init(obj)
     obj.oFlags = OBJ_FLAG_UPDATE_GFX_POS_AND_ANGLE
 	cur_obj_scale(4.01)
 	obj.oOpacity = 255
@@ -24,7 +24,7 @@ end
 
 id_bhvOutlineblock = hook_behavior(nil, OBJ_LIST_DEFAULT, true, bhv_outlineblock_init, nil)
 
-function find_place()
+local function find_place()
     local obj = obj_get_first(OBJ_LIST_DEFAULT)
     while obj ~= nil do
         if get_id_from_behavior(obj.behavior) == id_bhvOutlineblock then
@@ -37,7 +37,7 @@ end
 
 local place
 
-function place_block(x,y,z)
+local function place_block(x,y,z)
 	local box = spawn_sync_object(
 		id_bhvBreakableBox,
 		E_MODEL_BREAKABLE_BOX,
@@ -53,7 +53,7 @@ function place_block(x,y,z)
 	play_sound(SOUND_GENERAL_BOX_LANDING, {x=x,y=y,z=z} )
 end
 
-function mario_update_local(m)
+local function mario_update_local(m)
 	local rgt = math.sin(m.intendedYaw/32688 * math.pi)--idk the max angle value so i just went with this
 	local fwd = math.cos(m.intendedYaw/32688 * math.pi)
 	
@@ -96,13 +96,13 @@ function mario_update_local(m)
     end
 end
 
-function on_warp()
+local function on_warp()
 	if place then
 		obj_mark_for_deletion(place)
 	end
 end
 
-function mario_update(m)
+local function mario_update(m)
     if m.playerIndex == 0 then
         mario_update_local(m)
     end
