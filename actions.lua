@@ -3,7 +3,7 @@ local mario_set_forward_vel,perform_air_step,set_character_animation,queue_rumbl
 
 ACT_FREE_MOVE = allocate_mario_action(ACT_GROUP_AIRBORNE | ACT_FLAG_INTANGIBLE | ACT_FLAG_INVULNERABLE)
 
-savedMarioYaw = 0
+local savedMarioYaw = 0
 ---@param m MarioState
 local function act_free_move(m)
     m.peakHeight = m.pos.y
@@ -39,6 +39,9 @@ local function act_free_move(m)
         m.vel.y = 0
     end
 
+    if m.controller.buttonPressed & L_TRIG ~= 0 then
+        savedMarioYaw = m.faceAngle.y
+    end
     m.faceAngle.y = lHeld and savedMarioYaw or m.intendedYaw
 
     if m.controller.stickMag == 0 then

@@ -18,7 +18,7 @@ function bhv_minecraft_block_loop(obj)
 	
 end
 
-local E_MODEL_COLOR_BOX = smlua_model_util_get_id("color_box_geo")
+local E_MODEL_COLOR_BOX = smlua_model_util_get_id("mce_box")
 
 -------------------------------------------------------------------------------
 
