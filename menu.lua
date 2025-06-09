@@ -10,22 +10,29 @@ local TAB_ENEMIES = 3
 local TAB_HELP = 4
 local TAB_MAIN_END = 4
 
+---@type table<integer, Item[]>
 local ItemList = {
     [TAB_BUILDING_BLOCKS] = {},
     [TAB_ITEMS] = {},
     [TAB_ENEMIES] = {},
     [TAB_HELP] = {}
 }
-
-for i = 1, 35, 1 do
-    ItemList[TAB_BUILDING_BLOCKS][i] = gTextures.star
-end
-for i = 1, 17, 1 do
-    ItemList[TAB_ITEMS][i] = gTextures.coin
-end
-for i = 1, 22, 1 do
-    ItemList[TAB_ENEMIES][i] = gTextures.lakitu
-end
+local first_update = true
+hook_event(HOOK_UPDATE, function ()
+    if not first_update then return end
+    first_update = false
+    for i = 1, 16, 1 do
+        ItemList[TAB_BUILDING_BLOCKS][i] = {behavior = bhvMinecraftBox, icon = gTextures.star, params = {color = i - 1}}
+    end
+    for i = 1, 17, 1 do
+        ItemList[TAB_ITEMS][i] = {}
+        ItemList[TAB_ITEMS][i].icon = gTextures.coin
+    end
+    for i = 1, 22, 1 do
+        ItemList[TAB_ENEMIES][i] = {}
+        ItemList[TAB_ENEMIES][i].icon = gTextures.lakitu
+    end
+end)
 
 ------------------------------------------------------------------------------------------------
 
@@ -103,7 +110,7 @@ end
 ---@param y number
 ---@param width number
 ---@param height number
----@param items TextureInfo[]
+---@param items Item[]
 local function render_item_list(x, y, width, height, items)
     local hovering_over_item = false
     for index, item in ipairs(items) do
@@ -111,8 +118,8 @@ local function render_item_list(x, y, width, height, items)
         local slot_height = height * 0.1
         local slot_x = x + (slot_width * ((index - 1) % 10))
         local slot_y = y + (slot_height * ((index - 1) // 10))
-        local item_x = (slot_x + slot_width * 0.5) - (item.width * 0.5)
-        local item_y = (slot_y + slot_height * 0.5) - (item.height * 0.5)
+        local item_x = (slot_x + slot_width * 0.5) - (item.icon.width * 0.5)
+        local item_y = (slot_y + slot_height * 0.5) - (item.icon.height * 0.5)
         if moved_mouse and mouse_is_within(slot_x, slot_y, slot_x + slot_width, slot_y + slot_height) then
             selected_item_index = index
             hovering_over_item = true
@@ -126,7 +133,7 @@ local function render_item_list(x, y, width, height, items)
             djui_hud_render_rect(slot_x, slot_y, slot_width, slot_height)
         end
         djui_hud_set_color(255, 255, 255, 255)
-        djui_hud_render_texture(item, item_x, item_y, 1, 1)
+        djui_hud_render_texture(item.icon, item_x, item_y, 1, 1)
     end
 
     if moved_mouse and not hovering_over_item then
@@ -313,10 +320,12 @@ local function handle_standard_inputs(pressed)
             mouse_prev_item_index = selected_item_index
             if mouse_has_clicked and ItemList[active_tab] then
                 active_item_index = selected_item_index
+                gCurrentItem = ItemList[active_tab][active_item_index]
                 play_sound(SOUND_MENU_CLICK_FILE_SELECT, gGlobalSoundSource)
             end
         elseif not moved_mouse and pressed & A_BUTTON ~= 0 and ItemList[active_tab] then
             active_item_index = selected_item_index
+            gCurrentItem = ItemList[active_tab][active_item_index]
             play_sound(SOUND_MENU_CLICK_FILE_SELECT, gGlobalSoundSource)
         end
     end
@@ -331,8 +340,6 @@ local function handle_menu_inputs(m)
             handle_standard_inputs(pressed)
         end
     end
-
-    m.controller.buttonPressed = 0
 end
 
 ----------------------------------------------------
@@ -341,7 +348,7 @@ end
 local function before_mario_update(m)
     if m.playerIndex ~= 0 then return end
 
-    if m.controller.buttonPressed & L_TRIG ~= 0 then
+    if m.controller.buttonPressed & X_BUTTON ~= 0 then
         MenuOpen = true
     end
 
