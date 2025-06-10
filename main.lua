@@ -5,10 +5,9 @@ gLevelValues.fixCollisionBugs = true
 gLevelValues.fixCollisionBugsFalseLedgeGrab = false
 gLevelValues.fixCollisionBugsGroundPoundBonks = false
 
-CanBuild = true
+gServerSettings.stayInLevelAfterStar = 1
 
-E_MODEL_COLOR_BOX = smlua_model_util_get_id("mce_box")
-E_MODEL_OUTLINE = smlua_model_util_get_id("mce_outline")
+CanBuild = true
 
 -------------------------------------------------------------------------------
 
@@ -38,7 +37,7 @@ function bhv_outline_init(obj)
 	obj.oFaceAnglePitch = outline_stored_rotation.pitch
 	obj.oFaceAngleYaw = outline_stored_rotation.yaw
 	obj.oFaceAngleRoll = outline_stored_rotation.roll
-	spawn_non_sync_object(bhvMockItem, E_MODEL_NONE, obj.oPosX, obj.oPosY, obj.oPosZ, function () end)
+	spawn_non_sync_object(bhvMockItem, E_MODEL_NONE, obj.oPosX, obj.oPosY, obj.oPosZ, nil)
 end
 
 ---@param obj Object
@@ -64,21 +63,31 @@ end
 
 ---@param obj Object
 function bhv_mock_item_loop(obj)
-	if outline and gCurrentItem and gCurrentItem.model then
+	local current_item = gCurrentItem
+	if outline and current_item and current_item.model then
 		obj.oPosX = outline.oPosX
-		obj.oPosY = outline.oPosY
+		obj.oPosY = outline.oPosY - current_item.spawnYOffset
 		obj.oPosZ = outline.oPosZ
 		obj.oFaceAnglePitch = outline.oFaceAnglePitch
 		obj.oFaceAngleYaw = outline.oFaceAngleYaw
 		obj.oFaceAngleRoll = outline.oFaceAngleRoll
-		if gCurrentItem.behavior == bhvMinecraftBox then
-			obj.oOpacity = 50
-		end
-		obj_set_model_extended(obj, gCurrentItem.model)
-		if gCurrentItem.params.billboard then
-			obj_set_billboard(obj)
-		else
-			obj.header.gfx.node.flags = obj.header.gfx.node.flags & ~GRAPH_RENDER_BILLBOARD
+		obj.header.gfx.node.flags = obj.header.gfx.node.flags & ~GRAPH_RENDER_BILLBOARD
+		obj.oAnimState = 0
+		obj.oBehParams = current_item.behaviorParams
+		obj_scale(obj, 1)
+		obj_set_model_extended(obj, current_item.model)
+		if current_item.mock then
+			local mock_settings = current_item.mock
+			if mock_settings.billboard then
+				obj_set_billboard(obj)
+			end
+
+			if mock_settings.animState then
+				obj.oAnimState = mock_settings.animState
+			end
+			if mock_settings.scale then
+				obj_scale(obj, mock_settings.scale)
+			end
 		end
 	else
 		obj_set_model_extended(obj, E_MODEL_NONE)
@@ -92,13 +101,19 @@ local function place_item()
 	spawn_sync_object(
 		gCurrentItem.behavior,
 		gCurrentItem.model,
-		outline.oPosX, outline.oPosY, outline.oPosZ,
+		outline.oPosX, outline.oPosY  - gCurrentItem.spawnYOffset, outline.oPosZ,
 		---@param obj Object
 		function (obj)
 			obj.oOpacity = 255
 			obj.oFaceAnglePitch = outline.oFaceAnglePitch
 			obj.oFaceAngleYaw = outline.oFaceAngleYaw
 			obj.oFaceAngleRoll = outline.oFaceAngleRoll
+			if gCurrentItem.behaviorParams then
+				obj.oBehParams = gCurrentItem.behaviorParams
+			end
+			--[[if gCurrentItem.misc then
+				
+			end]]
 		end
 	)
 
@@ -139,17 +154,19 @@ local function set_outline_rotation(down, pressed)
 			outline.oFaceAnglePitch = outline.oFaceAnglePitch - 0x400
 		end
 	end
-	if pressed & L_JPAD ~= 0 then
-		outline.oFaceAngleYaw = outline.oFaceAngleYaw - 0x400
-	elseif pressed & R_JPAD ~= 0 then
-		outline.oFaceAngleYaw = outline.oFaceAngleYaw + 0x400
+	if l_held_modifier then
+		if pressed & L_JPAD ~= 0 then
+			outline.oFaceAngleYaw = outline.oFaceAngleYaw - 0x400
+		elseif pressed & R_JPAD ~= 0 then
+			outline.oFaceAngleYaw = outline.oFaceAngleYaw + 0x400
+		end
+		if pressed & X_BUTTON ~= 0 then
+			outline.oFaceAnglePitch = 0
+			outline.oFaceAngleYaw = 0
+			outline.oFaceAngleRoll = 0
+		end
 	end
 
-	if l_held_modifier and pressed & X_BUTTON ~= 0 then
-		outline.oFaceAnglePitch = 0
-		outline.oFaceAngleYaw = 0
-		outline.oFaceAngleRoll = 0
-	end
 	outline_stored_rotation.pitch = outline.oFaceAnglePitch
 	outline_stored_rotation.yaw = outline.oFaceAngleYaw
 	outline_stored_rotation.roll = outline.oFaceAngleRoll
@@ -178,7 +195,7 @@ local function builder_mario_update(m)
 			bhvOutline,
 			E_MODEL_OUTLINE,
 			m.pos.x, m.pos.y, m.pos.z,
-			function() end
+			nil
 		)
 		return
 	end

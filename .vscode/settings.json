@@ -1,7 +1,10 @@
 {
     "Lua.diagnostics.globals": [
-        "bhvMinecraftBox",
+        "bhvMceBlock",
         "bhvOutline",
-        "bhvMockItem"
+        "bhvMockItem",
+        "bhvMceStar",
+        "bhvMceCoin",
+        "bhvMceExclamationBox"
     ]
 }

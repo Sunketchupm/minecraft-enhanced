@@ -1,7 +1,7 @@
 // Metal Box
 
 // 0x08024C28 - 0x08024CAC
-const Collision custom_box_collision_default[] = {
+const Collision mce_block_col_default[] = {
     COL_INIT(),
     COL_VERTEX_INIT(0x8),
     COL_VERTEX( 100,  100, -100),

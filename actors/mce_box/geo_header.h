@@ -1,4 +1,4 @@
-extern const GeoLayout mce_box[];
+extern const GeoLayout mce_block[];
 extern Vtx block_boxcustom_000_displaylist_mesh_layer_1_mesh_mesh_layer_1_vtx_cull[8];
 extern Vtx block_boxcustom_000_displaylist_mesh_layer_1_mesh_mesh_layer_1_vtx_0[24];
 extern Gfx block_boxcustom_000_displaylist_mesh_layer_1_mesh_mesh_layer_1_tri_0[];

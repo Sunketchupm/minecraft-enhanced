@@ -1,4 +1,4 @@
-const GeoLayout mce_box[] = {
+const GeoLayout mce_block[] = {
 	GEO_NODE_START(),
 	GEO_OPEN_NODE(),
         GEO_ASM(0, lua_asm_set_color),

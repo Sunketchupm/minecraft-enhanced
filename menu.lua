@@ -13,12 +13,13 @@ local selected_hotbar_index = 1
 local HOTBAR_SIZE = 10
 local hotbar_selection_active = false
 
-local ROW_COUNT = 20
-local COLUMN_COUNT = 20
+local ROW_COUNT = 10
+local COLUMN_COUNT = 10
 
 ---@class MenuItemLink
     ---@field item Item
     ---@field icon TextureInfo
+    ---@field self MenuItemLink?
 
 ---@type table<integer, MenuItemLink[]>
 local TabItemList = {
@@ -31,41 +32,64 @@ local TabItemList = {
 ---@type MenuItemLink[]
 local HotbarItemList = {}
 for i = 1, HOTBAR_SIZE do
-    HotbarItemList[i] = { item = nil, icon = nil} ---@diagnostic disable-line: assign-type-mismatch
+    HotbarItemList[i] = { item = nil, icon = nil } ---@diagnostic disable-line: assign-type-mismatch
+end
+
+---@param tab integer
+---@param behavior BehaviorId
+---@param model ModelExtendedId
+---@param offset number
+---@param mock_settings table
+---@param behavior_param integer
+---@param icon TextureInfo
+local function add_item(tab, behavior, model, offset, mock_settings, behavior_param, icon)
+    ---@type MenuItemLink
+    local item = { item = { behavior = behavior, model = model, spawnYOffset = offset, mock = mock_settings, behaviorParams = behavior_param, misc = {} }, icon = icon }
+    item.self = item
+    table.insert(TabItemList[tab], item)
 end
 
 add_first_update(function ()
-    for i = 1, 200, 1 do
-        TabItemList[TAB_BUILDING_BLOCKS][i] = {
+    for i = 1, 50, 1 do
+        local color = 0
+        local r = math.random(0, 256)
+        local g = math.random(0, 256)
+        local b = math.random(0, 256)
+        color = (r << 16) | (g << 8) | (b << 0)
+        ---@type MenuItemLink
+        local menu_item = {
             item = {
-                behavior = bhvMinecraftBox,
-                model = E_MODEL_COLOR_BOX,
-                params = {
-                    color = {
-                        r = math.random(0, 255),
-                        g = math.random(0, 255),
-                        b = math.random(0, 255),
-                        a = 255
-                    }
-                }
+                behavior = bhvMceBlock,
+                model = E_MODEL_MCE_BLOCK,
+                spawnYOffset = 0,
+                mock = {},
+                behaviorParams = color,
+                misc = {}
             },
-            icon = gTextures.star}
+            icon = gTextures.star
+        }
+        menu_item.self = menu_item
+        TabItemList[TAB_BUILDING_BLOCKS][i] = menu_item
     end
-    --TabItemList[TAB_BUILDING_BLOCKS][1] = { item = { behavior = bhvMinecraftBox, model = E_MODEL_COLOR_BOX, params = { color = {r = 255, g = 255, b = 255, a = 255} } }, icon = gTextures.star}
-    --TabItemList[TAB_BUILDING_BLOCKS][2] = { item = { behavior = bhvMinecraftBox, model = E_MODEL_COLOR_BOX, params = { color = {r = 255, g = 0, b = 0, a = 255} } }, icon = gTextures.star}
-    --TabItemList[TAB_BUILDING_BLOCKS][3] = { item = { behavior = bhvMinecraftBox, model = E_MODEL_COLOR_BOX, params = { color = {r = 0, g = 0, b = 255, a = 255} } }, icon = gTextures.star}
-    --TabItemList[TAB_BUILDING_BLOCKS][4] = { item = { behavior = bhvMinecraftBox, model = E_MODEL_COLOR_BOX, params = { color = {r = 255, g = 255, b = 0, a = 255} } }, icon = gTextures.star}
-    --TabItemList[TAB_BUILDING_BLOCKS][5] = { item = { behavior = bhvMinecraftBox, model = E_MODEL_COLOR_BOX, params = { color = {r = 255, g = 0, b = 255, a = 255} } }, icon = gTextures.star}
-    --TabItemList[TAB_BUILDING_BLOCKS][6] = { item = { behavior = bhvMinecraftBox, model = E_MODEL_COLOR_BOX, params = { color = {r = 0, g = 255, b = 255, a = 255} } }, icon = gTextures.star}
-    --TabItemList[TAB_BUILDING_BLOCKS][7] = { item = { behavior = bhvMinecraftBox, model = E_MODEL_COLOR_BOX, params = { color = {r = 0, g = 0, b = 0, a = 255} } }, icon = gTextures.star}
 
-    TabItemList[TAB_ITEMS][1] = { item = {behavior = id_bhvStar, model = E_MODEL_STAR, params = {} }, icon = gTextures.star }
-    TabItemList[TAB_ITEMS][2] = { item = {behavior = id_bhvYellowCoin, model = E_MODEL_YELLOW_COIN, params = {billboard = true} }, icon = gTextures.coin }
-    TabItemList[TAB_ITEMS][3] = { item = {behavior = id_bhvTree, model = E_MODEL_BUBBLY_TREE, params = {billboard = true} }, icon = gTextures.apostrophe }
+    local star_offset = 6
+    add_item(TAB_ITEMS, bhvMceStar, E_MODEL_STAR, star_offset, {}, 0, gTextures.star)
+    add_item(TAB_ITEMS, bhvMceStar, E_MODEL_TRANSPARENT_STAR, star_offset, {}, 0, gTextures.star)
+    local coin_offset = 32
+    add_item(TAB_ITEMS, bhvMceCoin, E_MODEL_YELLOW_COIN, coin_offset, { billboard = true }, 1, gTextures.coin)
+    add_item(TAB_ITEMS, bhvMceCoin, E_MODEL_RED_COIN, coin_offset + 3, { billboard = true }, 2, gTextures.coin)
+    add_item(TAB_ITEMS, bhvMceCoin, E_MODEL_BLUE_COIN, coin_offset + 26, { billboard = true, scale = 1.25 }, 5, gTextures.coin)
+    local exclamation_box_offset = 50
+    add_item(TAB_ITEMS, bhvMceExclamationBox, E_MODEL_EXCLAMATION_BOX, exclamation_box_offset, { animState = 0, scale = 2 }, 1, gTextures.apostrophe)
+    add_item(TAB_ITEMS, bhvMceExclamationBox, E_MODEL_EXCLAMATION_BOX, exclamation_box_offset, { animState = 1, scale = 2 }, 2, gTextures.apostrophe)
+    add_item(TAB_ITEMS, bhvMceExclamationBox, E_MODEL_EXCLAMATION_BOX, exclamation_box_offset, { animState = 2, scale = 2 }, 3, gTextures.apostrophe)
+    add_item(TAB_ITEMS, bhvMceExclamationBox, E_MODEL_EXCLAMATION_BOX, exclamation_box_offset, { animState = 3, scale = 2 }, 4, gTextures.apostrophe)
+    add_item(TAB_ITEMS, bhvMceExclamationBox, E_MODEL_EXCLAMATION_BOX, exclamation_box_offset, { animState = 3, scale = 2 }, 99, gTextures.apostrophe)
 
-    TabItemList[TAB_ENEMIES][1] = { item = {behavior = id_bhvGoomba, model = E_MODEL_GOOMBA, params = {} }, icon = gTextures.lakitu }
-    TabItemList[TAB_ENEMIES][2] = { item = {behavior = id_bhvBobomb, model = E_MODEL_BLACK_BOBOMB, params = {} }, icon = gTextures.lakitu }
-    TabItemList[TAB_ENEMIES][3] = { item = {behavior = id_bhvChuckya, model = E_MODEL_CHUCKYA, params = {} }, icon = gTextures.lakitu }
+    local offset = 0
+    add_item(TAB_ENEMIES, id_bhvGoomba, E_MODEL_GOOMBA, offset, {}, 0, gTextures.lakitu)
+    add_item(TAB_ENEMIES, id_bhvBobomb, E_MODEL_BLACK_BOBOMB, offset, {}, 0, gTextures.lakitu)
+    add_item(TAB_ENEMIES, id_bhvChuckya, E_MODEL_CHUCKYA, offset, {}, 0, gTextures.lakitu)
 end)
 
 ------------------------------------------------------------------------------------------------
@@ -163,7 +187,7 @@ end
 local function render_item_list(x, y, width, height, items)
     local hovering_over_item = false
     for index, item in ipairs(items) do
-        local slot_width = width * 0.05
+        local slot_width = width * 0.1
         local slot_height = height * 0.1
         local slot_x = x + (slot_width * ((index - 1) % COLUMN_COUNT))
         local slot_y = y + (slot_height * ((index - 1) // ROW_COUNT))
@@ -304,7 +328,7 @@ local function render_hotbar(screen_width, screen_height)
         local slot_height = height * 0.95
         local slot_x = x + slot_width * (index - 1)
         local slot_y = y
-        if moved_mouse and mouse_is_within(slot_x, slot_y, slot_x + slot_width, slot_y + slot_height) then
+        if MenuOpen and moved_mouse and mouse_is_within(slot_x, slot_y, slot_x + slot_width, slot_y + slot_height) then
             selected_hotbar_index = index
         end
 
@@ -327,12 +351,12 @@ end
 ---@param screen_width number
 ---@param screen_height number
 local function render_menu(screen_width, screen_height)
+    render_hotbar(screen_width, screen_height)
     if MenuOpen then
         local x, y, width, height = render_main_rectangle(screen_width, screen_height)
         MenuTabs[active_tab](x, y, width, height)
+        render_mouse()
     end
-    render_hotbar(screen_width, screen_height)
-    render_mouse()
 end
 
 ----------------------------------------------------
@@ -350,14 +374,14 @@ end
 
 ---@param m MarioState
 local function handle_hotbar_inputs(m)
-    if m.controller.buttonDown & L_TRIG ~= 0 then
-        if m.controller.buttonPressed & L_JPAD ~= 0 and selected_hotbar_index > 1 then
-            selected_hotbar_index = selected_hotbar_index - 1
-        elseif m.controller.buttonPressed & R_JPAD ~= 0 and selected_hotbar_index < HOTBAR_SIZE then
-            selected_hotbar_index = selected_hotbar_index + 1
-        end
-        m.controller.buttonPressed = m.controller.buttonPressed & ~(L_JPAD | R_JPAD)
+    if m.controller.buttonDown & L_TRIG ~= 0 then return end
+
+    if m.controller.buttonPressed & L_JPAD ~= 0 and selected_hotbar_index > 1 then
+        selected_hotbar_index = selected_hotbar_index - 1
+    elseif m.controller.buttonPressed & R_JPAD ~= 0 and selected_hotbar_index < HOTBAR_SIZE then
+        selected_hotbar_index = selected_hotbar_index + 1
     end
+    m.controller.buttonPressed = m.controller.buttonPressed & ~(L_JPAD | R_JPAD)
 end
 
 ---@param m MarioState
@@ -479,10 +503,9 @@ local function before_mario_update(m)
         return
     end
 
-    handle_mouse_input()
     if MenuOpen then
         m.freeze = 1
-
+        handle_mouse_input()
         handle_menu_inputs(m)
     else
         handle_hotbar_inputs(m)
