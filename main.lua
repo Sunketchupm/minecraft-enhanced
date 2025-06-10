@@ -108,6 +108,9 @@ local function place_item()
 			obj.oFaceAnglePitch = outline.oFaceAnglePitch
 			obj.oFaceAngleYaw = outline.oFaceAngleYaw
 			obj.oFaceAngleRoll = outline.oFaceAngleRoll
+			obj.oMoveAnglePitch = outline.oMoveAnglePitch
+			obj.oMoveAngleYaw = outline.oMoveAngleYaw
+			obj.oMoveAngleRoll = outline.oMoveAngleRoll
 			if gCurrentItem.behaviorParams then
 				obj.oBehParams = gCurrentItem.behaviorParams
 			end
@@ -144,21 +147,27 @@ local function set_outline_rotation(down, pressed)
 	if pressed & U_JPAD ~= 0 then
 		if l_held_modifier then
 			outline.oFaceAngleRoll = outline.oFaceAngleRoll + 0x400
+			outline.oMoveAngleRoll = outline.oMoveAngleRoll + 0x400
 		else
 			outline.oFaceAnglePitch = outline.oFaceAnglePitch + 0x400
+			outline.oMoveAnglePitch = outline.oMoveAnglePitch + 0x400
 		end
 	elseif pressed & D_JPAD ~= 0 then
 		if l_held_modifier then
 			outline.oFaceAngleRoll = outline.oFaceAngleRoll - 0x400
+			outline.oMoveAngleRoll = outline.oMoveAngleRoll - 0x400
 		else
 			outline.oFaceAnglePitch = outline.oFaceAnglePitch - 0x400
+			outline.oMoveAnglePitch = outline.oMoveAnglePitch - 0x400
 		end
 	end
 	if l_held_modifier then
 		if pressed & L_JPAD ~= 0 then
 			outline.oFaceAngleYaw = outline.oFaceAngleYaw - 0x400
+			outline.oMoveAngleYaw = outline.oMoveAngleYaw - 0x400
 		elseif pressed & R_JPAD ~= 0 then
 			outline.oFaceAngleYaw = outline.oFaceAngleYaw + 0x400
+			outline.oMoveAngleYaw = outline.oMoveAngleYaw + 0x400
 		end
 		if pressed & X_BUTTON ~= 0 then
 			outline.oFaceAnglePitch = 0

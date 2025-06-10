@@ -184,8 +184,10 @@ function bhv_mce_exclamation_box_loop(obj)
             obj.oInteractStatus = 0
             obj.oPosY = obj.oHomeY
             obj.oGraphYOffset = 0
-            local index = obj.oBehParams
-            -- ! Underflow possible
+            local index = obj.oBehParams & 0xFF
+            if index < 1 or index > 4 then
+                index = 4
+            end
             obj.oAnimState = index - 1
         end
 
@@ -216,7 +218,7 @@ function bhv_mce_exclamation_box_loop(obj)
             obj.oAction = 2
         end
     elseif obj.oAction == 2 then
-        local index = obj.oBehParams
+        local index = obj.oBehParams & 0xFF
         local content = contents[index]
         if content then
             local behavior_id = content.behavior
