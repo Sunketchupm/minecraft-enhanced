@@ -25,32 +25,6 @@ end
 
 -------------------------------------------------------------------------------
 
---- Called from bhvMinecraftBox.bhv
-
----@param obj Object
-function bhv_minecraft_block_loop(obj)
-	
-end
-
---- Called from mce_box.geo
-
-function lua_asm_set_color(node, _misc)
-    local graphNode = cast_graph_node(node.next)
-    local dl = graphNode.displayList
-	if gCurrentItem and gCurrentItem.behavior == bhvMinecraftBox then
-		local color = gCurrentItem.params.color
-		if color then
-			gfx_parse(dl, function(cmd, op)
-				if op == G_SETPRIMCOLOR then
-					gfx_set_command(cmd, "gsDPSetPrimColor(0, 0, %i, %i, %i, %i)", color.r, color.g, color.b, color.a)
-				end
-			end)
-		end
-	end
-end
-
---------------------------------------
-
 ---@type Object?
 local outline = nil
 local outline_stored_rotation = {pitch = 0, yaw = 0, roll = 0}

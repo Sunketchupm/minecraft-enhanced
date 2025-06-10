@@ -13,6 +13,9 @@ local selected_hotbar_index = 1
 local HOTBAR_SIZE = 10
 local hotbar_selection_active = false
 
+local ROW_COUNT = 20
+local COLUMN_COUNT = 20
+
 ---@class MenuItemLink
     ---@field item Item
     ---@field icon TextureInfo
@@ -32,13 +35,29 @@ for i = 1, HOTBAR_SIZE do
 end
 
 add_first_update(function ()
-    TabItemList[TAB_BUILDING_BLOCKS][1] = { item = { behavior = bhvMinecraftBox, model = E_MODEL_COLOR_BOX, params = { color = {r = 255, g = 255, b = 255, a = 255} } }, icon = gTextures.star}
-    TabItemList[TAB_BUILDING_BLOCKS][2] = { item = { behavior = bhvMinecraftBox, model = E_MODEL_COLOR_BOX, params = { color = {r = 255, g = 0, b = 0, a = 255} } }, icon = gTextures.star}
-    TabItemList[TAB_BUILDING_BLOCKS][3] = { item = { behavior = bhvMinecraftBox, model = E_MODEL_COLOR_BOX, params = { color = {r = 0, g = 0, b = 255, a = 255} } }, icon = gTextures.star}
-    TabItemList[TAB_BUILDING_BLOCKS][4] = { item = { behavior = bhvMinecraftBox, model = E_MODEL_COLOR_BOX, params = { color = {r = 255, g = 255, b = 0, a = 255} } }, icon = gTextures.star}
-    TabItemList[TAB_BUILDING_BLOCKS][5] = { item = { behavior = bhvMinecraftBox, model = E_MODEL_COLOR_BOX, params = { color = {r = 255, g = 0, b = 255, a = 255} } }, icon = gTextures.star}
-    TabItemList[TAB_BUILDING_BLOCKS][6] = { item = { behavior = bhvMinecraftBox, model = E_MODEL_COLOR_BOX, params = { color = {r = 0, g = 255, b = 255, a = 255} } }, icon = gTextures.star}
-    TabItemList[TAB_BUILDING_BLOCKS][7] = { item = { behavior = bhvMinecraftBox, model = E_MODEL_COLOR_BOX, params = { color = {r = 0, g = 0, b = 0, a = 255} } }, icon = gTextures.star}
+    for i = 1, 200, 1 do
+        TabItemList[TAB_BUILDING_BLOCKS][i] = {
+            item = {
+                behavior = bhvMinecraftBox,
+                model = E_MODEL_COLOR_BOX,
+                params = {
+                    color = {
+                        r = math.random(0, 255),
+                        g = math.random(0, 255),
+                        b = math.random(0, 255),
+                        a = 255
+                    }
+                }
+            },
+            icon = gTextures.star}
+    end
+    --TabItemList[TAB_BUILDING_BLOCKS][1] = { item = { behavior = bhvMinecraftBox, model = E_MODEL_COLOR_BOX, params = { color = {r = 255, g = 255, b = 255, a = 255} } }, icon = gTextures.star}
+    --TabItemList[TAB_BUILDING_BLOCKS][2] = { item = { behavior = bhvMinecraftBox, model = E_MODEL_COLOR_BOX, params = { color = {r = 255, g = 0, b = 0, a = 255} } }, icon = gTextures.star}
+    --TabItemList[TAB_BUILDING_BLOCKS][3] = { item = { behavior = bhvMinecraftBox, model = E_MODEL_COLOR_BOX, params = { color = {r = 0, g = 0, b = 255, a = 255} } }, icon = gTextures.star}
+    --TabItemList[TAB_BUILDING_BLOCKS][4] = { item = { behavior = bhvMinecraftBox, model = E_MODEL_COLOR_BOX, params = { color = {r = 255, g = 255, b = 0, a = 255} } }, icon = gTextures.star}
+    --TabItemList[TAB_BUILDING_BLOCKS][5] = { item = { behavior = bhvMinecraftBox, model = E_MODEL_COLOR_BOX, params = { color = {r = 255, g = 0, b = 255, a = 255} } }, icon = gTextures.star}
+    --TabItemList[TAB_BUILDING_BLOCKS][6] = { item = { behavior = bhvMinecraftBox, model = E_MODEL_COLOR_BOX, params = { color = {r = 0, g = 255, b = 255, a = 255} } }, icon = gTextures.star}
+    --TabItemList[TAB_BUILDING_BLOCKS][7] = { item = { behavior = bhvMinecraftBox, model = E_MODEL_COLOR_BOX, params = { color = {r = 0, g = 0, b = 0, a = 255} } }, icon = gTextures.star}
 
     TabItemList[TAB_ITEMS][1] = { item = {behavior = id_bhvStar, model = E_MODEL_STAR, params = {} }, icon = gTextures.star }
     TabItemList[TAB_ITEMS][2] = { item = {behavior = id_bhvYellowCoin, model = E_MODEL_YELLOW_COIN, params = {billboard = true} }, icon = gTextures.coin }
@@ -144,10 +163,10 @@ end
 local function render_item_list(x, y, width, height, items)
     local hovering_over_item = false
     for index, item in ipairs(items) do
-        local slot_width = width * 0.1
+        local slot_width = width * 0.05
         local slot_height = height * 0.1
-        local slot_x = x + (slot_width * ((index - 1) % 10))
-        local slot_y = y + (slot_height * ((index - 1) // 10))
+        local slot_x = x + (slot_width * ((index - 1) % COLUMN_COUNT))
+        local slot_y = y + (slot_height * ((index - 1) // ROW_COUNT))
         if moved_mouse and mouse_is_within(slot_x, slot_y, slot_x + slot_width, slot_y + slot_height) then
             selected_item_index = index
             hovering_over_item = true
@@ -384,15 +403,15 @@ local function handle_item_selection_inputs(pressed)
             selected_item_index = 1
         end
 
-        if pressed & U_JPAD ~= 0 and selected_item_index > 10 then
-            selected_item_index = selected_item_index - 10
+        if pressed & U_JPAD ~= 0 and selected_item_index > COLUMN_COUNT then
+            selected_item_index = selected_item_index - COLUMN_COUNT
         elseif pressed & D_JPAD ~= 0 and selected_item_index < current_item_set_count then
-            local remaining = math.min(current_item_set_count - selected_item_index, 10)
+            local remaining = math.min(current_item_set_count - selected_item_index, COLUMN_COUNT)
             selected_item_index = selected_item_index + remaining
         end
-        if pressed & L_JPAD ~= 0 and selected_item_index > 1 and selected_item_index % 10 ~= 1 then
+        if pressed & L_JPAD ~= 0 and selected_item_index > 1 and selected_item_index % ROW_COUNT ~= 1 then
             selected_item_index = selected_item_index - 1
-        elseif pressed & R_JPAD ~= 0 and selected_item_index < current_item_set_count and selected_item_index % 10 ~= 0 then
+        elseif pressed & R_JPAD ~= 0 and selected_item_index < current_item_set_count and selected_item_index % ROW_COUNT ~= 0 then
             selected_item_index = selected_item_index + 1
         end
     end
