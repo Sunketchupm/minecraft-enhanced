@@ -90,13 +90,24 @@ end
 
 ---@param obj Object
 function bhv_mock_item_loop(obj)
-	if not outline then
+	if not outline or not obj_get_first_with_behavior_id(bhvOutline) then
 		obj_mark_for_deletion(obj)
 		return
 	end
 	obj.oPosX = outline.oPosX
 	obj.oPosY = outline.oPosY
 	obj.oPosZ = outline.oPosZ
+	obj.oFaceAnglePitch = outline.oFaceAnglePitch
+	obj.oFaceAngleYaw = outline.oFaceAngleYaw
+	obj.oFaceAngleRoll = outline.oFaceAngleRoll
+	if gCurrentItem and gCurrentItem.model then
+		obj_set_model_extended(obj, gCurrentItem.model)
+		if gCurrentItem.params.billboard then
+			obj_set_billboard(obj)
+		else
+			obj.header.gfx.node.flags = obj.header.gfx.node.flags & ~GRAPH_RENDER_BILLBOARD
+		end
+	end
 end
 
 -------------------------------------------------------------------------------

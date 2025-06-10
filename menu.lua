@@ -28,14 +28,16 @@ add_first_update(function ()
     TabItemList[TAB_BUILDING_BLOCKS][3] = { item = { behavior = bhvMinecraftBox, model = E_MODEL_COLOR_BOX, params = { color = {r = 0, g = 0, b = 255, a = 255} } }, icon = gTextures.star}
     TabItemList[TAB_BUILDING_BLOCKS][4] = { item = { behavior = bhvMinecraftBox, model = E_MODEL_COLOR_BOX, params = { color = {r = 255, g = 255, b = 0, a = 255} } }, icon = gTextures.star}
     TabItemList[TAB_BUILDING_BLOCKS][5] = { item = { behavior = bhvMinecraftBox, model = E_MODEL_COLOR_BOX, params = { color = {r = 255, g = 0, b = 255, a = 255} } }, icon = gTextures.star}
-    TabItemList[TAB_BUILDING_BLOCKS][6] = { item = { behavior = bhvMinecraftBox, model = E_MODEL_COLOR_BOX, params = { color = {r = 255, g = 255, b = 0, a = 255} } }, icon = gTextures.star}
-    TabItemList[TAB_BUILDING_BLOCKS][6] = { item = { behavior = bhvMinecraftBox, model = E_MODEL_COLOR_BOX, params = { color = {r = 0, g = 0, b = 0, a = 255} } }, icon = gTextures.star}
-    for i = 1, 17, 1 do
-        TabItemList[TAB_ITEMS][i] = { item = {behavior = nil, model = E_MODEL_NONE, params = {} }, icon = gTextures.coin }
-    end
-    for i = 1, 22, 1 do
-        TabItemList[TAB_ENEMIES][i] = { item = {behavior = nil, model = E_MODEL_NONE, params = {} }, icon = gTextures.lakitu }
-    end
+    TabItemList[TAB_BUILDING_BLOCKS][6] = { item = { behavior = bhvMinecraftBox, model = E_MODEL_COLOR_BOX, params = { color = {r = 0, g = 255, b = 255, a = 255} } }, icon = gTextures.star}
+    TabItemList[TAB_BUILDING_BLOCKS][7] = { item = { behavior = bhvMinecraftBox, model = E_MODEL_COLOR_BOX, params = { color = {r = 0, g = 0, b = 0, a = 255} } }, icon = gTextures.star}
+
+    TabItemList[TAB_ITEMS][1] = { item = {behavior = id_bhvStar, model = E_MODEL_STAR, params = {} }, icon = gTextures.star }
+    TabItemList[TAB_ITEMS][2] = { item = {behavior = id_bhvYellowCoin, model = E_MODEL_YELLOW_COIN, params = {billboard = true} }, icon = gTextures.coin }
+    TabItemList[TAB_ITEMS][3] = { item = {behavior = id_bhvTree, model = E_MODEL_BUBBLY_TREE, params = {billboard = true} }, icon = gTextures.apostrophe }
+
+    TabItemList[TAB_ENEMIES][1] = { item = {behavior = id_bhvGoomba, model = E_MODEL_GOOMBA, params = {} }, icon = gTextures.lakitu }
+    TabItemList[TAB_ENEMIES][2] = { item = {behavior = id_bhvBobomb, model = E_MODEL_BLACK_BOBOMB, params = {} }, icon = gTextures.lakitu }
+    TabItemList[TAB_ENEMIES][3] = { item = {behavior = id_bhvChuckya, model = E_MODEL_CHUCKYA, params = {} }, icon = gTextures.lakitu }
 end)
 
 ------------------------------------------------------------------------------------------------
