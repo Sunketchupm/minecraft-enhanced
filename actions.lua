@@ -8,9 +8,9 @@ local savedMarioYaw = 0
 local function act_free_move(m)
     m.peakHeight = m.pos.y
     m.health = 0x880
+    m.capTimer = 1
     if MenuOpen then return false end
 
-    m.capTimer = 1
     local lHeld = (m.controller.buttonDown & L_TRIG) ~= 0
     local bHeld = (m.controller.buttonDown & B_BUTTON) ~= 0
     if (m.input & INPUT_Z_DOWN) ~= 0 then
@@ -77,9 +77,16 @@ end
 
 ---@param m MarioState
 local function on_death(m)
-    if m.action == ACT_FREE_MOVE then
-        return false
+    if m.action == ACT_FREE_MOVE then return false end
+    local spawn = obj_get_nearest_object_with_behavior_id(m.marioObj, id_bhvSpinAirborneWarp)
+    if spawn then
+        vec3f_set(m.pos, spawn.oPosX, spawn.oPosY, spawn.oPosZ)
+        m.health = 0x880
+        m.capTimer = 1
+    else
+        warp_to_start_level()
     end
+    return false
 end
 
 local timer = 0

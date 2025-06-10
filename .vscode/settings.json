@@ -1,5 +1,7 @@
 {
     "Lua.diagnostics.globals": [
-        "bhvMinecraftBox"
+        "bhvMinecraftBox",
+        "bhvOutline",
+        "bhvMockItem"
     ]
 }

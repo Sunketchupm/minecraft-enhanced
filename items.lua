@@ -1,13 +1,14 @@
 ---@class Item
     ---@field behavior BehaviorId
+    ---@field model ModelExtendedId
     ---@field params table
 
----@type Item
-gCurrentItem = {behavior = nil, params = {}}
----@type BehaviorId[]
+gCurrentItem = {behavior = nil, model = E_MODEL_NONE, params = {}}
 gItemBehaviors = {}
 add_first_update(function ()
-    gCurrentItem = {behavior = bhvMinecraftBox, params = {color = {r = 255, g = 0, b = 0, a = 255}}}
+    ---@type Item
+    gCurrentItem = {behavior = bhvMinecraftBox, model = E_MODEL_COLOR_BOX, params = {color = {r = 255, g = 0, b = 0, a = 255}}}
+    ---@type BehaviorId[]
     gItemBehaviors = {
         bhvMinecraftBox
     }

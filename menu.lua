@@ -23,18 +23,18 @@ local TabItemList = {
 }
 
 add_first_update(function ()
-    TabItemList[TAB_BUILDING_BLOCKS][1] = { item = { behavior = bhvMinecraftBox, params = { color = {r = 255, g = 255, b = 255, a = 255} } }, icon = gTextures.star}
-    TabItemList[TAB_BUILDING_BLOCKS][2] = { item = { behavior = bhvMinecraftBox, params = { color = {r = 255, g = 0, b = 0, a = 255} } }, icon = gTextures.star}
-    TabItemList[TAB_BUILDING_BLOCKS][3] = { item = { behavior = bhvMinecraftBox, params = { color = {r = 0, g = 0, b = 255, a = 255} } }, icon = gTextures.star}
-    TabItemList[TAB_BUILDING_BLOCKS][4] = { item = { behavior = bhvMinecraftBox, params = { color = {r = 255, g = 255, b = 0, a = 255} } }, icon = gTextures.star}
-    TabItemList[TAB_BUILDING_BLOCKS][5] = { item = { behavior = bhvMinecraftBox, params = { color = {r = 255, g = 0, b = 255, a = 255} } }, icon = gTextures.star}
-    TabItemList[TAB_BUILDING_BLOCKS][6] = { item = { behavior = bhvMinecraftBox, params = { color = {r = 255, g = 255, b = 0, a = 255} } }, icon = gTextures.star}
-    TabItemList[TAB_BUILDING_BLOCKS][6] = { item = { behavior = bhvMinecraftBox, params = { color = {r = 0, g = 0, b = 0, a = 255} } }, icon = gTextures.star}
+    TabItemList[TAB_BUILDING_BLOCKS][1] = { item = { behavior = bhvMinecraftBox, model = E_MODEL_COLOR_BOX, params = { color = {r = 255, g = 255, b = 255, a = 255} } }, icon = gTextures.star}
+    TabItemList[TAB_BUILDING_BLOCKS][2] = { item = { behavior = bhvMinecraftBox, model = E_MODEL_COLOR_BOX, params = { color = {r = 255, g = 0, b = 0, a = 255} } }, icon = gTextures.star}
+    TabItemList[TAB_BUILDING_BLOCKS][3] = { item = { behavior = bhvMinecraftBox, model = E_MODEL_COLOR_BOX, params = { color = {r = 0, g = 0, b = 255, a = 255} } }, icon = gTextures.star}
+    TabItemList[TAB_BUILDING_BLOCKS][4] = { item = { behavior = bhvMinecraftBox, model = E_MODEL_COLOR_BOX, params = { color = {r = 255, g = 255, b = 0, a = 255} } }, icon = gTextures.star}
+    TabItemList[TAB_BUILDING_BLOCKS][5] = { item = { behavior = bhvMinecraftBox, model = E_MODEL_COLOR_BOX, params = { color = {r = 255, g = 0, b = 255, a = 255} } }, icon = gTextures.star}
+    TabItemList[TAB_BUILDING_BLOCKS][6] = { item = { behavior = bhvMinecraftBox, model = E_MODEL_COLOR_BOX, params = { color = {r = 255, g = 255, b = 0, a = 255} } }, icon = gTextures.star}
+    TabItemList[TAB_BUILDING_BLOCKS][6] = { item = { behavior = bhvMinecraftBox, model = E_MODEL_COLOR_BOX, params = { color = {r = 0, g = 0, b = 0, a = 255} } }, icon = gTextures.star}
     for i = 1, 17, 1 do
-        TabItemList[TAB_ITEMS][i] = { item = {behavior = nil, params = {} }, icon = gTextures.coin }
+        TabItemList[TAB_ITEMS][i] = { item = {behavior = nil, model = E_MODEL_NONE, params = {} }, icon = gTextures.coin }
     end
     for i = 1, 22, 1 do
-        TabItemList[TAB_ENEMIES][i] = { item = {behavior = nil, params = {} }, icon = gTextures.lakitu }
+        TabItemList[TAB_ENEMIES][i] = { item = {behavior = nil, model = E_MODEL_NONE, params = {} }, icon = gTextures.lakitu }
     end
 end)
 
@@ -360,7 +360,7 @@ local function before_mario_update(m)
     if m.playerIndex ~= 0 then return end
     if not CanBuild then return end
 
-    if not MenuOpen and m.controller.buttonPressed & X_BUTTON ~= 0 then
+    if not MenuOpen and m.controller.buttonDown & L_TRIG == 0 and m.controller.buttonPressed & X_BUTTON ~= 0 then
         MenuOpen = true
         return
     end
