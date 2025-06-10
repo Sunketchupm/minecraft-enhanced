@@ -20,6 +20,22 @@ end
 
 local E_MODEL_COLOR_BOX = smlua_model_util_get_id("mce_box")
 
+function lua_asm_set_color(node, _misc)
+    local graphNode = cast_graph_node(node.next)
+    local dl = graphNode.displayList
+	if gCurrentItem and gCurrentItem.behavior == bhvMinecraftBox then
+		local color = gCurrentItem.params.color
+		if color then
+			djui_chat_message_create(color.r .. ", " .. color.g .. ", " .. color.b .. ", " .. color.a)
+			gfx_parse(dl, function(cmd, op)
+				if op == G_SETPRIMCOLOR then
+					gfx_set_command(cmd, "gsDPSetPrimColor(0, 0, %i, %i, %i, %i)", color.r, color.g, color.b, color.a)
+				end
+			end)
+		end
+	end
+end
+
 -------------------------------------------------------------------------------
 
 local ON_GRID = true
@@ -47,9 +63,6 @@ local function place_item()
 			obj.oFaceAnglePitch = 0
 			obj.oFaceAngleYaw = 0
 			obj.oFaceAngleRoll = 0
-			if gCurrentItem.behavior == bhvMinecraftBox then
-				obj.oAnimState = gCurrentItem.params.color
-			end
 		end
 	)
 

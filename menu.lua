@@ -25,9 +25,13 @@ local first_update = true
 hook_event(HOOK_UPDATE, function ()
     if not first_update then return end
     first_update = false
-    for i = 1, 16, 1 do
-        ItemList[TAB_BUILDING_BLOCKS][i] = { item = { behavior = bhvMinecraftBox, params = { color = i - 1 } }, icon = gTextures.star}
-    end
+    ItemList[TAB_BUILDING_BLOCKS][1] = { item = { behavior = bhvMinecraftBox, params = { color = {r = 255, g = 255, b = 255, a = 255} } }, icon = gTextures.star}
+    ItemList[TAB_BUILDING_BLOCKS][2] = { item = { behavior = bhvMinecraftBox, params = { color = {r = 255, g = 0, b = 0, a = 255} } }, icon = gTextures.star}
+    ItemList[TAB_BUILDING_BLOCKS][3] = { item = { behavior = bhvMinecraftBox, params = { color = {r = 0, g = 0, b = 255, a = 255} } }, icon = gTextures.star}
+    ItemList[TAB_BUILDING_BLOCKS][4] = { item = { behavior = bhvMinecraftBox, params = { color = {r = 255, g = 255, b = 0, a = 255} } }, icon = gTextures.star}
+    ItemList[TAB_BUILDING_BLOCKS][5] = { item = { behavior = bhvMinecraftBox, params = { color = {r = 255, g = 0, b = 255, a = 255} } }, icon = gTextures.star}
+    ItemList[TAB_BUILDING_BLOCKS][6] = { item = { behavior = bhvMinecraftBox, params = { color = {r = 255, g = 255, b = 0, a = 255} } }, icon = gTextures.star}
+    ItemList[TAB_BUILDING_BLOCKS][6] = { item = { behavior = bhvMinecraftBox, params = { color = {r = 0, g = 0, b = 0, a = 255} } }, icon = gTextures.star}
     for i = 1, 17, 1 do
         ItemList[TAB_ITEMS][i] = { item = {behavior = nil, params = {} }, icon = gTextures.coin }
     end
@@ -320,12 +324,12 @@ local function handle_standard_inputs(pressed)
                 play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource)
             end
             mouse_prev_item_index = selected_item_index
-            if mouse_has_clicked and ItemList[active_tab] and ItemList[active_tab][active_item_index] then
+            if mouse_has_clicked and ItemList[active_tab] and ItemList[active_tab][selected_item_index] then
                 active_item_index = selected_item_index
                 gCurrentItem = ItemList[active_tab][active_item_index].item
                 play_sound(SOUND_MENU_CLICK_FILE_SELECT, gGlobalSoundSource)
             end
-        elseif not moved_mouse and pressed & A_BUTTON ~= 0 and ItemList[active_tab] and ItemList[active_tab][active_item_index] then
+        elseif not moved_mouse and pressed & A_BUTTON ~= 0 and ItemList[active_tab] and ItemList[active_tab][selected_item_index] then
             active_item_index = selected_item_index
             gCurrentItem = ItemList[active_tab][active_item_index].item
             play_sound(SOUND_MENU_CLICK_FILE_SELECT, gGlobalSoundSource)
