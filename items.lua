@@ -29,3 +29,18 @@ function obj_get_any_nearest_item(obj)
     end
     return nearest_item
 end
+
+local function on_object_count_chat_commmand()
+    local count = 0
+    for i = OBJ_LIST_PLAYER, NUM_OBJ_LISTS - 1, 1 do
+        local obj = obj_get_first(i)
+        while obj do
+            count = count + 1
+            obj = obj_get_next(obj)
+        end
+    end
+    djui_chat_message_create("Total objects: " .. count .. "/" .. OBJECT_POOL_CAPACITY)
+    return true
+end
+
+hook_chat_command("objects", "Counts the amount of objects in the current area", on_object_count_chat_commmand)
