@@ -16,3 +16,18 @@ function MinecraftDebug.segments(x, y, width, height)
         rect_x = rect_x + width * 0.05
     end
 end
+
+local first_update_functions = {}
+function add_first_update(func)
+    table.insert(first_update_functions, func)
+end
+
+local first_update = true
+local function on_first_update()
+    if not first_update then return end
+    first_update = false
+    for _, func in pairs(first_update_functions) do
+        func()
+    end
+end
+hook_event(HOOK_UPDATE, on_first_update)

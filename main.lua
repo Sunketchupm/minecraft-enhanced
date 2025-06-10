@@ -1,5 +1,9 @@
--- name: Minecraft Rewrite
--- description: A rewritten version of Minecraft, originally by zKevin
+-- name: Minecraft Enhanced Rewrite
+-- description: An improved version of the Minecraft mod, originally by zKevin
+
+CanBuild = true
+
+-------------------------------------------------------------------------------
 
 local outline = nil
 local function bhv_outline_init(obj)
@@ -26,7 +30,6 @@ function lua_asm_set_color(node, _misc)
 	if gCurrentItem and gCurrentItem.behavior == bhvMinecraftBox then
 		local color = gCurrentItem.params.color
 		if color then
-			djui_chat_message_create(color.r .. ", " .. color.g .. ", " .. color.b .. ", " .. color.a)
 			gfx_parse(dl, function(cmd, op)
 				if op == G_SETPRIMCOLOR then
 					gfx_set_command(cmd, "gsDPSetPrimColor(0, 0, %i, %i, %i, %i)", color.r, color.g, color.b, color.a)
@@ -69,8 +72,24 @@ local function place_item()
 	play_sound(SOUND_GENERAL_BOX_LANDING, gMarioStates[0].marioObj.header.gfx.cameraToObject)
 end
 
+local function determine_place_or_delete()
+	if not outline then return end
+	local nearest = obj_get_any_nearest_item(outline)
+
+	if nearest then
+		local dist = dist_between_objects(outline, nearest)
+		if dist >= GRID_SIZE then
+			place_item()
+		else
+			obj_mark_for_deletion(nearest)
+		end
+	else
+		place_item()
+	end
+end
+
 ---@param m MarioState
-local function outline_block_mario_update(m)
+local function builder_mario_update(m)
 	local facing_x = sins(m.intendedYaw)
 	local facing_z = coss(m.intendedYaw)
 
@@ -78,6 +97,7 @@ local function outline_block_mario_update(m)
 	local posY = to_grid( m.pos.y )
 	local posZ = to_grid( m.pos.z + facing_z*GRID_SIZE )
 
+	outline = obj_get_first_with_behavior_id(id_bhvOutlineBlock)
 	if not outline then
 		outline = spawn_non_sync_object(
 			id_bhvOutlineBlock,
@@ -97,18 +117,7 @@ local function outline_block_mario_update(m)
 
 	-- place block
 	if (m.controller.buttonPressed & Y_BUTTON) ~= 0 then
-		local nearest = obj_get_nearest_object_with_behavior_id(outline, bhvMinecraftBox)
-
-		if nearest then
-			local dist = dist_between_objects(outline, nearest)
-			if dist >= GRID_SIZE then
-				place_item()
-			else
-				obj_mark_for_deletion(nearest)
-			end
-		else
-			place_item()
-		end
+		determine_place_or_delete()
     end
 end
 
@@ -123,7 +132,15 @@ end
 ---@param m MarioState
 local function mario_update(m)
 	if m.playerIndex ~= 0 then return end
-    outline_block_mario_update(m)
+	if CanBuild then
+		builder_mario_update(m)
+	else
+		if outline then
+			obj_mark_for_deletion(outline)
+		end
+	end
+
+	CanBuild = m.action == ACT_FREE_MOVE
 end
 
 

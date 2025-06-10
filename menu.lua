@@ -15,28 +15,26 @@ local TAB_MAIN_END = 4
     ---@field icon TextureInfo
 
 ---@type table<integer, MenuItemLink[]>
-local ItemList = {
+local TabItemList = {
     [TAB_BUILDING_BLOCKS] = {},
     [TAB_ITEMS] = {},
     [TAB_ENEMIES] = {},
     [TAB_HELP] = {}
 }
-local first_update = true
-hook_event(HOOK_UPDATE, function ()
-    if not first_update then return end
-    first_update = false
-    ItemList[TAB_BUILDING_BLOCKS][1] = { item = { behavior = bhvMinecraftBox, params = { color = {r = 255, g = 255, b = 255, a = 255} } }, icon = gTextures.star}
-    ItemList[TAB_BUILDING_BLOCKS][2] = { item = { behavior = bhvMinecraftBox, params = { color = {r = 255, g = 0, b = 0, a = 255} } }, icon = gTextures.star}
-    ItemList[TAB_BUILDING_BLOCKS][3] = { item = { behavior = bhvMinecraftBox, params = { color = {r = 0, g = 0, b = 255, a = 255} } }, icon = gTextures.star}
-    ItemList[TAB_BUILDING_BLOCKS][4] = { item = { behavior = bhvMinecraftBox, params = { color = {r = 255, g = 255, b = 0, a = 255} } }, icon = gTextures.star}
-    ItemList[TAB_BUILDING_BLOCKS][5] = { item = { behavior = bhvMinecraftBox, params = { color = {r = 255, g = 0, b = 255, a = 255} } }, icon = gTextures.star}
-    ItemList[TAB_BUILDING_BLOCKS][6] = { item = { behavior = bhvMinecraftBox, params = { color = {r = 255, g = 255, b = 0, a = 255} } }, icon = gTextures.star}
-    ItemList[TAB_BUILDING_BLOCKS][6] = { item = { behavior = bhvMinecraftBox, params = { color = {r = 0, g = 0, b = 0, a = 255} } }, icon = gTextures.star}
+
+add_first_update(function ()
+    TabItemList[TAB_BUILDING_BLOCKS][1] = { item = { behavior = bhvMinecraftBox, params = { color = {r = 255, g = 255, b = 255, a = 255} } }, icon = gTextures.star}
+    TabItemList[TAB_BUILDING_BLOCKS][2] = { item = { behavior = bhvMinecraftBox, params = { color = {r = 255, g = 0, b = 0, a = 255} } }, icon = gTextures.star}
+    TabItemList[TAB_BUILDING_BLOCKS][3] = { item = { behavior = bhvMinecraftBox, params = { color = {r = 0, g = 0, b = 255, a = 255} } }, icon = gTextures.star}
+    TabItemList[TAB_BUILDING_BLOCKS][4] = { item = { behavior = bhvMinecraftBox, params = { color = {r = 255, g = 255, b = 0, a = 255} } }, icon = gTextures.star}
+    TabItemList[TAB_BUILDING_BLOCKS][5] = { item = { behavior = bhvMinecraftBox, params = { color = {r = 255, g = 0, b = 255, a = 255} } }, icon = gTextures.star}
+    TabItemList[TAB_BUILDING_BLOCKS][6] = { item = { behavior = bhvMinecraftBox, params = { color = {r = 255, g = 255, b = 0, a = 255} } }, icon = gTextures.star}
+    TabItemList[TAB_BUILDING_BLOCKS][6] = { item = { behavior = bhvMinecraftBox, params = { color = {r = 0, g = 0, b = 0, a = 255} } }, icon = gTextures.star}
     for i = 1, 17, 1 do
-        ItemList[TAB_ITEMS][i] = { item = {behavior = nil, params = {} }, icon = gTextures.coin }
+        TabItemList[TAB_ITEMS][i] = { item = {behavior = nil, params = {} }, icon = gTextures.coin }
     end
     for i = 1, 22, 1 do
-        ItemList[TAB_ENEMIES][i] = { item = {behavior = nil, params = {} }, icon = gTextures.lakitu }
+        TabItemList[TAB_ENEMIES][i] = { item = {behavior = nil, params = {} }, icon = gTextures.lakitu }
     end
 end)
 
@@ -75,17 +73,12 @@ local mouse_has_right_clicked = false
 local mouse_prev_item_index = 1
 local mouse_tab_was_clicked_on = 0
 
-local function render_and_handle_mouse_input()
-    if djui_hud_get_raw_mouse_x() > 0 or djui_hud_get_raw_mouse_y() > 0 then
-        moved_mouse = true
-    end
+local function render_mouse()
     if moved_mouse then
         prev_mouse_x = mouse_x
         prev_mouse_y = mouse_y
         mouse_x = djui_hud_get_mouse_x()
         mouse_y = djui_hud_get_mouse_y()
-        mouse_has_clicked = djui_hud_get_mouse_buttons_pressed() == 1
-        mouse_has_right_clicked = djui_hud_get_mouse_buttons_pressed() == 4
         djui_hud_render_texture_interpolated(gTextures.camera, prev_mouse_x, prev_mouse_y, 1, 1, mouse_x, mouse_y, 1, 1)
         --djui_hud_render_texture(gTextures.camera, mouse_x, mouse_y, 1, 1)
     end
@@ -93,6 +86,14 @@ end
 
 local function mouse_is_within(start_x, start_y, end_x, end_y)
     return mouse_x > start_x and mouse_y > start_y and mouse_x < end_x and mouse_y < end_y
+end
+
+local function handle_mouse_input()
+    if djui_hud_get_raw_mouse_x() > 0 or djui_hud_get_raw_mouse_y() > 0 then
+        moved_mouse = true
+    end
+    mouse_has_clicked = djui_hud_get_mouse_buttons_pressed() == 1
+    mouse_has_right_clicked = djui_hud_get_mouse_buttons_pressed() == 4
 end
 
 ------------------------------------------------------------------------------------------------
@@ -158,7 +159,7 @@ local function render_interior_rectangle(x, y, width, height)
     local interior_rect_height = height * 0.8
     djui_hud_set_color(175, 175, 175, 255)
     djui_hud_render_rect(interior_rect_x, interior_rect_y, interior_rect_width, interior_rect_height)
-    render_item_list(interior_rect_x, interior_rect_y, interior_rect_width, interior_rect_height, ItemList[active_tab])
+    render_item_list(interior_rect_x, interior_rect_y, interior_rect_width, interior_rect_height, TabItemList[active_tab])
 end
 
 local function render_standard_tab(x, y, width, height, name)
@@ -254,12 +255,13 @@ local function render_menu(screen_width, screen_height)
     if not MenuOpen then return end
     local x, y, width, height = render_main_rectangle(screen_width, screen_height)
     MenuTabs[active_tab](x, y, width, height)
-    render_and_handle_mouse_input()
+    render_mouse()
 end
 
 ----------------------------------------------------
 
 local function hud_render()
+    if not CanBuild then return end
     djui_hud_set_resolution(RESOLUTION_DJUI)
 
     local screen_width = djui_hud_get_screen_width()
@@ -271,8 +273,10 @@ end
 
 ---@param pressed integer
 local function handle_standard_inputs(pressed)
-    if (pressed & START_BUTTON ~= 0) or (not moved_mouse and pressed & B_BUTTON ~= 0) or (moved_mouse and mouse_has_right_clicked) then
+    if moved_mouse and pressed ~= 0 and not mouse_has_clicked and not mouse_has_right_clicked then
         moved_mouse = false
+    end
+    if (pressed & START_BUTTON ~= 0) or (not moved_mouse and pressed & X_BUTTON ~= 0) or (moved_mouse and mouse_has_right_clicked) then
         MenuOpen = false
         return
     end
@@ -295,12 +299,11 @@ local function handle_standard_inputs(pressed)
         play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
     end
 
-    local current_item_set_count = #ItemList[active_tab]
+    local current_item_set_count = #TabItemList[active_tab]
     if current_item_set_count == 0 then return end
 
     if pressed & (U_JPAD | L_JPAD | D_JPAD | R_JPAD) ~= 0 then
         play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource)
-        moved_mouse = false
         if selected_item_index == 0 then
             selected_item_index = active_item_index > 0 and active_item_index or 1
         end
@@ -324,14 +327,14 @@ local function handle_standard_inputs(pressed)
                 play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource)
             end
             mouse_prev_item_index = selected_item_index
-            if mouse_has_clicked and ItemList[active_tab] and ItemList[active_tab][selected_item_index] then
+            if mouse_has_clicked and TabItemList[active_tab] and TabItemList[active_tab][selected_item_index] then
                 active_item_index = selected_item_index
-                gCurrentItem = ItemList[active_tab][active_item_index].item
+                gCurrentItem = TabItemList[active_tab][active_item_index].item
                 play_sound(SOUND_MENU_CLICK_FILE_SELECT, gGlobalSoundSource)
             end
-        elseif not moved_mouse and pressed & A_BUTTON ~= 0 and ItemList[active_tab] and ItemList[active_tab][selected_item_index] then
+        elseif not moved_mouse and pressed & A_BUTTON ~= 0 and TabItemList[active_tab] and TabItemList[active_tab][selected_item_index] then
             active_item_index = selected_item_index
-            gCurrentItem = ItemList[active_tab][active_item_index].item
+            gCurrentItem = TabItemList[active_tab][active_item_index].item
             play_sound(SOUND_MENU_CLICK_FILE_SELECT, gGlobalSoundSource)
         end
     end
@@ -342,8 +345,10 @@ local function handle_menu_inputs(m)
     local pressed = m.controller.buttonPressed
 
     if MenuOpen then
+        handle_mouse_input()
         if active_tab <= TAB_MAIN_END then
             handle_standard_inputs(pressed)
+            m.controller.buttonPressed = 0
         end
     end
 end
@@ -353,9 +358,11 @@ end
 ---@param m MarioState
 local function before_mario_update(m)
     if m.playerIndex ~= 0 then return end
+    if not CanBuild then return end
 
-    if m.controller.buttonPressed & X_BUTTON ~= 0 then
+    if not MenuOpen and m.controller.buttonPressed & X_BUTTON ~= 0 then
         MenuOpen = true
+        return
     end
 
     if MenuOpen then
