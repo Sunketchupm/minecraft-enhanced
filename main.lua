@@ -90,23 +90,24 @@ end
 
 ---@param obj Object
 function bhv_mock_item_loop(obj)
-	if not outline or not obj_get_first_with_behavior_id(bhvOutline) then
-		obj_mark_for_deletion(obj)
-		return
-	end
-	obj.oPosX = outline.oPosX
-	obj.oPosY = outline.oPosY
-	obj.oPosZ = outline.oPosZ
-	obj.oFaceAnglePitch = outline.oFaceAnglePitch
-	obj.oFaceAngleYaw = outline.oFaceAngleYaw
-	obj.oFaceAngleRoll = outline.oFaceAngleRoll
-	if gCurrentItem and gCurrentItem.model then
+	if outline and gCurrentItem and gCurrentItem.model then
+		obj.oPosX = outline.oPosX
+		obj.oPosY = outline.oPosY
+		obj.oPosZ = outline.oPosZ
+		obj.oFaceAnglePitch = outline.oFaceAnglePitch
+		obj.oFaceAngleYaw = outline.oFaceAngleYaw
+		obj.oFaceAngleRoll = outline.oFaceAngleRoll
+		if gCurrentItem.behavior == bhvMinecraftBox then
+			obj.oOpacity = 50
+		end
 		obj_set_model_extended(obj, gCurrentItem.model)
 		if gCurrentItem.params.billboard then
 			obj_set_billboard(obj)
 		else
 			obj.header.gfx.node.flags = obj.header.gfx.node.flags & ~GRAPH_RENDER_BILLBOARD
 		end
+	else
+		obj_set_model_extended(obj, E_MODEL_NONE)
 	end
 end
 
@@ -180,6 +181,16 @@ local function set_outline_rotation(down, pressed)
 	outline_stored_rotation.roll = outline.oFaceAngleRoll
 end
 
+local function delete_outline()
+	if outline then
+		obj_mark_for_deletion(outline)
+	end
+	local mock = obj_get_first_with_behavior_id(bhvMockItem)
+	if mock then
+		obj_mark_for_deletion(mock)
+	end
+end
+
 ---------------------------------------
 
 ---@param m MarioState
@@ -207,9 +218,7 @@ end
 -------------------------------------------------------------------------------
 
 local function on_warp()
-	if outline then
-		obj_mark_for_deletion(outline)
-	end
+	delete_outline()
 end
 
 ---@param m MarioState
@@ -218,9 +227,7 @@ local function mario_update(m)
 	if CanBuild then
 		builder_mario_update(m)
 	else
-		if outline then
-			obj_mark_for_deletion(outline)
-		end
+		delete_outline()
 	end
 
 	CanBuild = m.action == ACT_FREE_MOVE

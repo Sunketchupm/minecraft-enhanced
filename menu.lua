@@ -2,13 +2,16 @@ MenuOpen = false
 
 local active_tab = 1
 local selected_item_index = 1
-local active_item_index = 0
 
 local TAB_BUILDING_BLOCKS = 1
 local TAB_ITEMS = 2
 local TAB_ENEMIES = 3
 local TAB_HELP = 4
 local TAB_MAIN_END = 4
+
+local selected_hotbar_index = 1
+local HOTBAR_SIZE = 10
+local hotbar_selection_active = false
 
 ---@class MenuItemLink
     ---@field item Item
@@ -21,6 +24,12 @@ local TabItemList = {
     [TAB_ENEMIES] = {},
     [TAB_HELP] = {}
 }
+
+---@type MenuItemLink[]
+local HotbarItemList = {}
+for i = 1, HOTBAR_SIZE do
+    HotbarItemList[i] = { item = nil, icon = nil} ---@diagnostic disable-line: assign-type-mismatch
+end
 
 add_first_update(function ()
     TabItemList[TAB_BUILDING_BLOCKS][1] = { item = { behavior = bhvMinecraftBox, model = E_MODEL_COLOR_BOX, params = { color = {r = 255, g = 255, b = 255, a = 255} } }, icon = gTextures.star}
@@ -58,9 +67,9 @@ local function render_bordered_rectangle(x, y, width, height, colors, margin_wid
     djui_hud_set_color_with_table(colors[2])
     djui_hud_render_rect(x, y, width, height)
     djui_hud_set_color_with_table(colors[3])
-    djui_hud_render_rect(x + (width * margin_width), y + height * margin_width, width - width * margin_height, height - height * margin_height)
+    djui_hud_render_rect(x + (width * margin_width), y + height * margin_height, width - width * margin_width, height - height * margin_height)
     djui_hud_set_color_with_table(colors[1])
-    djui_hud_render_rect(x + (width * margin_width), y + height * margin_width, width - width * margin_height * 2, height - height * margin_height * 2)
+    djui_hud_render_rect(x + (width * margin_width), y + height * margin_height, width - width * margin_width * 2, height - height * margin_height * 2)
 end
 
 ----------------------------------------------------
@@ -72,6 +81,9 @@ local mouse_x = 0
 local mouse_y = 0
 local mouse_has_clicked = false
 local mouse_has_right_clicked = false
+--local mouse_click_held = false
+--local mouse_hold_released = false
+--local mouse_hold_timer = 0
 local mouse_prev_item_index = 1
 local mouse_tab_was_clicked_on = 0
 
@@ -96,6 +108,15 @@ local function handle_mouse_input()
     end
     mouse_has_clicked = djui_hud_get_mouse_buttons_pressed() == 1
     mouse_has_right_clicked = djui_hud_get_mouse_buttons_pressed() == 4
+    --[[
+    mouse_click_held = djui_hud_get_mouse_buttons_down() == 1
+    mouse_hold_released = djui_hud_get_mouse_buttons_released() == 1
+    if mouse_click_held then
+        mouse_hold_timer = mouse_hold_timer + 1
+    else
+        mouse_hold_timer = 0
+    end
+    ]]
 end
 
 ------------------------------------------------------------------------------------------------
@@ -127,22 +148,21 @@ local function render_item_list(x, y, width, height, items)
         local slot_height = height * 0.1
         local slot_x = x + (slot_width * ((index - 1) % 10))
         local slot_y = y + (slot_height * ((index - 1) // 10))
-        local item_x = (slot_x + slot_width * 0.5) - (item.icon.width * 0.5)
-        local item_y = (slot_y + slot_height * 0.5) - (item.icon.height * 0.5)
         if moved_mouse and mouse_is_within(slot_x, slot_y, slot_x + slot_width, slot_y + slot_height) then
             selected_item_index = index
             hovering_over_item = true
         end
 
-        if index == active_item_index then
-            djui_hud_set_color(125, 125, 125, 255)
-            djui_hud_render_rect(slot_x, slot_y, slot_width, slot_height)
-        elseif index == selected_item_index then
+        if index == selected_item_index then
             djui_hud_set_color(150, 150, 150, 255)
             djui_hud_render_rect(slot_x, slot_y, slot_width, slot_height)
         end
-        djui_hud_set_color(255, 255, 255, 255)
-        djui_hud_render_texture(item.icon, item_x, item_y, 1, 1)
+        if item.icon then
+            local item_x = (slot_x + slot_width * 0.5) - (item.icon.width * 0.5)
+            local item_y = (slot_y + slot_height * 0.5) - (item.icon.height * 0.5)
+            djui_hud_set_color(255, 255, 255, 255)
+            djui_hud_render_texture(item.icon, item_x, item_y, 1, 1)
+        end
     end
 
     if moved_mouse and not hovering_over_item then
@@ -224,7 +244,7 @@ local function render_menu_tab(x, y, width, height, index)
     local tab_height = height * 0.1
     local tab_x = x + (tab_width * (index - 1))
     local tab_y = y - (tab_height - (tab_height * 0.1))
-    render_bordered_rectangle(tab_x, tab_y, tab_width, tab_height, colors, 0.1, 0.1)
+    render_bordered_rectangle(tab_x, tab_y, tab_width, tab_height, colors, 0.05, 0.07)
     if mouse_is_within(tab_x, tab_y, tab_x + tab_width, tab_y + tab_height) and mouse_has_clicked then
         mouse_tab_was_clicked_on = index
     end
@@ -245,7 +265,7 @@ local function render_main_rectangle(screen_width, screen_height)
     for i = 1, TAB_MAIN_END do
         render_menu_tab(x, y, width, height, i)
     end
-    render_bordered_rectangle(x, y, width, height, colors, 0.01, 0.01)
+    render_bordered_rectangle(x, y, width, height, colors, 0.008, 0.01)
     return x, y, width, height
 end
 
@@ -253,10 +273,46 @@ end
 
 ---@param screen_width number
 ---@param screen_height number
+local function render_hotbar(screen_width, screen_height)
+    local width = screen_width * 0.5
+    local height = screen_height * 0.08
+    local x = screen_width * 0.25
+    local y = screen_height - (height * 0.9)
+    local colors = {{r = 200, g = 200, b = 200, a = 255}, {r = 255, g = 255, b = 255, a = 255}, {r = 150, g = 150, b = 150, a = 255}}
+    render_bordered_rectangle(x, y, width, height, colors, 0.007, 0.06)
+    for index, item in ipairs(HotbarItemList) do
+        local slot_width = width * 0.1
+        local slot_height = height * 0.95
+        local slot_x = x + slot_width * (index - 1)
+        local slot_y = y
+        if moved_mouse and mouse_is_within(slot_x, slot_y, slot_x + slot_width, slot_y + slot_height) then
+            selected_hotbar_index = index
+        end
+
+        if index == selected_hotbar_index then
+            djui_hud_set_color(150, 150, 150, 255)
+            if hotbar_selection_active then
+                djui_hud_set_color(255, 255, 0, 255)
+            end
+            djui_hud_render_rect(slot_x, slot_y, slot_width, slot_height)
+        end
+        if item.icon then
+            local item_x = (slot_x + slot_width * 0.5) - (item.icon.width * 0.5)
+            local item_y = (slot_y + slot_height * 0.5) - (item.icon.height * 0.5)
+            djui_hud_set_color(255, 255, 255, 255)
+            djui_hud_render_texture(item.icon, item_x, item_y, 1, 1)
+        end
+    end
+end
+
+---@param screen_width number
+---@param screen_height number
 local function render_menu(screen_width, screen_height)
-    if not MenuOpen then return end
-    local x, y, width, height = render_main_rectangle(screen_width, screen_height)
-    MenuTabs[active_tab](x, y, width, height)
+    if MenuOpen then
+        local x, y, width, height = render_main_rectangle(screen_width, screen_height)
+        MenuTabs[active_tab](x, y, width, height)
+    end
+    render_hotbar(screen_width, screen_height)
     render_mouse()
 end
 
@@ -273,41 +329,59 @@ end
 
 ------------------------------------------------------------------------------------------------
 
----@param pressed integer
-local function handle_standard_inputs(pressed)
-    if moved_mouse and pressed ~= 0 and not mouse_has_clicked and not mouse_has_right_clicked then
-        moved_mouse = false
+---@param m MarioState
+local function handle_hotbar_inputs(m)
+    if m.controller.buttonDown & L_TRIG ~= 0 then
+        if m.controller.buttonPressed & L_JPAD ~= 0 and selected_hotbar_index > 1 then
+            selected_hotbar_index = selected_hotbar_index - 1
+        elseif m.controller.buttonPressed & R_JPAD ~= 0 and selected_hotbar_index < HOTBAR_SIZE then
+            selected_hotbar_index = selected_hotbar_index + 1
+        end
+        m.controller.buttonPressed = m.controller.buttonPressed & ~(L_JPAD | R_JPAD)
     end
-    if (pressed & START_BUTTON ~= 0) or (not moved_mouse and pressed & X_BUTTON ~= 0) or (moved_mouse and mouse_has_right_clicked) then
-        MenuOpen = false
-        return
+end
+
+---@param m MarioState
+local function handle_hotbar_menu_inputs(m)
+    local pressed = m.controller.buttonPressed
+    if pressed & L_JPAD ~= 0 and selected_hotbar_index > 1 then
+        selected_hotbar_index = selected_hotbar_index - 1
+    elseif pressed & R_JPAD ~= 0 and selected_hotbar_index < HOTBAR_SIZE then
+        selected_hotbar_index = selected_hotbar_index + 1
     end
 
+    if m.controller.buttonReleased & A_BUTTON ~= 0 then
+        HotbarItemList[selected_hotbar_index] = TabItemList[active_tab][selected_item_index]
+        hotbar_selection_active = false
+    end
+end
+
+----------------------------------------------------
+
+local function handle_change_tab_inputs(pressed)
     if pressed & L_TRIG ~= 0 and active_tab > 1 then
         active_tab = active_tab - 1
         selected_item_index = 0
-        active_item_index = 0
         play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
     elseif pressed & R_TRIG ~= 0 and active_tab < TAB_MAIN_END then
         active_tab = active_tab + 1
         selected_item_index = 0
-        active_item_index = 0
         play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
     elseif mouse_tab_was_clicked_on > 0 then
         active_tab = mouse_tab_was_clicked_on
         mouse_tab_was_clicked_on = 0
         selected_item_index = 0
-        active_item_index = 0
         play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
     end
+end
 
+local function handle_item_selection_inputs(pressed)
     local current_item_set_count = #TabItemList[active_tab]
     if current_item_set_count == 0 then return end
-
     if pressed & (U_JPAD | L_JPAD | D_JPAD | R_JPAD) ~= 0 then
         play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource)
         if selected_item_index == 0 then
-            selected_item_index = active_item_index > 0 and active_item_index or 1
+            selected_item_index = 1
         end
 
         if pressed & U_JPAD ~= 0 and selected_item_index > 10 then
@@ -322,36 +396,55 @@ local function handle_standard_inputs(pressed)
             selected_item_index = selected_item_index + 1
         end
     end
+end
 
-    if selected_item_index > 0 then
-        if moved_mouse then
-            if mouse_prev_item_index ~= selected_item_index then
-                play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource)
-            end
-            mouse_prev_item_index = selected_item_index
-            if mouse_has_clicked and TabItemList[active_tab] and TabItemList[active_tab][selected_item_index] then
-                active_item_index = selected_item_index
-                gCurrentItem = TabItemList[active_tab][active_item_index].item
-                play_sound(SOUND_MENU_CLICK_FILE_SELECT, gGlobalSoundSource)
-            end
-        elseif not moved_mouse and pressed & A_BUTTON ~= 0 and TabItemList[active_tab] and TabItemList[active_tab][selected_item_index] then
-            active_item_index = selected_item_index
-            gCurrentItem = TabItemList[active_tab][active_item_index].item
+local function handle_pick_item_inputs(pressed)
+    if moved_mouse then
+        if mouse_prev_item_index ~= selected_item_index then
+            play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource)
+        end
+        mouse_prev_item_index = selected_item_index
+        if mouse_has_clicked and TabItemList[active_tab] and TabItemList[active_tab][selected_item_index] then
+            HotbarItemList[selected_hotbar_index] = TabItemList[active_tab][selected_item_index]
             play_sound(SOUND_MENU_CLICK_FILE_SELECT, gGlobalSoundSource)
         end
+    elseif not moved_mouse and pressed & A_BUTTON ~= 0 and TabItemList[active_tab] and TabItemList[active_tab][selected_item_index] then
+        --HotbarItemList[selected_hotbar_index] = TabItemList[active_tab][selected_item_index]
+        hotbar_selection_active = true
+        play_sound(SOUND_MENU_CLICK_FILE_SELECT, gGlobalSoundSource)
     end
 end
+
+---@param pressed integer
+local function handle_standard_inputs(pressed)
+    if moved_mouse and pressed ~= 0 and not mouse_has_clicked and not mouse_has_right_clicked then
+        moved_mouse = false
+    end
+    if (pressed & START_BUTTON ~= 0) or (not moved_mouse and pressed & X_BUTTON ~= 0) or (moved_mouse and mouse_has_right_clicked) then
+        MenuOpen = false
+        return
+    end
+
+    handle_change_tab_inputs(pressed)
+    handle_item_selection_inputs(pressed)
+    if selected_item_index > 0 then
+        handle_pick_item_inputs(pressed)
+    end
+end
+
+----------------------------------------------------
 
 ---@param m MarioState
 local function handle_menu_inputs(m)
     local pressed = m.controller.buttonPressed
 
-    if MenuOpen then
-        handle_mouse_input()
-        if active_tab <= TAB_MAIN_END then
+    if active_tab <= TAB_MAIN_END then
+        if not hotbar_selection_active then
             handle_standard_inputs(pressed)
-            m.controller.buttonPressed = 0
+        else
+            handle_hotbar_menu_inputs(m)
         end
+        m.controller.buttonPressed = 0
     end
 end
 
@@ -367,11 +460,16 @@ local function before_mario_update(m)
         return
     end
 
+    handle_mouse_input()
     if MenuOpen then
         m.freeze = 1
 
         handle_menu_inputs(m)
+    else
+        handle_hotbar_inputs(m)
     end
+
+    gCurrentItem = HotbarItemList[selected_hotbar_index].item
 end
 
 ------------------------------------------------------------------------------------------------

@@ -89,6 +89,18 @@ local function on_death(m)
     return false
 end
 
+local override_action_change = false
+---@param m MarioState
+---@param incoming integer
+local function before_set_mario_action(m, incoming)
+    if m.playerIndex ~= 0 then return end
+
+    if m.action == ACT_FREE_MOVE and incoming ~= ACT_FREE_MOVE and not override_action_change then
+        override_action_change = false
+        return 1
+    end
+end
+
 local timer = 0
 local start_timer = false
 ---@param m MarioState
@@ -103,6 +115,7 @@ local function mario_update(m)
     end
     if m.controller.buttonPressed & L_TRIG ~= 0 then
         if start_timer then
+            override_action_change = true
             set_mario_action(m, m.action == ACT_FREE_MOVE and ACT_FREEFALL or ACT_FREE_MOVE, 0)
             start_timer = false
             timer = 0
@@ -114,6 +127,7 @@ end
 hook_mario_action(ACT_FREE_MOVE, act_free_move)
 hook_event(HOOK_ALLOW_INTERACT, allow_interact)
 hook_event(HOOK_ON_DEATH, on_death)
+hook_event(HOOK_BEFORE_SET_MARIO_ACTION, before_set_mario_action)
 hook_event(HOOK_MARIO_UPDATE, mario_update)
 
 -----------------------------------------------------------------------------------------------------------
