@@ -103,16 +103,18 @@ end
 ---@param y number
 ---@param width number
 ---@param height number
----@param colors DjuiColor[]
+---@param colors DjuiColor[] {normal, shine, shade}
 ---@param margin_width number
 ---@param margin_height number
 local function render_bordered_rectangle(x, y, width, height, colors, margin_width, margin_height)
     djui_hud_set_color_with_table(colors[2])
-    djui_hud_render_rect(x, y, width, height)
+    djui_hud_render_rect(x, y, width, height * margin_height)
+    djui_hud_render_rect(x, y, width * margin_width, height)
     djui_hud_set_color_with_table(colors[3])
-    djui_hud_render_rect(x + (width * margin_width), y + height * margin_height, width - width * margin_width, height - height * margin_height)
+    djui_hud_render_rect(x, y + (height - height * margin_height), width, height * margin_height)
+    djui_hud_render_rect(x + (width - width * margin_width), y, width * margin_width, height)
     djui_hud_set_color_with_table(colors[1])
-    djui_hud_render_rect(x + (width * margin_width), y + height * margin_height, width - width * margin_width * 2, height - height * margin_height * 2)
+    djui_hud_render_rect(x + width * margin_width, y + height * margin_height, width - width * margin_width * 2, height - height * margin_height * 2)
 end
 
 ----------------------------------------------------
