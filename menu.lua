@@ -113,6 +113,11 @@ local function render_bordered_rectangle(x, y, width, height, colors, margin_wid
     djui_hud_set_color_with_table(colors[3])
     djui_hud_render_rect(x, y + (height - height * margin_height), width, height * margin_height)
     djui_hud_render_rect(x + (width - width * margin_width), y, width * margin_width, height)
+    djui_hud_set_color_with_table({r = 0, g = 0, b = 0, a = 255})
+    djui_hud_render_rect(x, y, width, height * margin_height / 3)
+    djui_hud_render_rect(x, y, width * margin_width / 3, height)
+    djui_hud_render_rect(x, y + (height - height * margin_height / 3), width, height * margin_height / 3)
+    djui_hud_render_rect(x + (width - width * margin_width / 3), y, width * margin_width / 3, height)
     djui_hud_set_color_with_table(colors[1])
     djui_hud_render_rect(x + width * margin_width, y + height * margin_height, width - width * margin_width * 2, height - height * margin_height * 2)
 end
@@ -199,8 +204,10 @@ local function render_item_list(x, y, width, height, items)
         end
 
         if index == selected_item_index then
-            djui_hud_set_color(150, 150, 150, 255)
+            djui_hud_set_color(255, 255, 255, 150)
             djui_hud_render_rect(slot_x, slot_y, slot_width, slot_height)
+            -- the line below is the broken highlighted thing, still here in case you can and want to figure out how to fix the issue
+            --djui_hud_render_rect(slot_x * 1.012, slot_y * 1.012, slot_width * 0.85, slot_height * 0.9)
         end
         if item.icon then
             local item_x = (slot_x + slot_width * 0.5) - (item.icon.width * 0.5)
@@ -224,8 +231,8 @@ local function render_interior_rectangle(x, y, width, height)
     local interior_rect_y = y + height * 0.15
     local interior_rect_width = width * 0.9
     local interior_rect_height = height * 0.8
-    djui_hud_set_color(175, 175, 175, 255)
-    djui_hud_render_rect(interior_rect_x, interior_rect_y, interior_rect_width, interior_rect_height)
+    local interior_colors = {{r = 175, g = 175, b = 175, a = 255}, {r = 96, g = 96, b = 96, a = 255}, {r = 255, g = 255, b = 255, a = 255}}
+    render_bordered_rectangle(interior_rect_x, interior_rect_y, interior_rect_width, interior_rect_height, interior_colors, 0.007, 0.007)
     render_item_list(interior_rect_x, interior_rect_y, interior_rect_width, interior_rect_height, TabItemList[active_tab])
 end
 
@@ -322,8 +329,8 @@ local function render_hotbar(screen_width, screen_height)
     local width = screen_width * 0.5
     local height = screen_height * 0.08
     local x = screen_width * 0.25
-    local y = screen_height - (height * 0.9)
-    local colors = {{r = 200, g = 200, b = 200, a = 255}, {r = 255, g = 255, b = 255, a = 255}, {r = 150, g = 150, b = 150, a = 255}}
+    local y = screen_height - (height * 1.4)
+    local colors = {{r = 64, g = 64, b = 32, a = 192}, {r = 128, g = 128, b = 128, a = 255}, {r = 128, g = 128, b = 128, a = 255}}
     render_bordered_rectangle(x, y, width, height, colors, 0.007, 0.06)
     for index, item in ipairs(HotbarItemList) do
         local slot_width = width * 0.1
@@ -339,7 +346,9 @@ local function render_hotbar(screen_width, screen_height)
             if hotbar_selection_active then
                 djui_hud_set_color(255, 255, 0, 255)
             end
-            djui_hud_render_rect(slot_x, slot_y, slot_width, slot_height)
+            local slot_colors = {{r = 32, g = 32, b = 0, a = 0}, {r = 192, g = 192, b = 192, a = 255}, {r = 192, g = 192, b = 192, a = 255}}
+            render_bordered_rectangle(slot_x * 0.995, slot_y * 0.995, slot_width + 10, slot_height + 13, slot_colors, 0.1, 0.1)
+
         end
         if item.icon then
             local item_x = (slot_x + slot_width * 0.5) - (item.icon.width * 0.5)
