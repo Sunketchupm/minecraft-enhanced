@@ -578,7 +578,12 @@ end
 ---@param m MarioState
 local function before_mario_update(m)
     if m.playerIndex ~= 0 then return end
-    if not CanBuild then return end
+    if not CanBuild then
+        camera_romhack_allow_dpad_usage(1)
+        camera_config_enable_dpad(true)
+        return
+    end
+    
 
     if not MenuOpen and m.controller.buttonDown & L_TRIG == 0 and m.controller.buttonPressed & X_BUTTON ~= 0 then
         MenuOpen = true
@@ -593,6 +598,8 @@ local function before_mario_update(m)
         handle_hotbar_inputs(m)
     end
 
+    camera_romhack_allow_dpad_usage(0)
+    camera_config_enable_dpad(false)
     gCurrentItem = HotbarItemList[selected_hotbar_index].item
 end
 

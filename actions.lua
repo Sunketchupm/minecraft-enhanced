@@ -136,8 +136,6 @@ local function mario_update(m)
             local next_action = m.action == ACT_FREE_MOVE and ACT_FREEFALL or ACT_FREE_MOVE
             if next_action == ACT_FREE_MOVE then
                 camera_set_romhack_override(RCO_ALL_INCLUDING_VANILLA)
-                camera_romhack_allow_dpad_usage(0)
-                camera_config_enable_dpad(false)
             else
                 if prev_romhack_cam_state == RCO_NONE or
                     (level_is_vanilla_level(gNetworkPlayers[0].currLevelNum) and prev_romhack_cam_state == RCO_ALL or prev_romhack_cam_state == RCO_ALL_EXCEPT_BOWSER) then
@@ -145,8 +143,6 @@ local function mario_update(m)
                 else
                     camera_set_romhack_override(prev_romhack_cam_state)
                 end
-                camera_romhack_allow_dpad_usage(1)
-                camera_config_enable_dpad(true)
             end
             drop_and_set_mario_action(m, next_action, 0)
             mario_set_forward_vel(m, 0)
