@@ -11,8 +11,6 @@ local TAB_MAIN_END = 4
 
 local selected_hotbar_index = 1
 local HOTBAR_SIZE = 10
-local hotbar_selection_active = false
-
 local item_list_row_count = 10
 local item_list_column_count = 10
 
@@ -413,10 +411,6 @@ local function render_hotbar(screen_width, screen_height)
         end
 
         if index == selected_hotbar_index then
-            djui_hud_set_color(150, 150, 150, 255)
-            if hotbar_selection_active then
-                djui_hud_set_color(255, 255, 0, 255)
-            end
             local slot_colors = {{r = 32, g = 32, b = 0, a = 0}, {r = 192, g = 192, b = 192, a = 255}, {r = 192, g = 192, b = 192, a = 255}}
             render_bordered_rectangle(slot_x * 0.995, slot_y * 0.995, slot_width + 10, slot_height + 13, slot_colors, 0.1, 0.1)
 
@@ -469,15 +463,14 @@ end
 ---@param m MarioState
 local function handle_hotbar_menu_inputs(m)
     local pressed = m.controller.buttonPressed
-    if pressed & L_JPAD ~= 0 and selected_hotbar_index > 1 then
+    if pressed & L_CBUTTONS ~= 0 and selected_hotbar_index > 1 then
         selected_hotbar_index = selected_hotbar_index - 1
-    elseif pressed & R_JPAD ~= 0 and selected_hotbar_index < HOTBAR_SIZE then
+    elseif pressed & R_CBUTTONS ~= 0 and selected_hotbar_index < HOTBAR_SIZE then
         selected_hotbar_index = selected_hotbar_index + 1
     end
 
     if m.controller.buttonReleased & A_BUTTON ~= 0 then
         HotbarItemList[selected_hotbar_index] = TabItemList[active_tab][selected_item_index]
-        hotbar_selection_active = false
     end
 end
 
@@ -534,8 +527,7 @@ local function handle_pick_item_inputs(pressed)
             play_sound(SOUND_MENU_CLICK_FILE_SELECT, gGlobalSoundSource)
         end
     elseif not moved_mouse and pressed & A_BUTTON ~= 0 and TabItemList[active_tab] and TabItemList[active_tab][selected_item_index] then
-        --HotbarItemList[selected_hotbar_index] = TabItemList[active_tab][selected_item_index]
-        hotbar_selection_active = true
+        HotbarItemList[selected_hotbar_index] = TabItemList[active_tab][selected_item_index]
         play_sound(SOUND_MENU_CLICK_FILE_SELECT, gGlobalSoundSource)
     end
 end
@@ -564,11 +556,8 @@ local function handle_menu_inputs(m)
     local pressed = m.controller.buttonPressed
 
     if active_tab <= TAB_MAIN_END then
-        if not hotbar_selection_active then
-            handle_standard_inputs(pressed)
-        else
-            handle_hotbar_menu_inputs(m)
-        end
+        handle_standard_inputs(pressed)
+        handle_hotbar_menu_inputs(m)
         m.controller.buttonPressed = 0
     end
 end
@@ -583,7 +572,6 @@ local function before_mario_update(m)
         camera_config_enable_dpad(true)
         return
     end
-    
 
     if not MenuOpen and m.controller.buttonDown & L_TRIG == 0 and m.controller.buttonPressed & X_BUTTON ~= 0 then
         MenuOpen = true
