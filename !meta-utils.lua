@@ -17,6 +17,30 @@ function MinecraftDebug.segments(x, y, width, height)
     end
 end
 
+MenuDebug = {}
+MenuDebug.displacement_x = 0
+MenuDebug.displacement_y = 0
+function MenuDebug.move_hud_elements()
+    ---@type MarioState
+    local m = gMarioStates[0]
+    if m.controller.buttonDown & L_JPAD ~= 0 then
+        MenuDebug.displacement_x = MenuDebug.displacement_x - 1
+        djui_chat_message_create(("%d, %d"):format(MenuDebug.displacement_x, MenuDebug.displacement_y))
+    end
+    if m.controller.buttonDown & R_JPAD ~= 0 then
+        MenuDebug.displacement_x = MenuDebug.displacement_x + 1
+        djui_chat_message_create(("%d, %d"):format(MenuDebug.displacement_x, MenuDebug.displacement_y))
+    end
+    if m.controller.buttonDown & U_JPAD ~= 0 then
+        MenuDebug.displacement_y = MenuDebug.displacement_y - 1
+        djui_chat_message_create(("%d, %d"):format(MenuDebug.displacement_x, MenuDebug.displacement_y))
+    end
+    if m.controller.buttonDown & D_JPAD ~= 0 then
+        MenuDebug.displacement_y = MenuDebug.displacement_y + 1
+        djui_chat_message_create(("%d, %d"):format(MenuDebug.displacement_x, MenuDebug.displacement_y))
+    end
+end
+
 local first_update_functions = {}
 function add_first_update(func)
     table.insert(first_update_functions, func)
@@ -31,25 +55,3 @@ local function on_first_update()
     end
 end
 hook_event(HOOK_UPDATE, on_first_update)
-
----@param obj Object
----@param hitbox ObjectHitbox
-function obj_set_hitbox(obj, hitbox)
-    if not obj or not hitbox then return end
-    if obj.oFlags & OBJ_FLAG_30 == 0 then
-        obj.oFlags = obj.oFlags | OBJ_FLAG_30
-
-        obj.oInteractType = hitbox.interactType
-        obj.oDamageOrCoinValue = hitbox.damageOrCoinValue
-        obj.oHealth = hitbox.health
-        obj.oNumLootCoins = hitbox.numLootCoins
-
-        cur_obj_become_tangible()
-    end
-
-    obj.hitboxRadius = obj.header.gfx.scale.x * hitbox.radius
-    obj.hitboxHeight = obj.header.gfx.scale.y * hitbox.height
-    obj.hurtboxRadius = obj.header.gfx.scale.x * hitbox.hurtboxRadius
-    obj.hurtboxHeight = obj.header.gfx.scale.y * hitbox.hurtboxHeight
-    obj.hitboxDownOffset = obj.header.gfx.scale.y * hitbox.downOffset
-end

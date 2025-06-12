@@ -13,8 +13,8 @@ local selected_hotbar_index = 1
 local HOTBAR_SIZE = 10
 local hotbar_selection_active = false
 
-local ROW_COUNT = 10
-local COLUMN_COUNT = 10
+local item_list_row_count = 10
+local item_list_column_count = 10
 
 ---@class MenuItemLink
     ---@field item Item
@@ -50,7 +50,7 @@ local function add_item(tab, behavior, model, offset, mock_settings, behavior_pa
 end
 
 add_first_update(function ()
-    for i = 1, 50, 1 do
+    for i = 1, 150, 1 do
         local color = 0
         local r = math.random(0, 256)
         local g = math.random(0, 256)
@@ -103,23 +103,69 @@ end
 ---@param y number
 ---@param width number
 ---@param height number
----@param colors DjuiColor[] {normal, shine, shade}
+---@param color DjuiColor?
+---@param pixel_size number?
+local function render_pixel_border(x, y, width, height, color, pixel_size)
+    local border_color = {r = 0, g = 0, b = 0, a = 255}
+    local size = 1
+    if color then
+        border_color = color
+    end
+    if pixel_size then
+        size = pixel_size
+    end
+    djui_hud_set_color_with_table(border_color)
+    djui_hud_render_rect(x, y, width, size)
+    djui_hud_render_rect(x, y, size, height)
+    djui_hud_render_rect(x, y + height, width, size)
+    djui_hud_render_rect(x + width, y, size, height + size)
+end
+
+---@param x number
+---@param y number
+---@param width number
+---@param height number
+---@param shine DjuiColor
+---@param shade DjuiColor
 ---@param margin_width number
 ---@param margin_height number
-local function render_bordered_rectangle(x, y, width, height, colors, margin_width, margin_height)
-    djui_hud_set_color_with_table(colors[2])
+local function render_rectangle_borders(x, y, width, height, shine, shade, margin_width, margin_height)
+    djui_hud_set_color_with_table(shine)
     djui_hud_render_rect(x, y, width, height * margin_height)
     djui_hud_render_rect(x, y, width * margin_width, height)
-    djui_hud_set_color_with_table(colors[3])
+    djui_hud_set_color_with_table(shade)
     djui_hud_render_rect(x, y + (height - height * margin_height), width, height * margin_height)
     djui_hud_render_rect(x + (width - width * margin_width), y, width * margin_width, height)
-    djui_hud_set_color_with_table({r = 0, g = 0, b = 0, a = 255})
-    djui_hud_render_rect(x, y, width, height * margin_height / 3)
-    djui_hud_render_rect(x, y, width * margin_width / 3, height)
-    djui_hud_render_rect(x, y + (height - height * margin_height / 3), width, height * margin_height / 3)
-    djui_hud_render_rect(x + (width - width * margin_width / 3), y, width * margin_width / 3, height)
-    djui_hud_set_color_with_table(colors[1])
+end
+
+---@param x number
+---@param y number
+---@param width number
+---@param height number
+---@param colors DjuiColor?
+---@param margin_width number
+---@param margin_height number
+local function render_colored_rectangle(x, y, width, height, colors, margin_width, margin_height)
+    if colors then
+        djui_hud_set_color_with_table(colors)
+    end
     djui_hud_render_rect(x + width * margin_width, y + height * margin_height, width - width * margin_width * 2, height - height * margin_height * 2)
+end
+
+---@param x number
+---@param y number
+---@param width number
+---@param height number
+---@param colors DjuiColor[] {base, shine, shade}
+---@param margin_width number
+---@param margin_height number
+---@param remove_pixel_border boolean?
+local function render_bordered_rectangle(x, y, width, height, colors, margin_width, margin_height, remove_pixel_border)
+    render_rectangle_borders(x, y, width, height, colors[2], colors[3], margin_width, margin_height)
+    if not remove_pixel_border then
+        render_pixel_border(x, y, width, height)
+    end
+    render_colored_rectangle(x, y, width, height, colors[1], margin_width, margin_height)
 end
 
 ----------------------------------------------------
@@ -193,11 +239,21 @@ end
 ---@param items MenuItemLink[]
 local function render_item_list(x, y, width, height, items)
     local hovering_over_item = false
+    local slot_width = 50
+    local slot_height = 50
+    local div = width / slot_width
+    local div_floor = math.floor(div)
+    item_list_column_count = div_floor
+    if div ~= div_floor then
+        local div_decimal = div - div_floor
+        slot_width = slot_width + (slot_width * (div_decimal / item_list_column_count))
+    end
+    djui_chat_message_create(div)
+    item_list_row_count = height // slot_height
+
     for index, item in ipairs(items) do
-        local slot_width = width * 0.1
-        local slot_height = height * 0.1
-        local slot_x = x + (slot_width * ((index - 1) % COLUMN_COUNT))
-        local slot_y = y + (slot_height * ((index - 1) // ROW_COUNT))
+        local slot_x = x + ((slot_width * ((index - 1) % item_list_column_count)))
+        local slot_y = y + ((slot_height * ((index - 1) // item_list_column_count)))
         if moved_mouse and mouse_is_within(slot_x, slot_y, slot_x + slot_width, slot_y + slot_height) then
             selected_item_index = index
             hovering_over_item = true
@@ -205,9 +261,8 @@ local function render_item_list(x, y, width, height, items)
 
         if index == selected_item_index then
             djui_hud_set_color(255, 255, 255, 150)
+            render_colored_rectangle(slot_x, slot_y, slot_width, slot_height, nil, 0.05, 0.05)
             djui_hud_render_rect(slot_x, slot_y, slot_width, slot_height)
-            -- the line below is the broken highlighted thing, still here in case you can and want to figure out how to fix the issue
-            --djui_hud_render_rect(slot_x * 1.012, slot_y * 1.012, slot_width * 0.85, slot_height * 0.9)
         end
         if item.icon then
             local item_x = (slot_x + slot_width * 0.5) - (item.icon.width * 0.5)
@@ -215,6 +270,19 @@ local function render_item_list(x, y, width, height, items)
             djui_hud_set_color(255, 255, 255, 255)
             djui_hud_render_texture(item.icon, item_x, item_y, 1, 1)
         end
+    end
+
+    for i = 1, item_list_column_count + 1, 1 do
+        djui_hud_set_color(255, 255, 255, 255)
+        djui_hud_render_rect(x + (slot_width * (i - 1) - 1), y, 2, height)
+        djui_hud_set_color(96, 96, 96, 255)
+        djui_hud_render_rect(x + (slot_width * (i - 1) + 1), y, 2, height)
+    end
+    for i = 1, item_list_row_count + 1, 1 do
+        djui_hud_set_color(255, 255, 255, 255)
+        djui_hud_render_rect(x, y + (slot_height * (i - 1) - 1), width, 2)
+        djui_hud_set_color(96, 96, 96, 255)
+        djui_hud_render_rect(x, y + (slot_height * (i - 1) + 1), width, 2)
     end
 
     if moved_mouse and not hovering_over_item then
@@ -231,9 +299,13 @@ local function render_interior_rectangle(x, y, width, height)
     local interior_rect_y = y + height * 0.15
     local interior_rect_width = width * 0.9
     local interior_rect_height = height * 0.8
-    local interior_colors = {{r = 175, g = 175, b = 175, a = 255}, {r = 96, g = 96, b = 96, a = 255}, {r = 255, g = 255, b = 255, a = 255}}
-    render_bordered_rectangle(interior_rect_x, interior_rect_y, interior_rect_width, interior_rect_height, interior_colors, 0.007, 0.007)
+    --local interior_colors = {{r = 175, g = 175, b = 175, a = 255}, {r = 96, g = 96, b = 96, a = 255}, {r = 255, g = 255, b = 255, a = 255}}
+    local color = {r = 175, g = 175, b = 175, a = 255}
+    djui_hud_set_color_with_table(color)
+    djui_hud_render_rect(interior_rect_x, interior_rect_y, interior_rect_width, interior_rect_height)
+    --render_colored_rectangle(interior_rect_x, interior_rect_y, interior_rect_width, interior_rect_height, interior_colors[1], 0.007, 0.007)
     render_item_list(interior_rect_x, interior_rect_y, interior_rect_width, interior_rect_height, TabItemList[active_tab])
+    --render_rectangle_borders(interior_rect_x, interior_rect_y, interior_rect_width, interior_rect_height, interior_colors[2], interior_colors[3], 0.007, 0.007)
 end
 
 local function render_standard_tab(x, y, width, height, name)
@@ -438,15 +510,15 @@ local function handle_item_selection_inputs(pressed)
             selected_item_index = 1
         end
 
-        if pressed & U_JPAD ~= 0 and selected_item_index > COLUMN_COUNT then
-            selected_item_index = selected_item_index - COLUMN_COUNT
+        if pressed & U_JPAD ~= 0 and selected_item_index > item_list_column_count then
+            selected_item_index = selected_item_index - item_list_column_count
         elseif pressed & D_JPAD ~= 0 and selected_item_index < current_item_set_count then
-            local remaining = math.min(current_item_set_count - selected_item_index, COLUMN_COUNT)
+            local remaining = math.min(current_item_set_count - selected_item_index, item_list_column_count)
             selected_item_index = selected_item_index + remaining
         end
-        if pressed & L_JPAD ~= 0 and selected_item_index > 1 and selected_item_index % ROW_COUNT ~= 1 then
+        if pressed & L_JPAD ~= 0 and selected_item_index > 1 then
             selected_item_index = selected_item_index - 1
-        elseif pressed & R_JPAD ~= 0 and selected_item_index < current_item_set_count and selected_item_index % ROW_COUNT ~= 0 then
+        elseif pressed & R_JPAD ~= 0 and selected_item_index < current_item_set_count then
             selected_item_index = selected_item_index + 1
         end
     end
