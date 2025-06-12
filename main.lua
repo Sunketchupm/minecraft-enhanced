@@ -6,21 +6,81 @@ gLevelValues.fixCollisionBugsFalseLedgeGrab = false
 gLevelValues.fixCollisionBugsGroundPoundBonks = false
 
 gServerSettings.stayInLevelAfterStar = 1
+gLevelValues.fixInvalidShellRides = false
 
 CanBuild = true
 
 -------------------------------------------------------------------------------
 
-local ON_GRID = true
-local GRID_SIZE = 200
+local on_grid = true
+local grid_size = {x = 200, y = 200, z = 200}
 
-local function to_grid(n)
-	if ON_GRID then
-		return math.floor(n/GRID_SIZE + .5) * GRID_SIZE
+local function to_grid_x(n)
+	if on_grid then
+		return math.floor(n/grid_size.x + .5) * grid_size.x
 	else
 		return n
 	end
 end
+
+local function to_grid_y(n)
+	if on_grid then
+		return math.floor(n/grid_size.y + .5) * grid_size.y
+	else
+		return n
+	end
+end
+
+local function to_grid_z(n)
+	if on_grid then
+		return math.floor(n/grid_size.z + .5) * grid_size.z
+	else
+		return n
+	end
+end
+
+---@param msg string
+local function on_grid_size_chat_command(msg)
+	if msg:lower() == "off" then
+		on_grid = false
+		djui_chat_message_create("Turned off the grid")
+		return true
+	elseif msg:lower() == "on" then
+		on_grid = true
+		djui_chat_message_create("Turned on the grid")
+		return true
+	elseif msg:lower() == "" then
+		on_grid = not on_grid
+		djui_chat_message_create("Turned " .. (on_grid and "on" or "off") .. " the grid")
+		return true
+	end
+
+	local sizes = split_string(msg, " ")
+	local sizes_count = #sizes
+
+	if not sizes[1] then
+		djui_chat_message_create("Usage: [num] or [x|y|z]")
+		return true
+	end
+
+	if sizes_count == 1 then
+		local size = tonumber(sizes[1]) or 200
+		vec3f_set(grid_size, size, size, size)
+		djui_chat_message_create("Set grid size to " .. size)
+	elseif sizes_count == 3 then
+		vec3f_set(grid_size, tonumber(sizes[1]) or 200, tonumber(sizes[2]) or 200, tonumber(sizes[3]) or 200)
+		djui_chat_message_create("Set grid size to (" .. sizes[1], sizes[2], sizes[3] .. ")")
+	else
+		djui_chat_message_create("Usage: [num] or [x y z] or [on|off]")
+	end
+	return true
+end
+
+hook_chat_command("grid", "[num] or [x|y|z] or [on|off] | Change the shape of the grid. Default is 200 in each dimension", on_grid_size_chat_command)
+
+hook_mod_menu_inputbox("Grid Size X", "200", 10, function (index, value) grid_size.x = tonumber(value) or 200 update_mod_menu_element_inputbox(index, tostring(grid_size.x)) end)
+hook_mod_menu_inputbox("Grid Size Y", "200", 10, function (index, value) grid_size.y = tonumber(value) or 200 update_mod_menu_element_inputbox(index, tostring(grid_size.y)) end)
+hook_mod_menu_inputbox("Grid Size Z", "200", 10, function (index, value) grid_size.z = tonumber(value) or 200 update_mod_menu_element_inputbox(index, tostring(grid_size.z)) end)
 
 -------------------------------------------------------------------------------
 
@@ -48,13 +108,20 @@ function bhv_outline_loop(obj)
 	local facing_x = sins(m.intendedYaw)
 	local facing_z = coss(m.intendedYaw)
 
-	local posX = to_grid( m.pos.x + facing_x*GRID_SIZE )
-	local posY = to_grid( m.pos.y )
-	local posZ = to_grid( m.pos.z + facing_z*GRID_SIZE )
+	local posX = to_grid_x( m.pos.x + facing_x*grid_size.x )
+	local posY = to_grid_y( m.pos.y )
+	local posZ = to_grid_z( m.pos.z + facing_z*grid_size.z )
 
 	outline.oPosX = posX
 	outline.oPosY = posY
 	outline.oPosZ = posZ
+
+	local current_item = gCurrentItem
+	if current_item then
+		obj_scale_xyz(obj, current_item.size.x, current_item.size.y, current_item.size.z)
+	else
+		obj_scale(obj, 1)
+	end
 end
 
 --------------------------------------
@@ -66,7 +133,7 @@ function bhv_mock_item_loop(obj)
 	local current_item = gCurrentItem
 	if outline and current_item and current_item.model then
 		obj.oPosX = outline.oPosX
-		obj.oPosY = outline.oPosY - current_item.spawnYOffset
+		obj.oPosY = outline.oPosY - (current_item.spawnYOffset * current_item.size.y)
 		obj.oPosZ = outline.oPosZ
 		obj.oFaceAnglePitch = outline.oFaceAnglePitch
 		obj.oFaceAngleYaw = outline.oFaceAngleYaw
@@ -74,20 +141,20 @@ function bhv_mock_item_loop(obj)
 		obj.header.gfx.node.flags = obj.header.gfx.node.flags & ~GRAPH_RENDER_BILLBOARD
 		obj.oAnimState = 0
 		obj.oBehParams = current_item.behaviorParams
-		obj_scale(obj, 1)
+		local outline_scale = outline.header.gfx.scale
+		obj_scale_xyz(obj, outline_scale.x, outline_scale.y, outline_scale.z)
 		obj_set_model_extended(obj, current_item.model)
-		if current_item.mock then
-			local mock_settings = current_item.mock
-			if mock_settings.billboard then
-				obj_set_billboard(obj)
-			end
 
-			if mock_settings.animState then
-				obj.oAnimState = mock_settings.animState
-			end
-			if mock_settings.scale then
-				obj_scale(obj, mock_settings.scale)
-			end
+		local mock_settings = current_item.mock
+		if mock_settings.billboard then
+			obj_set_billboard(obj)
+		end
+
+		if mock_settings.animState then
+			obj.oAnimState = mock_settings.animState
+		end
+		if mock_settings.scale then
+			obj_scale_mult_to(obj, mock_settings.scale)
 		end
 	else
 		obj_set_model_extended(obj, E_MODEL_NONE)
@@ -97,11 +164,12 @@ end
 -------------------------------------------------------------------------------
 
 local function place_item()
-	if not outline or not gCurrentItem or not gCurrentItem.behavior or not gCurrentItem.model then return end
+	local current_item = gCurrentItem
+	if not outline or not current_item or not current_item.behavior or not current_item.model then return end
 	spawn_sync_object(
-		gCurrentItem.behavior,
-		gCurrentItem.model,
-		outline.oPosX, outline.oPosY  - gCurrentItem.spawnYOffset, outline.oPosZ,
+		current_item.behavior,
+		current_item.model,
+		outline.oPosX, outline.oPosY - (current_item.spawnYOffset * current_item.size.y), outline.oPosZ,
 		---@param obj Object
 		function (obj)
 			obj.oOpacity = 255
@@ -111,10 +179,12 @@ local function place_item()
 			obj.oMoveAnglePitch = outline.oMoveAnglePitch
 			obj.oMoveAngleYaw = outline.oMoveAngleYaw
 			obj.oMoveAngleRoll = outline.oMoveAngleRoll
-			if gCurrentItem.behaviorParams then
-				obj.oBehParams = gCurrentItem.behaviorParams
-			end
-			--[[if gCurrentItem.misc then
+			obj.oBehParams = current_item.behaviorParams
+			obj.oScaleX = current_item.size.x
+			obj.oScaleY = current_item.size.y
+			obj.oScaleZ = current_item.size.z
+			obj_scale_xyz(obj, current_item.size.x, current_item.size.y, current_item.size.z)
+			--[[if current_item.misc then
 				
 			end]]
 		end
@@ -128,8 +198,12 @@ local function determine_place_or_delete()
 	local nearest = obj_get_any_nearest_item(outline)
 
 	if nearest then
-		local dist = dist_between_objects(outline, nearest)
-		if dist >= GRID_SIZE then
+		local dists = {
+			x = math.abs(nearest.oPosX - outline.oPosX),
+			y = math.abs(nearest.oPosY - outline.oPosY),
+			z = math.abs(nearest.oPosZ - outline.oPosZ)
+		}
+		if dists.x >= grid_size.x or dists.y >= grid_size.y or dists.z >= grid_size.z then
 			place_item()
 		else
 			obj_mark_for_deletion(nearest)

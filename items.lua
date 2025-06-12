@@ -4,13 +4,24 @@
     ---@field spawnYOffset number
     ---@field mock table
     ---@field behaviorParams integer
-    ---@field misc table
+    ---@field size Vec3f
+
+---@class Object
+    ---@field oScaleX number
+    ---@field oScaleY number
+    ---@field oScaleZ number
+
+define_custom_obj_fields({
+    oScaleX = "f32",
+    oScaleY = "f32",
+    oScaleZ = "f32"
+})
 
 gCurrentItem = {behavior = nil, model = E_MODEL_NONE, params = {}}
 local item_behaviors = {}
 add_first_update(function ()
     ---@type Item
-    gCurrentItem = { behavior = bhvMceBlock, model = E_MODEL_MCE_BLOCK, spawnYOffset = 0, mock = {}, behaviorParams = 0, misc = {} }
+    gCurrentItem = { behavior = bhvMceBlock, model = E_MODEL_MCE_BLOCK, spawnYOffset = 0, mock = {}, behaviorParams = 0, size = gVec3fOne() }
     ---@type BehaviorId[]
     item_behaviors = {
         bhvMceBlock,
@@ -27,6 +38,8 @@ end)
 ---@param obj Object
 function bhv_mce_block_init(obj)
     obj.collisionData = COL_MCE_BLOCK_DEFAULT
+    obj.oCollisionDistance = 5000
+    obj.header.gfx.skipInViewCheck = true
 end
 
 --[[ -- Unused for now
@@ -120,7 +133,7 @@ function bhv_mce_coin_init(obj)
         obj.oNumLootCoins = 2
     elseif model == E_MODEL_BLUE_COIN then
         obj.oNumLootCoins = 5
-        obj_scale(obj, 1.25)
+        obj_scale_mult_to(obj, 1.25)
     end
 end
 
@@ -242,6 +255,18 @@ function bhv_mce_exclamation_box_loop(obj)
         end
     end
 end
+
+local function koopa_shell_delete_if_unused()
+    local obj = obj_get_first_with_behavior_id(id_bhvKoopaShell)
+    while obj do
+        if obj.oAction == 0 and obj.oTimer >= 300 then
+            obj_mark_for_deletion(obj)
+        end
+        obj = obj_get_next_with_same_behavior_id(obj)
+    end
+end
+
+hook_event(HOOK_UPDATE, koopa_shell_delete_if_unused)
 
 ------------------------------------------------------------------------------------------
 

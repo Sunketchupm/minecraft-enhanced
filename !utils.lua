@@ -19,3 +19,11 @@ function obj_set_hitbox(obj, hitbox)
     obj.hurtboxHeight = obj.header.gfx.scale.y * hitbox.hurtboxHeight
     obj.hitboxDownOffset = obj.header.gfx.scale.y * hitbox.downOffset
 end
+
+---@param obj Object
+---@param scale number
+function obj_scale_mult_to(obj, scale)
+    obj.header.gfx.scale.x = obj.header.gfx.scale.x * scale
+    obj.header.gfx.scale.y = obj.header.gfx.scale.y * scale
+    obj.header.gfx.scale.z = obj.header.gfx.scale.z * scale
+end

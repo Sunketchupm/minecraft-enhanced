@@ -42,7 +42,7 @@ end
 ---@param icon TextureInfo
 local function add_item(tab, behavior, model, offset, mock_settings, behavior_param, icon)
     ---@type MenuItemLink
-    local item = { item = { behavior = behavior, model = model, spawnYOffset = offset, mock = mock_settings, behaviorParams = behavior_param, misc = {} }, icon = icon }
+    local item = { item = { behavior = behavior, model = model, spawnYOffset = offset, mock = mock_settings, behaviorParams = behavior_param, size = gVec3fOne() }, icon = icon }
     item.self = item
     table.insert(TabItemList[tab], item)
 end
@@ -62,7 +62,7 @@ add_first_update(function ()
                 spawnYOffset = 0,
                 mock = {},
                 behaviorParams = color,
-                misc = {}
+                size = gVec3fOne()
             },
             icon = gTextures.star
         }
@@ -588,10 +588,49 @@ local function before_mario_update(m)
 
     camera_romhack_allow_dpad_usage(0)
     camera_config_enable_dpad(false)
-    gCurrentItem = HotbarItemList[selected_hotbar_index].item
+    if HotbarItemList[selected_hotbar_index] then
+        gCurrentItem = HotbarItemList[selected_hotbar_index].item
+    end
 end
 
 ------------------------------------------------------------------------------------------------
 
 hook_event(HOOK_ON_HUD_RENDER_BEHIND, hud_render)
 hook_event(HOOK_BEFORE_MARIO_UPDATE, before_mario_update)
+
+------------------------------------------------------------------------------------------------
+
+---@param msg string
+local function on_set_item_size_chat_command(msg)
+    local sizes = split_string(msg, " ")
+	local sizes_count = #sizes
+
+	if not sizes[1] then
+		djui_chat_message_create("Usage: [num] or [x|y|z]")
+		return true
+	end
+
+    local current_selected = HotbarItemList[selected_hotbar_index].item
+    if current_selected then
+            current_selected.size = gVec3fOne()
+        if sizes_count == 1 then
+            local size = math.clamp(tonumber(sizes[1]) or 200, 0.01, 10)
+            vec3f_set(current_selected.size, size, size, size)
+            djui_chat_message_create("Set item size to " .. size)
+        elseif sizes_count == 3 then
+            local size_x = math.clamp(tonumber(sizes[1]) or 200, 0.01, 10)
+            local size_y = math.clamp(tonumber(sizes[2]) or 200, 0.01, 10)
+            local size_z = math.clamp(tonumber(sizes[3]) or 200, 0.01, 10)
+            vec3f_set(current_selected.size, size_x, size_y, size_z)
+            djui_chat_message_create("Set item size to (" .. sizes[1], sizes[2], sizes[3] .. ")")
+        else
+            djui_chat_message_create("Usage: [num] or [x y z] or [on|off]")
+        end
+    else
+        djui_chat_message_create("You must have an item selected to change its size!")
+    end
+
+    return true
+end
+
+hook_chat_command("size", "[num] or [x y z] | Sets the size scaling of the currently selected item. Clamped between 0.01 and 10", on_set_item_size_chat_command)
