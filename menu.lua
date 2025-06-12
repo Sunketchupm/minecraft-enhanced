@@ -2,6 +2,8 @@ MenuOpen = false
 
 local active_tab = 1
 local selected_item_index = 1
+local current_item_page = 1
+local item_page_max = 1
 
 local TAB_BUILDING_BLOCKS = 1
 local TAB_ITEMS = 2
@@ -48,7 +50,7 @@ local function add_item(tab, behavior, model, offset, mock_settings, behavior_pa
 end
 
 add_first_update(function ()
-    for i = 1, 150, 1 do
+    for i = 1, 100, 1 do
         local color = 0
         local r = math.random(0, 256)
         local g = math.random(0, 256)
@@ -215,19 +217,57 @@ end
 
 ------------------------------------------------------------------------------------------------
 
----@param x number
----@param y number
+---@param base_slot_width number
 ---@param width number
+---@return number
+---@return integer
+local function determine_slot_width(base_slot_width, width)
+    local column_count = width / base_slot_width
+    local whole_column_count = math.floor(column_count)
+    item_list_column_count = whole_column_count
+    if column_count ~= whole_column_count then
+        local div_decimal = column_count - whole_column_count
+        base_slot_width = base_slot_width + (base_slot_width * (div_decimal / item_list_column_count))
+    end
+    return base_slot_width, whole_column_count
+end
+
+---@param base_slot_height number
 ---@param height number
----@param text string
-local function render_tab_header(x, y, width, height, text)
-    djui_hud_set_color(0, 0, 0, 255)
-    djui_hud_set_font(FONT_NORMAL)
-    local scale = 1.5
-    local size = djui_hud_measure_text(text) * scale
-    local text_x = x + width * 0.5 - size * 0.5
-    local text_y = y + height * 0.04
-    djui_hud_print_text(text, text_x, text_y, scale)
+---@return number
+---@return integer
+local function determine_slot_height(base_slot_height, height)
+    local row_count = height / base_slot_height
+    local whole_row_count = math.floor(row_count)
+    item_list_row_count = whole_row_count
+    if row_count ~= whole_row_count then
+        local div_decimal = row_count - whole_row_count
+        base_slot_height = base_slot_height + (base_slot_height * (div_decimal / item_list_row_count))
+    end
+    return base_slot_height, whole_row_count
+end
+
+---@param column_count integer
+---@param row_count integer
+---@param items MenuItemLink[]
+---@return MenuItemLink[][]
+local function determine_pages(column_count, row_count, items)
+    local max_items_per_page = column_count * row_count
+    ---@type MenuItemLink[][]
+    local item_pages = {{}}
+    local stored_page = 1
+    local item_in_page_index = 0
+    for i = 1, #items do
+        item_in_page_index = item_in_page_index + 1
+        if item_in_page_index > max_items_per_page then
+            item_in_page_index = 1
+            stored_page = stored_page + 1
+            item_pages[stored_page] = {}
+        end
+        item_pages[stored_page][item_in_page_index] = items[i]
+    end
+    item_page_max = stored_page
+    return item_pages
 end
 
 ---@param x number
@@ -237,18 +277,11 @@ end
 ---@param items MenuItemLink[]
 local function render_item_list(x, y, width, height, items)
     local hovering_over_item = false
-    local slot_width = 50
-    local slot_height = 50
-    local div = width / slot_width
-    local div_floor = math.floor(div)
-    item_list_column_count = div_floor
-    if div ~= div_floor then
-        local div_decimal = div - div_floor
-        slot_width = slot_width + (slot_width * (div_decimal / item_list_column_count))
-    end
-    item_list_row_count = height // slot_height
+    local slot_width, column_count = determine_slot_width(65, width)
+    local slot_height, row_count = determine_slot_height(65, height)
+    local item_pages = determine_pages(column_count, row_count, items)
 
-    for index, item in ipairs(items) do
+    for index, item in ipairs(item_pages[current_item_page]) do
         local slot_x = x + ((slot_width * ((index - 1) % item_list_column_count)))
         local slot_y = y + ((slot_height * ((index - 1) // item_list_column_count)))
         if moved_mouse and mouse_is_within(slot_x, slot_y, slot_x + slot_width, slot_y + slot_height) then
@@ -287,6 +320,23 @@ local function render_item_list(x, y, width, height, items)
     end
 end
 
+----------------------------------------------------
+
+---@param x number
+---@param y number
+---@param width number
+---@param height number
+---@param text string
+local function render_tab_header(x, y, width, height, text)
+    djui_hud_set_color(0, 0, 0, 255)
+    djui_hud_set_font(FONT_NORMAL)
+    local scale = 1.5
+    local size = djui_hud_measure_text(text) * scale
+    local text_x = x + width * 0.5 - size * 0.5
+    local text_y = y + height * 0.04
+    djui_hud_print_text(text, text_x, text_y, scale)
+end
+
 ---@param x number
 ---@param y number
 ---@param width number
@@ -295,15 +345,20 @@ local function render_interior_rectangle(x, y, width, height)
     local interior_rect_x = x + width * 0.05
     local interior_rect_y = y + height * 0.15
     local interior_rect_width = width * 0.9
-    local interior_rect_height = height * 0.8
-    --local interior_colors = {{r = 175, g = 175, b = 175, a = 255}, {r = 96, g = 96, b = 96, a = 255}, {r = 255, g = 255, b = 255, a = 255}}
+    local interior_rect_height = height * 0.7
     local color = {r = 175, g = 175, b = 175, a = 255}
     djui_hud_set_color_with_table(color)
     djui_hud_render_rect(interior_rect_x, interior_rect_y, interior_rect_width, interior_rect_height)
-    --render_colored_rectangle(interior_rect_x, interior_rect_y, interior_rect_width, interior_rect_height, interior_colors[1], 0.007, 0.007)
     render_item_list(interior_rect_x, interior_rect_y, interior_rect_width, interior_rect_height, TabItemList[active_tab])
-    --render_rectangle_borders(interior_rect_x, interior_rect_y, interior_rect_width, interior_rect_height, interior_colors[2], interior_colors[3], 0.007, 0.007)
+
+    ------------------------------------------------------------- SHERBIE HERE ------------------------------------------------------------------
+    -- Useful functions:
+    -- djui_hud_set_color(r, g, b, a)
+    -- djui_hud_print_text(message, x, y, scale)
+    -- djui_hud_measure_text(message)
 end
+
+------------------------------------------------------------------------------------------------
 
 local function render_standard_tab(x, y, width, height, name)
     render_tab_header(x, y, width, height, name)
@@ -536,6 +591,7 @@ local function handle_item_selection_inputs(m)
     end
 end
 
+---@param pressed integer
 local function handle_pick_item_inputs(pressed)
     if moved_mouse then
         if mouse_prev_item_index ~= selected_item_index then
@@ -552,6 +608,17 @@ local function handle_pick_item_inputs(pressed)
     end
 end
 
+---@param pressed integer
+local function handle_paging_inputs(pressed)
+    if pressed & L_CBUTTONS ~= 0 and current_item_page > 1 then
+        current_item_page = current_item_page - 1
+        play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
+    elseif pressed & R_CBUTTONS ~= 0 and current_item_page < item_page_max then
+        current_item_page = current_item_page + 1
+        play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
+    end
+end
+
 ---@param m MarioState
 local function handle_standard_inputs(m)
     local pressed = m.controller.buttonPressed
@@ -565,6 +632,7 @@ local function handle_standard_inputs(m)
 
     handle_change_tab_inputs(pressed)
     handle_item_selection_inputs(m)
+    handle_paging_inputs(pressed)
     if selected_item_index > 0 then
         handle_pick_item_inputs(pressed)
     end
