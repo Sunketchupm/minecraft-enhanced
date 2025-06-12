@@ -6,7 +6,7 @@ function djui_chat_message_create(...)
         error("`djui_chat_message_create` recieved 0 args")
         return
     end
-    local str = args[1]
+    local str = tostring(args[1])
     for i = 1, args_length do
         if i ~= 1 then
             str = str .. ", " .. tostring(args[i])

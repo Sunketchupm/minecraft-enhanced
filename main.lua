@@ -299,7 +299,9 @@ end
 local function mario_update(m)
 	if m.playerIndex ~= 0 then return end
 	if CanBuild then
-		builder_mario_update(m)
+		if not MenuOpen then
+			builder_mario_update(m)
+		end
 	else
 		delete_outline()
 	end

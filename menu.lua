@@ -463,9 +463,9 @@ end
 ---@param m MarioState
 local function handle_hotbar_menu_inputs(m)
     local pressed = m.controller.buttonPressed
-    if pressed & L_CBUTTONS ~= 0 and selected_hotbar_index > 1 then
+    if pressed & L_JPAD ~= 0 and selected_hotbar_index > 1 then
         selected_hotbar_index = selected_hotbar_index - 1
-    elseif pressed & R_CBUTTONS ~= 0 and selected_hotbar_index < HOTBAR_SIZE then
+    elseif pressed & R_JPAD ~= 0 and selected_hotbar_index < HOTBAR_SIZE then
         selected_hotbar_index = selected_hotbar_index + 1
     end
 
@@ -493,24 +493,44 @@ local function handle_change_tab_inputs(pressed)
     end
 end
 
-local function handle_item_selection_inputs(pressed)
+-- Control stick direction
+local csd = {up = false, left = false, down = false, right = false}
+local used_csd = {up = false, left = false, down = false, right = false}
+
+local function handle_control_stick_inputs(m)
+    local controller = m.controller
+
+    if not csd.up and controller.stickY <= 30 then used_csd.up = false end
+    if not csd.down and controller.stickY >= -30 then used_csd.down = false end
+    if not csd.left and controller.stickX >= -30 then used_csd.left = false end
+    if not csd.right and controller.stickX <= 30 then used_csd.right = false end
+    if not used_csd.up and controller.stickY > 30 then csd.up = true used_csd.up = true else csd.up = false end
+    if not used_csd.down and controller.stickY < -30 then csd.down = true used_csd.down = true else csd.down = false end
+    if not used_csd.left and controller.stickX < -30 then csd.left = true used_csd.left = true else csd.left = false end
+    if not used_csd.right and controller.stickX > 30 then csd.right = true used_csd.right = true else csd.right = false end
+end
+
+---@param m MarioState
+local function handle_item_selection_inputs(m)
     local current_item_set_count = #TabItemList[active_tab]
     if current_item_set_count == 0 then return end
-    if pressed & (U_JPAD | L_JPAD | D_JPAD | R_JPAD) ~= 0 then
+    handle_control_stick_inputs(m)
+
+    if csd.up or csd.left or csd.down or csd.right then
         play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource)
         if selected_item_index == 0 then
             selected_item_index = 1
         end
 
-        if pressed & U_JPAD ~= 0 and selected_item_index > item_list_column_count then
+        if csd.up and selected_item_index > item_list_column_count then
             selected_item_index = selected_item_index - item_list_column_count
-        elseif pressed & D_JPAD ~= 0 and selected_item_index < current_item_set_count then
+        elseif csd.down and selected_item_index < current_item_set_count then
             local remaining = math.min(current_item_set_count - selected_item_index, item_list_column_count)
             selected_item_index = selected_item_index + remaining
         end
-        if pressed & L_JPAD ~= 0 and selected_item_index > 1 then
+        if csd.left and selected_item_index > 1 then
             selected_item_index = selected_item_index - 1
-        elseif pressed & R_JPAD ~= 0 and selected_item_index < current_item_set_count then
+        elseif csd.right and selected_item_index < current_item_set_count then
             selected_item_index = selected_item_index + 1
         end
     end
@@ -532,8 +552,9 @@ local function handle_pick_item_inputs(pressed)
     end
 end
 
----@param pressed integer
-local function handle_standard_inputs(pressed)
+---@param m MarioState
+local function handle_standard_inputs(m)
+    local pressed = m.controller.buttonPressed
     if moved_mouse and pressed ~= 0 and not mouse_has_clicked and not mouse_has_right_clicked then
         moved_mouse = false
     end
@@ -543,7 +564,7 @@ local function handle_standard_inputs(pressed)
     end
 
     handle_change_tab_inputs(pressed)
-    handle_item_selection_inputs(pressed)
+    handle_item_selection_inputs(m)
     if selected_item_index > 0 then
         handle_pick_item_inputs(pressed)
     end
@@ -553,10 +574,8 @@ end
 
 ---@param m MarioState
 local function handle_menu_inputs(m)
-    local pressed = m.controller.buttonPressed
-
     if active_tab <= TAB_MAIN_END then
-        handle_standard_inputs(pressed)
+        handle_standard_inputs(m)
         handle_hotbar_menu_inputs(m)
         m.controller.buttonPressed = 0
     end
