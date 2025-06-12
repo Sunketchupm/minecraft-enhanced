@@ -33,6 +33,51 @@ end)
 
 ------------------------------------------------------------------------------------------
 
+---@param obj Object
+---@param hitbox ObjectHitbox
+local function obj_set_hitbox(obj, hitbox)
+    if not obj or not hitbox then return end
+    if obj.oFlags & OBJ_FLAG_30 == 0 then
+        obj.oFlags = obj.oFlags | OBJ_FLAG_30
+
+        obj.oInteractType = hitbox.interactType
+        obj.oDamageOrCoinValue = hitbox.damageOrCoinValue
+        obj.oHealth = hitbox.health
+        obj.oNumLootCoins = hitbox.numLootCoins
+
+        cur_obj_become_tangible()
+    end
+
+    obj.hitboxRadius = obj.header.gfx.scale.x * hitbox.radius
+    obj.hitboxHeight = obj.header.gfx.scale.y * hitbox.height
+    obj.hurtboxRadius = obj.header.gfx.scale.x * hitbox.hurtboxRadius
+    obj.hurtboxHeight = obj.header.gfx.scale.y * hitbox.hurtboxHeight
+    obj.hitboxDownOffset = obj.header.gfx.scale.y * hitbox.downOffset
+end
+
+---@param obj Object
+local function obj_is_hidden_or_unrendered(obj)
+    if not obj then return false end
+    local render_flags = obj.header.gfx.node.flags
+    return render_flags & (GRAPH_RENDER_INVISIBLE) ~= 0 or render_flags & (GRAPH_RENDER_ACTIVE) == 0
+end
+
+---@param obj Object
+---@param scale number
+function obj_scale_mult_to(obj, scale)
+    obj.header.gfx.scale.x = obj.header.gfx.scale.x * scale
+    obj.header.gfx.scale.y = obj.header.gfx.scale.y * scale
+    obj.header.gfx.scale.z = obj.header.gfx.scale.z * scale
+end
+
+local function show_pos_in_free_move(obj)
+    if obj_is_hidden_or_unrendered(obj) and gMarioStates[0].action == ACT_FREE_MOVE then
+        spawn_non_sync_object(id_bhvSparkleParticleSpawner, E_MODEL_SPARKLES_ANIMATION, obj.oPosX, obj.oPosY, obj.oPosZ, nil)
+    end
+end
+
+------------------------------------------------------------------------------------------
+
 --- Called from bhvMceBlock.bhv
 
 ---@param obj Object
@@ -104,6 +149,8 @@ function bhv_mce_star_loop(obj)
             cur_obj_enable_rendering_and_become_tangible(obj)
         end
     end
+
+    show_pos_in_free_move(obj)
     obj.oInteractStatus = 0
 end
 
@@ -152,6 +199,7 @@ function bhv_mce_coin_loop(obj)
         end
     end
 
+    show_pos_in_free_move(obj)
     obj.oInteractStatus = 0
 end
 
@@ -254,6 +302,8 @@ function bhv_mce_exclamation_box_loop(obj)
             obj.oAction = 0
         end
     end
+
+    show_pos_in_free_move(obj)
 end
 
 local function koopa_shell_delete_if_unused()
