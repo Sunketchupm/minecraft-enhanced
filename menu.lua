@@ -248,7 +248,6 @@ local function render_item_list(x, y, width, height, items)
         local div_decimal = div - div_floor
         slot_width = slot_width + (slot_width * (div_decimal / item_list_column_count))
     end
-    djui_chat_message_create(div)
     item_list_row_count = height // slot_height
 
     for index, item in ipairs(items) do

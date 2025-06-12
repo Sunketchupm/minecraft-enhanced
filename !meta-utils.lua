@@ -1,6 +1,18 @@
 local __djui_chat_message_create = djui_chat_message_create
-function djui_chat_message_create(message)
-    __djui_chat_message_create(tostring(message))
+function djui_chat_message_create(...)
+    local args = {...}
+    local args_length = #args
+    if args_length == 0 then
+        error("`djui_chat_message_create` recieved 0 args")
+        return
+    end
+    local str = args[1]
+    for i = 1, args_length do
+        if i ~= 1 then
+            str = str .. ", " .. tostring(args[i])
+        end
+    end
+    __djui_chat_message_create(tostring(str))
 end
 
 MinecraftDebug = {}

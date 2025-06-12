@@ -1,15 +1,18 @@
 -- localize functions to improve performance
 local mario_set_forward_vel,perform_air_step,set_character_animation,queue_rumble_data_mario,check_fall_damage_or_get_stuck,set_mario_action,mario_bonk_reflection,lava_boost_on_wall,check_wall_kick,play_knockback_sound,common_air_knockback_step,update_air_without_turn = mario_set_forward_vel,perform_air_step,set_character_animation,queue_rumble_data_mario,check_fall_damage_or_get_stuck,set_mario_action,mario_bonk_reflection,lava_boost_on_wall,check_wall_kick,play_knockback_sound,common_air_knockback_step,update_air_without_turn
 
-ACT_FREE_MOVE = allocate_mario_action(ACT_GROUP_AIRBORNE | ACT_FLAG_INTANGIBLE | ACT_FLAG_INVULNERABLE)
+ACT_FREE_MOVE = allocate_mario_action(ACT_GROUP_AUTOMATIC | ACT_FLAG_INTANGIBLE | ACT_FLAG_INVULNERABLE)
 
 local savedMarioYaw = 0
+local prev_romhack_cam_state = camera_get_romhack_override()
 ---@param m MarioState
 local function act_free_move(m)
+    if MenuOpen then return false end
+
     m.peakHeight = m.pos.y
     m.health = 0x880
     m.capTimer = 1
-    if MenuOpen then return false end
+    m.squishTimer = 0
 
     local lHeld = (m.controller.buttonDown & L_TRIG) ~= 0
     local bHeld = (m.controller.buttonDown & B_BUTTON) ~= 0
@@ -44,28 +47,39 @@ local function act_free_move(m)
     end
     m.faceAngle.y = lHeld and savedMarioYaw or m.intendedYaw
 
-    if m.controller.stickMag == 0 then
-        mario_set_forward_vel(m, 0)
-    end
-
-    if m.forwardVel > 0 then
+    if m.controller.stickMag > 0 then
         if bHeld then
-            m.vel.x = sins(m.intendedYaw) * (m.pos.y == m.floorHeight and 180 or 70)
-            m.vel.z = coss(m.intendedYaw) * (m.pos.y == m.floorHeight and 180 or 70)
+            m.vel.x = sins(m.intendedYaw) * 70
+            m.vel.z = coss(m.intendedYaw) * 70
             if lHeld then
-                m.vel.x = sins(m.intendedYaw) * (m.pos.y == m.floorHeight and 30 or 5)
-                m.vel.z = coss(m.intendedYaw) * (m.pos.y == m.floorHeight and 30 or 5)
+                m.vel.x = sins(m.intendedYaw) * 5
+                m.vel.z = coss(m.intendedYaw) * 5
             end
         else
-            m.vel.x = sins(m.intendedYaw) * (m.pos.y == m.floorHeight and 110 or 20)
-            m.vel.z = coss(m.intendedYaw) * (m.pos.y == m.floorHeight and 110 or 20)
+            m.vel.x = sins(m.intendedYaw) * 20
+            m.vel.z = coss(m.intendedYaw) * 20
         end
     end
 
     set_character_animation(m, CHAR_ANIM_IDLE_HEAD_CENTER)
 
-    perform_air_step(m, 0)
-    update_air_without_turn(m)
+    local next_pos = vec3f_add(m.vel, vec3f_copy(gVec3fZero(), m.pos))
+    local floor_height = find_floor_height(next_pos.x, next_pos.y, next_pos.z)
+    if floor_height == gLevelValues.floorLowerLimit then
+        floor_height = find_floor_height(next_pos.x, next_pos.y + m.marioObj.hitboxHeight, next_pos.z)
+        next_pos.y = floor_height
+    end
+    if floor_height ~= gLevelValues.floorLowerLimit then
+        vec3f_copy(m.pos, next_pos)
+    end
+
+    if m.pos.y < m.floorHeight then
+        m.pos.y = m.floorHeight
+    end
+    vec3f_zero(m.vel)
+
+    vec3f_copy(m.marioObj.header.gfx.pos, m.pos)
+    vec3s_set(m.marioObj.header.gfx.angle, 0, m.faceAngle.y, 0)
 end
 
 ---@param m MarioState
@@ -94,18 +108,6 @@ local function allow_force_water_action(m)
     if m.action == ACT_FREE_MOVE then return false end
 end
 
-local override_action_change = false
----@param m MarioState
----@param incoming integer
-local function before_set_mario_action(m, incoming)
-    if m.playerIndex ~= 0 then return end
-
-    if m.action == ACT_FREE_MOVE and incoming ~= ACT_FREE_MOVE and not override_action_change then
-        override_action_change = false
-        return 1
-    end
-end
-
 local timer = 0
 local start_timer = false
 ---@param m MarioState
@@ -120,10 +122,30 @@ local function mario_update(m)
     end
     if m.controller.buttonPressed & L_TRIG ~= 0 then
         if start_timer then
-            override_action_change = true
             start_timer = false
             timer = 0
-            set_mario_action(m, m.action == ACT_FREE_MOVE and ACT_FREEFALL or ACT_FREE_MOVE, 0)
+
+            if m.action == ACT_SQUISHED then
+                m.pos.y = m.pos.y + m.marioObj.hitboxHeight
+                m.squishTimer = 1
+            end
+
+            if m.action ~= ACT_FREE_MOVE then
+                prev_romhack_cam_state = camera_get_romhack_override()
+            end
+            local next_action = m.action == ACT_FREE_MOVE and ACT_FREEFALL or ACT_FREE_MOVE
+            if next_action == ACT_FREE_MOVE then
+                camera_set_romhack_override(RCO_ALL_INCLUDING_VANILLA)
+            else
+                if prev_romhack_cam_state == RCO_NONE or
+                    (level_is_vanilla_level(gNetworkPlayers[0].currLevelNum) and prev_romhack_cam_state == RCO_ALL or prev_romhack_cam_state == RCO_ALL_EXCEPT_BOWSER) then
+                    camera_set_romhack_override(RCO_DISABLE)
+                else
+                    camera_set_romhack_override(prev_romhack_cam_state)
+                end
+            end
+            drop_and_set_mario_action(m, next_action, 0)
+            mario_set_forward_vel(m, 0)
         else
             start_timer = true
         end
@@ -134,7 +156,6 @@ hook_mario_action(ACT_FREE_MOVE, act_free_move)
 hook_event(HOOK_ALLOW_INTERACT, allow_interact)
 hook_event(HOOK_ON_DEATH, on_death)
 hook_event(HOOK_ALLOW_FORCE_WATER_ACTION, allow_force_water_action)
-hook_event(HOOK_BEFORE_SET_MARIO_ACTION, before_set_mario_action)
 hook_event(HOOK_MARIO_UPDATE, mario_update)
 
 -----------------------------------------------------------------------------------------------------------
