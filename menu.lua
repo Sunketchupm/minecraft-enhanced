@@ -69,7 +69,7 @@ local function add_item(tab, behavior, model, offset, mock_settings, behavior_pa
         spawnYOffset = offset,
         params = behavior_param,
         size = gVec3fOne(),
-        misc = { mock = mock_settings }
+        mock = mock_settings,
     }, icon = icon }
 
     item.self = item
@@ -91,7 +91,7 @@ add_first_update(function ()
                 spawnYOffset = 0,
                 params = color,
                 size = gVec3fOne(),
-                misc = { mock = {} }
+                mock = {},
             },
             icon = gTextures.star
         }

@@ -4,28 +4,26 @@
     ---@field spawnYOffset number
     ---@field params integer
     ---@field size Vec3f
-    ---@field misc table
+    ---@field mock table
 
 ---@class Object
     ---@field oScaleX number
     ---@field oScaleY number
     ---@field oScaleZ number
     ---@field oItemParams integer
-    ---@field oSurfaceId integer
 
 define_custom_obj_fields({
     oScaleX = "f32",
     oScaleY = "f32",
     oScaleZ = "f32",
     oItemParams = "u32",
-    oSurfaceId = "s32",
 })
 
 gCurrentItem = {behavior = nil, model = E_MODEL_NONE, params = {}}
 local item_behaviors = {}
 add_first_update(function ()
     ---@type Item
-    gCurrentItem = { behavior = bhvMceBlock, model = E_MODEL_MCE_BLOCK, spawnYOffset = 0, params = 0, size = gVec3fOne(), misc = { mock = {} } }
+    gCurrentItem = { behavior = bhvMceBlock, model = E_MODEL_MCE_BLOCK, spawnYOffset = 0, params = 0, size = gVec3fOne(), mock = {} }
     ---@type BehaviorId[]
     item_behaviors = {
         bhvMceBlock,
@@ -140,10 +138,11 @@ local standard_collision_lookup = {
 
 ---@param obj Object
 function bhv_mce_block_init(obj)
-    if obj.oSurfaceId ~= MCE_BLOCK_NO_COLLISION_ID then
+    local surface_id = obj.oItemParams & 0xFF
+    if surface_id ~= MCE_BLOCK_NO_COLLISION_ID then
         local collision = COL_MCE_BLOCK_DEFAULT
-        if standard_collision_lookup[obj.oSurfaceId] then
-            collision = standard_collision_lookup[obj.oSurfaceId]
+        if standard_collision_lookup[surface_id] then
+            collision = standard_collision_lookup[surface_id]
         end
         obj.collisionData = collision
     end
@@ -164,18 +163,11 @@ function lua_asm_set_color(node, _misc)
     local graphNode = cast_graph_node(node.next)
     local dl = graphNode.displayList
 
-    local obj = geo_get_current_object()
-    local color = obj.oItemParams
-    local r = (obj.oItemParams & 0x00FF0000) >> 16
-    local g = (obj.oItemParams & 0x0000FF00) >> 8
-    local b = (obj.oItemParams & 0x000000FF) >> 0
-    if color then
-        gfx_parse(dl, function(cmd, op)
-            if op == G_SETPRIMCOLOR then
-                gfx_set_command(cmd, "gsDPSetPrimColor(0, 0, %i, %i, %i, %i)", r, g, b, 255)
-            end
-        end)
-    end
+    gfx_parse(dl, function(cmd, op)
+        if op == G_SETPRIMCOLOR then
+            gfx_set_command(cmd, "gsDPSetPrimColor(0, 0, %i, %i, %i, %i)", 255, 255, 255, 255)
+        end
+    end)
 end
 
 
@@ -457,7 +449,7 @@ local block_id_lookup = {
 local function on_set_surface_chat_command(msg)
     if block_id_lookup[msg:lower()] then
         if HotbarItemList[selected_hotbar_index].item and HotbarItemList[selected_hotbar_index].item.behavior == bhvMceBlock then
-            HotbarItemList[selected_hotbar_index].item.misc.surface = block_id_lookup[msg:lower()]
+            HotbarItemList[selected_hotbar_index].item.params = block_id_lookup[msg:lower()]
             djui_chat_message_create("Set the surface type to " .. msg)
         else
             djui_chat_message_create("You must have a block selected to change its surface type!")
