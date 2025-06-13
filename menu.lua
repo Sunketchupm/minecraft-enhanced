@@ -59,9 +59,10 @@ end
 ---@param model ModelExtendedId
 ---@param offset number
 ---@param mock_settings table
+---@param anim_state integer
 ---@param behavior_param integer
 ---@param icon TextureInfo
-local function add_item(tab, behavior, model, offset, mock_settings, behavior_param, icon)
+local function add_item(tab, behavior, model, offset, anim_state, mock_settings, behavior_param, icon)
     ---@type MenuItemLink
     local item = { item = {
         behavior = behavior,
@@ -69,7 +70,8 @@ local function add_item(tab, behavior, model, offset, mock_settings, behavior_pa
         spawnYOffset = offset,
         params = behavior_param,
         size = gVec3fOne(),
-        misc = { mock = mock_settings }
+        animState = anim_state,
+        mock = mock_settings
     }, icon = icon }
 
     item.self = item
@@ -78,20 +80,16 @@ end
 
 add_first_update(function ()
     for i = 1, 100, 1 do
-        local color = 0
-        local r = math.random(0, 256)
-        local g = math.random(0, 256)
-        local b = math.random(0, 256)
-        color = (r << 16) | (g << 8) | (b << 0)
         ---@type MenuItemLink
         local menu_item = {
             item = {
                 behavior = bhvMceBlock,
                 model = E_MODEL_MCE_BLOCK,
                 spawnYOffset = 0,
-                params = color,
+                params = 0,
                 size = gVec3fOne(),
-                misc = { mock = {} }
+                animState = i,
+                mock = {}
             },
             icon = gTextures.star
         }
@@ -100,23 +98,23 @@ add_first_update(function ()
     end
 
     local star_offset = 6
-    add_item(TAB_ITEMS, bhvMceStar, E_MODEL_STAR, star_offset, {}, 0, gTextures.star)
-    add_item(TAB_ITEMS, bhvMceStar, E_MODEL_TRANSPARENT_STAR, star_offset, {}, 0, gTextures.star)
+    add_item(TAB_ITEMS, bhvMceStar, E_MODEL_STAR, star_offset, 0, { animateFaceAngleYaw = 0x800 }, 0, gTextures.star)
+    add_item(TAB_ITEMS, bhvMceStar, E_MODEL_TRANSPARENT_STAR, star_offset, 0, { animateFaceAngleYaw = 0x800 }, 0, gTextures.star)
     local coin_offset = 32
-    add_item(TAB_ITEMS, bhvMceCoin, E_MODEL_YELLOW_COIN, coin_offset, { billboard = true }, 1, gTextures.coin)
-    add_item(TAB_ITEMS, bhvMceCoin, E_MODEL_RED_COIN, coin_offset + 3, { billboard = true }, 2, gTextures.coin)
-    add_item(TAB_ITEMS, bhvMceCoin, E_MODEL_BLUE_COIN, coin_offset + 26, { billboard = true, scale = 1.25 }, 5, gTextures.coin)
+    add_item(TAB_ITEMS, bhvMceCoin, E_MODEL_YELLOW_COIN, coin_offset, 0, { animateAnimState = true, animateFrame = 2, billboard = true }, 1, gTextures.coin)
+    add_item(TAB_ITEMS, bhvMceCoin, E_MODEL_RED_COIN, coin_offset + 3, 0, { animateAnimState = true, animateFrame = 2, billboard = true }, 2, gTextures.coin)
+    add_item(TAB_ITEMS, bhvMceCoin, E_MODEL_BLUE_COIN, coin_offset + 26, 0, { animateAnimState = true, animateFrame = 2, billboard = true, scale = 1.25 }, 5, gTextures.coin)
     local exclamation_box_offset = 50
-    add_item(TAB_ITEMS, bhvMceExclamationBox, E_MODEL_EXCLAMATION_BOX, exclamation_box_offset, { animState = 0, scale = 2 }, 1, gTextures.apostrophe)
-    add_item(TAB_ITEMS, bhvMceExclamationBox, E_MODEL_EXCLAMATION_BOX, exclamation_box_offset, { animState = 1, scale = 2 }, 2, gTextures.apostrophe)
-    add_item(TAB_ITEMS, bhvMceExclamationBox, E_MODEL_EXCLAMATION_BOX, exclamation_box_offset, { animState = 2, scale = 2 }, 3, gTextures.apostrophe)
-    add_item(TAB_ITEMS, bhvMceExclamationBox, E_MODEL_EXCLAMATION_BOX, exclamation_box_offset, { animState = 3, scale = 2 }, 4, gTextures.apostrophe)
-    add_item(TAB_ITEMS, bhvMceExclamationBox, E_MODEL_EXCLAMATION_BOX, exclamation_box_offset, { animState = 3, scale = 2 }, 99, gTextures.apostrophe)
+    add_item(TAB_ITEMS, bhvMceExclamationBox, E_MODEL_EXCLAMATION_BOX, exclamation_box_offset, 0, { scale = 2 }, 1, gTextures.apostrophe)
+    add_item(TAB_ITEMS, bhvMceExclamationBox, E_MODEL_EXCLAMATION_BOX, exclamation_box_offset, 1, { scale = 2 }, 2, gTextures.apostrophe)
+    add_item(TAB_ITEMS, bhvMceExclamationBox, E_MODEL_EXCLAMATION_BOX, exclamation_box_offset, 2, { scale = 2 }, 3, gTextures.apostrophe)
+    add_item(TAB_ITEMS, bhvMceExclamationBox, E_MODEL_EXCLAMATION_BOX, exclamation_box_offset, 3, { scale = 2 }, 4, gTextures.apostrophe)
+    add_item(TAB_ITEMS, bhvMceExclamationBox, E_MODEL_EXCLAMATION_BOX, exclamation_box_offset, 3, { scale = 2 }, 99, gTextures.apostrophe)
 
     local offset = 0
-    add_item(TAB_ENEMIES, id_bhvGoomba, E_MODEL_GOOMBA, offset, {}, 0, gTextures.lakitu)
-    add_item(TAB_ENEMIES, id_bhvBobomb, E_MODEL_BLACK_BOBOMB, offset, {}, 0, gTextures.lakitu)
-    add_item(TAB_ENEMIES, id_bhvChuckya, E_MODEL_CHUCKYA, offset, {}, 0, gTextures.lakitu)
+    add_item(TAB_ENEMIES, id_bhvGoomba, E_MODEL_GOOMBA, offset, 0, {}, 0, gTextures.lakitu)
+    add_item(TAB_ENEMIES, id_bhvBobomb, E_MODEL_BLACK_BOBOMB, offset, 0, {}, 0, gTextures.lakitu)
+    add_item(TAB_ENEMIES, id_bhvChuckya, E_MODEL_CHUCKYA, offset, 0, {}, 0, gTextures.lakitu)
 end)
 
 ------------------------------------------------------------------------------------------------

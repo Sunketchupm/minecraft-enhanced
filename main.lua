@@ -138,27 +138,38 @@ function bhv_mock_item_loop(obj)
 		obj.oPosX = outline.oPosX
 		obj.oPosY = outline.oPosY - (current_item.spawnYOffset * current_item.size.y)
 		obj.oPosZ = outline.oPosZ
-		obj.oFaceAnglePitch = outline.oFaceAnglePitch
-		obj.oFaceAngleYaw = outline.oFaceAngleYaw
-		obj.oFaceAngleRoll = outline.oFaceAngleRoll
 		obj.header.gfx.node.flags = obj.header.gfx.node.flags & ~GRAPH_RENDER_BILLBOARD
-		obj.oAnimState = 0
 		obj.oItemParams = current_item.params
 		local outline_scale = outline.header.gfx.scale
 		obj_scale_xyz(obj, outline_scale.x, outline_scale.y, outline_scale.z)
 		obj_set_model_extended(obj, current_item.model)
 
-		local mock_settings = current_item.misc.mock
+		local mock_settings = current_item.mock
 		if mock_settings.billboard then
 			obj_set_billboard(obj)
-		end
-
-		if mock_settings.animState then
-			obj.oAnimState = mock_settings.animState
 		end
 		if mock_settings.scale then
 			obj_scale_mult_to(obj, mock_settings.scale)
 		end
+		if mock_settings.animateAnimState then
+			if mock_settings.animateFrame then
+				obj.oAnimState = obj.oAnimState + (1 % mock_settings.animateFrame)
+			else
+				obj.oAnimState = obj.oAnimState + 1
+			end
+			if obj.oAnimState >= 255 then
+				obj.oAnimState = 0
+			end
+		else
+			obj.oAnimState = current_item.animState
+		end
+		if mock_settings.animateFaceAngleYaw then
+			obj.oFaceAngleYaw = convert_s16(obj.oFaceAngleYaw + mock_settings.animateFaceAngleYaw)
+		else
+			obj.oFaceAngleYaw = outline.oFaceAngleYaw
+		end
+		obj.oFaceAnglePitch = outline.oFaceAnglePitch
+		obj.oFaceAngleRoll = outline.oFaceAngleRoll
 	else
 		obj_set_model_extended(obj, E_MODEL_NONE)
 	end
@@ -187,11 +198,7 @@ local function place_item()
 			obj.oScaleY = current_item.size.y
 			obj.oScaleZ = current_item.size.z
 			obj_scale_xyz(obj, current_item.size.x, current_item.size.y, current_item.size.z)
-			if current_item.misc then
-				if current_item.misc.surface then
-					obj.oSurfaceId = current_item.misc.surface
-				end
-			end
+			obj.oAnimState = current_item.animState
 		end
 	)
 
@@ -276,7 +283,6 @@ end
 local function builder_mario_update(m)
 	local down = m.controller.buttonDown
 	local pressed = m.controller.buttonPressed
-
 
 	if not obj_get_first_with_behavior_id(bhvOutline) then
 		spawn_non_sync_object(
