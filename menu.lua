@@ -19,9 +19,20 @@ local item_list_column_count = 10
 -------------- TEXTURES --------------
 local A_BUTTON_TEX = get_texture_info("Abutton")
 local B_BUTTON_TEX = get_texture_info("Bbutton")
+local X_BUTTON_TEX = gTextures.star --get_texture_info("Xbutton")
+local Y_BUTTON_TEX = gTextures.star --get_texture_info("Ybutton")
+local U_JPAD_TEX = gTextures.star --get_texture_info("Ujpad")
+local L_JPAD_TEX = gTextures.star --get_texture_info("Ljpad")
+local D_JPAD_TEX = gTextures.star --get_texture_info("Djpad")
+local R_JPAD_TEX = gTextures.star --get_texture_info("Rjpad")
+local U_CBUTTON_TEX = gTextures.star --get_texture_info("Ucbutton")
+local L_CBUTTON_TEX = gTextures.star --get_texture_info("Lcbutton")
+local D_CBUTTON_TEX = gTextures.star --get_texture_info("Dcbutton")
+local R_CBUTTON_TEX = gTextures.star --get_texture_info("Rcbutton")
 local L_TRIG_TEX = get_texture_info("Ltrig")
 local R_TRIG_TEX =  get_texture_info("Rtrig")
 local Z_TRIG_TEX =  get_texture_info("Ztrig")
+local CONTROL_STICK_TEX = gTextures.star --get_texture_info("controlstick")
 --------------------------------------
 
 ---@class MenuItemLink
@@ -105,6 +116,22 @@ end)
 ---@param color_table DjuiColor
 local function djui_hud_set_color_with_table(color_table)
     djui_hud_set_color(color_table.r, color_table.g, color_table.b, color_table.a)
+end
+
+---@param text string
+---@param x number
+---@param y number
+---@param scale number
+local function render_shadowed_text(text, x, y, scale)
+    local shadow_x = x
+    local shadow_y = y
+    djui_hud_set_color(0, 0, 0, 255)
+    djui_hud_print_text(text, shadow_x, shadow_y, scale)
+
+    local text_x = shadow_x - 2
+    local text_y = shadow_y - 2
+    djui_hud_set_color(255, 255, 255, 255)
+    djui_hud_print_text(text, text_x, text_y, scale)
 end
 
 ---@param x number
@@ -391,54 +418,114 @@ local function render_enemies_tab(x, y, width, height)
     render_standard_tab(x, y, width, height, "Enemies")
 end
 
+--------------------------
+
+---@param x number
+---@param y number
+---@param width number
+---@param height number
+---@param name string
+---@param buttons {prefix: string?, texture: TextureInfo}[]
+local function render_controls_rect(x, y, width, height, name, buttons)
+    -- Rect
+    local colors = {{r = 120, g = 120, b = 120, a = 255}, {r = 186, g = 186, b = 186, a = 255}, {r = 98, g = 98, b = 98, a = 255}}
+    render_bordered_rectangle(x, y, width, height, colors, 0.004, 0.06)
+
+    local text_scale = 1.1
+    render_shadowed_text(name, x + (width * 0.03) * text_scale, y + (height * 0.15) * text_scale, text_scale)
+
+    -- Texture
+    djui_hud_set_color(255, 255, 255, 255)
+    local texture_scale = 2
+    local initial_texture_x = 0
+    if buttons[1] then
+        initial_texture_x = (x + width) - buttons[1].texture.width * texture_scale * 1.5
+    end
+    local texture_y = y + height * 0.1 * texture_scale
+    for i, button in ipairs(buttons) do
+        local texture = button.texture
+        local texture_x = initial_texture_x - texture.width * texture_scale
+        if button.prefix then
+            ---@type string
+            local prefix = button.prefix
+            local text_size = djui_hud_measure_text(prefix) * text_scale
+            local text_x = texture_x - text_size
+            render_shadowed_text(prefix, text_x, texture_y, text_scale)
+            initial_texture_x = text_x
+        end
+        djui_hud_render_texture(texture, texture_x, texture_y, texture_scale, texture_scale)
+    end
+end
+
 ---@param x number
 ---@param y number
 ---@param width number
 ---@param height number
 local function render_help_tab(x, y, width, height)
     render_tab_header(x, y, width, height, "Controls")
+    do -- render_tab_header() inlined
+        djui_hud_set_color(0, 0, 0, 255)
+        djui_hud_set_font(FONT_NORMAL)
+        local scale = 1.2
+        local text = "All controls are Build Mode only"
+        local size = djui_hud_measure_text(text) * scale
+        local text_x = x + width * 0.5 - size * 0.5
+        local text_y = y + height * 0.11
+        djui_hud_print_text(text, text_x, text_y, scale)
+    end
 
-    -- Useful functions:
-    -- djui_hud_set_color(r, g, b, a)
-    -- djui_hud_print_text(message, x, y, scale)
-    -- djui_hud_measure_text(message)  
-
-    -- rectangles?
     local rect_x = x + (width * 0.035)
     local rect_y = y + (height * 0.15)
     local rect_width = width * 0.93
     local rect_height = height * 0.09
-    local colors = {{r = 120, g = 120, b = 120, a = 255}, {r = 186, g = 186, b = 186, a = 255}, {r = 98, g = 98, b = 98, a = 255}}
-    render_bordered_rectangle(rect_x, rect_y, rect_width, rect_height, colors, 0.004, 0.06)
-    render_bordered_rectangle(rect_x, rect_y * 1.2, rect_width, rect_height, colors, 0.004, 0.06)
-    render_bordered_rectangle(rect_x, rect_y * 1.4, rect_width, rect_height, colors, 0.004, 0.06)
-    render_bordered_rectangle(rect_x, rect_y * 1.6, rect_width, rect_height, colors, 0.004, 0.06)
 
-    -- control textures
-    local tex_x = x + (width * 0.91)
-    local tex_y = y + (height * 0.16)
-    djui_hud_set_color(255, 255, 255, 255)
-    djui_hud_render_texture(L_TRIG_TEX, tex_x, y + (height * 0.165), 2, 2)
-    djui_hud_render_texture(L_TRIG_TEX, tex_x / 1.04, y + (height * 0.165), 2, 2)
-    djui_hud_render_texture(A_BUTTON_TEX, tex_x, y + (height * 0.265), 2, 2)
-    djui_hud_render_texture(B_BUTTON_TEX, tex_x, y + (height * 0.36), 2, 2)
-    djui_hud_render_texture(Z_TRIG_TEX, tex_x, y + (height * 0.455), 2, 2)
+    item_page_max = 3
+    if current_item_page == 1 then
+        render_controls_rect(rect_x, rect_y * 1.1, rect_width, rect_height, "Fly / Enter/Exit Build Mode",
+            {{prefix = " + ", texture = L_TRIG_TEX}, {prefix = "(Usable outside Build Mode) ", texture = L_TRIG_TEX}})
+        render_controls_rect(rect_x, rect_y * 1.3, rect_width, rect_height, "Fly Up",
+            {{texture = A_BUTTON_TEX}})
+        render_controls_rect(rect_x, rect_y * 1.5, rect_width, rect_height, "Fly Down",
+            {{texture = Z_TRIG_TEX}})
+        render_controls_rect(rect_x, rect_y * 1.7, rect_width, rect_height, "Sprint Fly",
+            {{texture = B_BUTTON_TEX}})
+        render_controls_rect(rect_x, rect_y * 1.9, rect_width, rect_height, "Slow Fly",
+            {{prefix = " and ", texture = L_TRIG_TEX}, {prefix = "Hold ", texture = B_BUTTON_TEX}})
+        render_controls_rect(rect_x, rect_y * 2.1, rect_width, rect_height, "Lock Angle",
+            {{prefix = "Hold ", texture = L_TRIG_TEX}})
 
-    -- Text Shadow (theres probably a better way to add this)
-    local shadow_x = x + (width * 0.057)
-    djui_hud_set_color(0, 0, 0, 255)
-    djui_hud_print_text("Fly", shadow_x, y + (height * 0.167), 1.1)
-    djui_hud_print_text("Fly Up", shadow_x, y + (height * 0.262), 1.1)
-    djui_hud_print_text("Fly Down", shadow_x, y + (height * 0.357), 1.1)
-    djui_hud_print_text("Sprint Fly", shadow_x, y + (height * 0.452), 1.1)
+        render_tab_header(x, y + height * 0.83, width, height, "Flying Controls")
+    elseif current_item_page == 2 then
+        render_controls_rect(rect_x, rect_y * 1.1, rect_width, rect_height, "Place/Delete Item",
+            {{texture = Y_BUTTON_TEX}})
+        render_controls_rect(rect_x, rect_y * 1.3, rect_width, rect_height, "Change Hotbar Selection",
+            {{prefix = " / ", texture = R_JPAD_TEX}, {texture = L_JPAD_TEX}})
+        render_controls_rect(rect_x, rect_y * 1.5, rect_width, rect_height, "Change Angle (Pitch)",
+            {{prefix = " / ", texture = D_JPAD_TEX}, {texture = U_JPAD_TEX}})
+        render_controls_rect(rect_x, rect_y * 1.7, rect_width, rect_height, "Change Angle (Yaw)",
+            {{prefix = " / ", texture = R_JPAD_TEX}, {prefix = " then ", texture = L_JPAD_TEX}, {prefix = "Hold ", texture = L_TRIG_TEX}})
+        render_controls_rect(rect_x, rect_y * 1.9, rect_width, rect_height, "Change Angle (Roll)",
+            {{prefix = " / ", texture = D_JPAD_TEX}, {prefix = " then ", texture = U_JPAD_TEX}, {prefix = "Hold ", texture = L_TRIG_TEX}})
+        render_controls_rect(rect_x, rect_y * 2.1, rect_width, rect_height, "Reset Angle",
+            {{prefix = " then ", texture = X_BUTTON_TEX}, {prefix = "Hold ", texture = L_TRIG_TEX}})
 
-    -- Actual Text
-    local text_x = x + (width * 0.055)
-    djui_hud_set_color(255, 255, 255, 255)
-    djui_hud_print_text("Fly", text_x, y + (height * 0.165), 1.1)
-    djui_hud_print_text("Fly Up", text_x, y + (height * 0.26), 1.1)
-    djui_hud_print_text("Fly Down", text_x, y + (height * 0.355), 1.1)
-    djui_hud_print_text("Sprint Fly", text_x, y + (height * 0.45), 1.1)
+        render_tab_header(x, y + height * 0.83, width, height, "Build Mode Controls")
+    elseif current_item_page == 3 then
+        render_controls_rect(rect_x, rect_y * 1.1, rect_width, rect_height, "Open/Close Menu",
+            {{texture = X_BUTTON_TEX}})
+        render_controls_rect(rect_x, rect_y * 1.3, rect_width, rect_height, "Change Item Selection",
+            {{texture = CONTROL_STICK_TEX}})
+        render_controls_rect(rect_x, rect_y * 1.5, rect_width, rect_height, "Change Pages",
+            {{prefix = " / ", texture = R_CBUTTON_TEX}, {texture = L_CBUTTON_TEX}})
+        render_controls_rect(rect_x, rect_y * 1.7, rect_width, rect_height, "Change Tabs",
+            {{prefix = " / ", texture = R_TRIG_TEX}, {texture = L_TRIG_TEX}})
+        render_controls_rect(rect_x, rect_y * 1.9, rect_width, rect_height, "Change Hotbar Selection",
+            {{prefix = " / ", texture = R_JPAD_TEX}, {texture = L_JPAD_TEX}})
+        render_controls_rect(rect_x, rect_y * 2.1, rect_width, rect_height, "Send To Hotbar",
+            {{texture = A_BUTTON_TEX}})
+
+        render_tab_header(x, y + height * 0.83, width, height, "Menu Navigation Controls")
+    end
 end
 
 local MenuTabs = {
@@ -497,7 +584,7 @@ local function render_hotbar(screen_width, screen_height)
     local width = screen_width * 0.5
     local height = screen_height * 0.08
     local x = screen_width * 0.25
-    local y = screen_height - (height * 2)
+    local y = screen_height - (height * 1.5)
     local colors = {{r = 64, g = 64, b = 32, a = 192}, {r = 128, g = 128, b = 128, a = 255}, {r = 128, g = 128, b = 128, a = 255}}
     render_bordered_rectangle(x, y, width, height, colors, 0.007, 0.06)
     for index, item in ipairs(HotbarItemList) do
@@ -576,18 +663,27 @@ end
 ----------------------------------------------------
 
 local function handle_change_tab_inputs(pressed)
-    if pressed & L_TRIG ~= 0 and active_tab > 1 then
+    if pressed & L_TRIG ~= 0 then
         active_tab = active_tab - 1
+        if active_tab < 1 then
+            active_tab = TAB_MAIN_END
+        end
         selected_item_index = 0
+        current_item_page = 1
         play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
-    elseif pressed & R_TRIG ~= 0 and active_tab < TAB_MAIN_END then
+    elseif pressed & R_TRIG ~= 0 then
         active_tab = active_tab + 1
+        if active_tab > TAB_MAIN_END then
+            active_tab = 1
+        end
         selected_item_index = 0
+        current_item_page = 1
         play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
     elseif mouse_tab_was_clicked_on > 0 then
         active_tab = mouse_tab_was_clicked_on
         mouse_tab_was_clicked_on = 0
         selected_item_index = 0
+        current_item_page = 1
         play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
     end
 end
@@ -730,6 +826,19 @@ hook_event(HOOK_ON_HUD_RENDER_BEHIND, hud_render)
 hook_event(HOOK_BEFORE_MARIO_UPDATE, before_mario_update)
 
 ------------------------------------------------------------------------------------------------
+
+local function on_controls_chat_command()
+    CanBuild = true
+    MenuOpen = true
+    active_tab = TAB_HELP
+    set_mario_action(gMarioStates[0], ACT_FREE_MOVE, 0)
+    return true
+end
+
+hook_chat_command("controls", "Displays the controls used in this mod", on_controls_chat_command)
+
+------------------------------------------------------------------------------------------------
+
 
 ---@param msg string
 local function on_set_item_size_chat_command(msg)
