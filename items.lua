@@ -18,7 +18,7 @@ define_custom_obj_fields({
     oScaleY = "f32",
     oScaleZ = "f32",
     oItemParams = "u32",
-    oSurfaceId = "u32",
+    oSurfaceId = "s32",
 })
 
 gCurrentItem = {behavior = nil, model = E_MODEL_NONE, params = {}}
@@ -111,6 +111,7 @@ local COL_MCE_BLOCK_VERY_SLIPPERY = smlua_collision_util_get("mce_block_col_very
 local COL_MCE_BLOCK_HANGABLE = smlua_collision_util_get("mce_block_col_hangable")
 local COL_MCE_BLOCK_VANISH = smlua_collision_util_get("mce_block_vanish")
 
+local MCE_BLOCK_NO_COLLISION_ID = -1
 local MCE_BLOCK_DEFAULT_ID = 0
 local MCE_BLOCK_LAVA_ID = 1
 local MCE_BLOCK_DEATH_ID = 2
@@ -139,11 +140,13 @@ local standard_collision_lookup = {
 
 ---@param obj Object
 function bhv_mce_block_init(obj)
-    local collision = COL_MCE_BLOCK_DEFAULT
-    if standard_collision_lookup[obj.oSurfaceId] then
-        collision = standard_collision_lookup[obj.oSurfaceId]
+    if obj.oSurfaceId ~= MCE_BLOCK_NO_COLLISION_ID then
+        local collision = COL_MCE_BLOCK_DEFAULT
+        if standard_collision_lookup[obj.oSurfaceId] then
+            collision = standard_collision_lookup[obj.oSurfaceId]
+        end
+        obj.collisionData = collision
     end
-    obj.collisionData = collision
     obj.oCollisionDistance = 5000
     obj.header.gfx.skipInViewCheck = true
 end
@@ -434,7 +437,10 @@ end
 
 local block_id_lookup = {
     ["default"] = MCE_BLOCK_DEFAULT_ID,
-    ["none"] = MCE_BLOCK_DEFAULT_ID,
+    ["normal"] = MCE_BLOCK_DEFAULT_ID,
+    ["none"] = -1,
+    ["no collision"] = -1,
+    ["intangible"] = -1,
     ["lava"] = MCE_BLOCK_LAVA_ID,
     ["death"] = MCE_BLOCK_DEATH_ID,
     ["quicksand"] = MCE_BLOCK_QUICKSAND_ID,
