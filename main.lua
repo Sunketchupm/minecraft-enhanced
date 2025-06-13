@@ -10,7 +10,7 @@ gLevelValues.fixInvalidShellRides = false
 
 CanBuild = true
 
-E_MODEL_MCE_BLOCK = smlua_model_util_get_id("mce_block")
+E_MODEL_MCE_BLOCK = smlua_model_util_get_id("mce_block_geo")
 E_MODEL_OUTLINE = smlua_model_util_get_id("mce_outline")
 
 -------------------------------------------------------------------------------
@@ -118,6 +118,7 @@ function bhv_outline_loop(obj)
 	outline.oPosX = posX
 	outline.oPosY = posY
 	outline.oPosZ = posZ
+	outline.oOpacity = 127
 
 	local current_item = gCurrentItem
 	if current_item then

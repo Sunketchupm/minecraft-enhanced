@@ -151,12 +151,10 @@ function bhv_mce_block_init(obj)
     obj.header.gfx.skipInViewCheck = true
 end
 
---[[ -- Unused for now
 ---@param obj Object
 function bhv_mce_block_loop(obj)
-    
+    obj.oOpacity = 50
 end
-]]
 
 --- Called from mce_box.geo
 
