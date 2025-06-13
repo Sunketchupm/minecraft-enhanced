@@ -11,12 +11,14 @@
     ---@field oScaleY number
     ---@field oScaleZ number
     ---@field oItemParams integer
+    ---@field oSurfaceId integer
 
 define_custom_obj_fields({
     oScaleX = "f32",
     oScaleY = "f32",
     oScaleZ = "f32",
-    oItemParams = "u32"
+    oItemParams = "u32",
+    oSurfaceId = "u32",
 })
 
 gCurrentItem = {behavior = nil, model = E_MODEL_NONE, params = {}}
@@ -72,6 +74,24 @@ function obj_scale_mult_to(obj, scale)
     obj.header.gfx.scale.z = obj.header.gfx.scale.z * scale
 end
 
+---@param obj Object
+---@return Object? item
+function obj_get_any_nearest_item(obj)
+    local nearest_item = nil
+    local nearest_dist = 0xFFFF
+    for _, item_behavior in ipairs(item_behaviors) do
+        local item = obj_get_nearest_object_with_behavior_id(obj, item_behavior)
+        if item then
+            local dist = dist_between_objects(item, obj)
+            if dist < nearest_dist then
+                nearest_item = item
+                nearest_dist = dist
+            end
+        end
+    end
+    return nearest_item
+end
+
 local function show_pos_in_free_move(obj)
     if obj_is_hidden_or_unrendered(obj) and gMarioStates[0].action == ACT_FREE_MOVE then
         spawn_non_sync_object(id_bhvSparkleParticleSpawner, E_MODEL_SPARKLES_ANIMATION, obj.oPosX, obj.oPosY, obj.oPosZ, nil)
@@ -80,11 +100,50 @@ end
 
 ------------------------------------------------------------------------------------------
 
+local COL_MCE_BLOCK_DEFAULT = smlua_collision_util_get("mce_block_col_default")
+local COL_MCE_BLOCK_LAVA = smlua_collision_util_get("mce_block_col_lava")
+local COL_MCE_BLOCK_DEATH = smlua_collision_util_get("mce_block_col_death")
+local COL_MCE_BLOCK_QUICKSAND = smlua_collision_util_get("mce_block_col_quicksand")
+local COL_MCE_BLOCK_SHALLOW_QUICKSAND = smlua_collision_util_get("mce_block_col_shallowsand")
+local COL_MCE_BLOCK_NOT_SLIPPERY = smlua_collision_util_get("mce_block_col_not_slippery")
+local COL_MCE_BLOCK_SLIPPERY = smlua_collision_util_get("mce_block_col_slippery")
+local COL_MCE_BLOCK_VERY_SLIPPERY = smlua_collision_util_get("mce_block_col_very_slippery")
+local COL_MCE_BLOCK_HANGABLE = smlua_collision_util_get("mce_block_col_hangable")
+local COL_MCE_BLOCK_VANISH = smlua_collision_util_get("mce_block_vanish")
+
+local MCE_BLOCK_DEFAULT_ID = 0
+local MCE_BLOCK_LAVA_ID = 1
+local MCE_BLOCK_DEATH_ID = 2
+local MCE_BLOCK_QUICKSAND_ID = 3
+local MCE_BLOCK_SHALLOW_QUICKSAND_ID = 4
+local MCE_BLOCK_NOT_SLIPPERY_ID = 5
+local MCE_BLOCK_SLIPPERY_ID = 6
+local MCE_BLOCK_VERY_SLIPPERY_ID = 7
+local MCE_BLOCK_HANGABLE_ID = 8
+local MCE_BLOCK_VANISH_ID = 9
+
+local standard_collision_lookup = {
+    [MCE_BLOCK_DEFAULT_ID] = COL_MCE_BLOCK_DEFAULT,
+    [MCE_BLOCK_LAVA_ID] = COL_MCE_BLOCK_LAVA,
+    [MCE_BLOCK_DEATH_ID] = COL_MCE_BLOCK_DEATH,
+    [MCE_BLOCK_QUICKSAND_ID] = COL_MCE_BLOCK_QUICKSAND,
+    [MCE_BLOCK_SHALLOW_QUICKSAND_ID] = COL_MCE_BLOCK_SHALLOW_QUICKSAND,
+    [MCE_BLOCK_NOT_SLIPPERY_ID] = COL_MCE_BLOCK_NOT_SLIPPERY,
+    [MCE_BLOCK_SLIPPERY_ID] = COL_MCE_BLOCK_SLIPPERY,
+    [MCE_BLOCK_VERY_SLIPPERY_ID] = COL_MCE_BLOCK_VERY_SLIPPERY,
+    [MCE_BLOCK_HANGABLE_ID] = COL_MCE_BLOCK_HANGABLE,
+    [MCE_BLOCK_VANISH_ID] = COL_MCE_BLOCK_VANISH,
+}
+
 --- Called from bhvMceBlock.bhv
 
 ---@param obj Object
 function bhv_mce_block_init(obj)
-    obj.collisionData = COL_MCE_BLOCK_DEFAULT
+    local collision = COL_MCE_BLOCK_DEFAULT
+    if standard_collision_lookup[obj.oSurfaceId] then
+        collision = standard_collision_lookup[obj.oSurfaceId]
+    end
+    obj.collisionData = collision
     obj.oCollisionDistance = 5000
     obj.header.gfx.skipInViewCheck = true
 end
@@ -323,24 +382,6 @@ hook_event(HOOK_UPDATE, koopa_shell_delete_if_unused)
 
 ------------------------------------------------------------------------------------------
 
----@param obj Object
----@return Object? item
-function obj_get_any_nearest_item(obj)
-    local nearest_item = nil
-    local nearest_dist = 0xFFFF
-    for _, item_behavior in ipairs(item_behaviors) do
-        local item = obj_get_nearest_object_with_behavior_id(obj, item_behavior)
-        if item then
-            local dist = dist_between_objects(item, obj)
-            if dist < nearest_dist then
-                nearest_item = item
-                nearest_dist = dist
-            end
-        end
-    end
-    return nearest_item
-end
-
 local function on_object_count_chat_commmand()
     local count = 0
     for i = OBJ_LIST_PLAYER, NUM_OBJ_LISTS - 1, 1 do
@@ -353,6 +394,10 @@ local function on_object_count_chat_commmand()
     djui_chat_message_create("Total objects: " .. count .. "/" .. OBJECT_POOL_CAPACITY)
     return true
 end
+
+hook_chat_command("objects", "Counts the amount of objects in the current area", on_object_count_chat_commmand)
+
+------------------------------------------------------------------------------------------
 
 ---@param msg string
 local function on_set_item_size_chat_command(msg)
@@ -387,5 +432,36 @@ local function on_set_item_size_chat_command(msg)
     return true
 end
 
-hook_chat_command("objects", "Counts the amount of objects in the current area", on_object_count_chat_commmand)
+local block_id_lookup = {
+    ["default"] = MCE_BLOCK_DEFAULT_ID,
+    ["none"] = MCE_BLOCK_DEFAULT_ID,
+    ["lava"] = MCE_BLOCK_LAVA_ID,
+    ["death"] = MCE_BLOCK_DEATH_ID,
+    ["quicksand"] = MCE_BLOCK_QUICKSAND_ID,
+    ["shallow quicksand"] = MCE_BLOCK_SHALLOW_QUICKSAND_ID,
+    ["shallowsand"] = MCE_BLOCK_SHALLOW_QUICKSAND_ID,
+    ["not slippery"] = MCE_BLOCK_NOT_SLIPPERY_ID,
+    ["slippery"] = MCE_BLOCK_SLIPPERY_ID,
+    ["very slippery"] = MCE_BLOCK_VERY_SLIPPERY_ID,
+    ["hangable"] = MCE_BLOCK_HANGABLE_ID,
+    ["vanish"] = MCE_BLOCK_VANISH_ID,
+}
+
+---@param msg string
+local function on_set_surface_chat_command(msg)
+    if block_id_lookup[msg:lower()] then
+        if HotbarItemList[selected_hotbar_index].item and HotbarItemList[selected_hotbar_index].item.behavior == bhvMceBlock then
+            HotbarItemList[selected_hotbar_index].item.misc.surface = block_id_lookup[msg:lower()]
+            djui_chat_message_create("Set the surface type to " .. msg)
+        else
+            djui_chat_message_create("You must have a block selected to change its surface type!")
+        end
+    else
+        djui_chat_message_create("Could not find surface type " .. "\"" .. msg .. "\"")
+    end
+    return true
+end
+
 hook_chat_command("size", "[num] or [x y z] | Sets the size scaling of the currently selected item. Clamped between 0.01 and 10", on_set_item_size_chat_command)
+hook_chat_command("surface", "! BLOCK ONLY ! Sets the surface type of a block. Refer to the Surface Types tab for which exist and what they do", on_set_surface_chat_command)
+hook_chat_command("surf", "! SAME AS /surface !", on_set_surface_chat_command)

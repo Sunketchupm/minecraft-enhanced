@@ -100,6 +100,8 @@ local function on_death(m)
     else
         warp_to_start_level()
     end
+    set_mario_action(m, ACT_FREEFALL, 0)
+    soft_reset_camera(m.area.camera)
     return false
 end
 

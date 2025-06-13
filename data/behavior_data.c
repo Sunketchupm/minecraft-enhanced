@@ -23,7 +23,7 @@ const BehaviorScript bhvMceBlock[] = {
     BEGIN(OBJ_LIST_SURFACE),
     ID(id_bhvNewId),
     OR_INT(oFlags, OBJ_FLAG_UPDATE_GFX_POS_AND_ANGLE),
-    //LOAD_COLLISION_DATA(custom_box_collision_default),
+    //LOAD_COLLISION_DATA(mce_block_col_default),
     SET_FLOAT(oCollisionDistance, 500),
     //SET_HOME(),
     CALL_NATIVE(bhv_mce_block_init),

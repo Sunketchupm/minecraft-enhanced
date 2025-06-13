@@ -10,6 +10,9 @@ gLevelValues.fixInvalidShellRides = false
 
 CanBuild = true
 
+E_MODEL_MCE_BLOCK = smlua_model_util_get_id("mce_block")
+E_MODEL_OUTLINE = smlua_model_util_get_id("mce_outline")
+
 -------------------------------------------------------------------------------
 
 local on_grid = true
@@ -184,9 +187,11 @@ local function place_item()
 			obj.oScaleY = current_item.size.y
 			obj.oScaleZ = current_item.size.z
 			obj_scale_xyz(obj, current_item.size.x, current_item.size.y, current_item.size.z)
-			--[[if current_item.misc then
-				
-			end]]
+			if current_item.misc then
+				if current_item.misc.surface then
+					obj.oSurfaceId = current_item.misc.surface
+				end
+			end
 		end
 	)
 

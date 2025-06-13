@@ -654,20 +654,6 @@ local function handle_hotbar_inputs(m)
     m.controller.buttonPressed = m.controller.buttonPressed & ~(L_JPAD | R_JPAD)
 end
 
----@param m MarioState
-local function handle_hotbar_menu_inputs(m)
-    local pressed = m.controller.buttonPressed
-    if pressed & L_JPAD ~= 0 and selected_hotbar_index > 1 then
-        selected_hotbar_index = selected_hotbar_index - 1
-    elseif pressed & R_JPAD ~= 0 and selected_hotbar_index < HOTBAR_SIZE then
-        selected_hotbar_index = selected_hotbar_index + 1
-    end
-
-    if m.controller.buttonReleased & A_BUTTON ~= 0 then
-        HotbarItemList[selected_hotbar_index] = TabItemList[active_tab][selected_item_index]
-    end
-end
-
 ----------------------------------------------------
 
 local function handle_change_tab_inputs(pressed)
@@ -747,11 +733,11 @@ local function handle_pick_item_inputs(pressed)
         end
         mouse_prev_item_index = selected_item_index
         if mouse_has_clicked and TabItemList[active_tab] and TabItemList[active_tab][selected_item_index] then
-            HotbarItemList[selected_hotbar_index] = TabItemList[active_tab][selected_item_index]
+            HotbarItemList[selected_hotbar_index] = table.deepcopy(TabItemList[active_tab][selected_item_index])
             play_sound(SOUND_MENU_CLICK_FILE_SELECT, gGlobalSoundSource)
         end
     elseif not moved_mouse and pressed & A_BUTTON ~= 0 and TabItemList[active_tab] and TabItemList[active_tab][selected_item_index] then
-        HotbarItemList[selected_hotbar_index] = TabItemList[active_tab][selected_item_index]
+        HotbarItemList[selected_hotbar_index] = table.deepcopy(TabItemList[active_tab][selected_item_index])
         play_sound(SOUND_MENU_CLICK_FILE_SELECT, gGlobalSoundSource)
     end
 end
@@ -792,7 +778,6 @@ end
 local function handle_menu_inputs(m)
     if active_tab <= TAB_MAIN_END then
         handle_standard_inputs(m)
-        handle_hotbar_menu_inputs(m)
         m.controller.buttonPressed = 0
     end
 end
@@ -813,12 +798,11 @@ local function before_mario_update(m)
         return
     end
 
+    handle_hotbar_inputs(m)
     if MenuOpen then
         m.freeze = 1
         handle_mouse_input()
         handle_menu_inputs(m)
-    else
-        handle_hotbar_inputs(m)
     end
 
     camera_romhack_allow_dpad_usage(0)
