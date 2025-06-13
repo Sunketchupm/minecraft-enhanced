@@ -108,7 +108,7 @@ local COL_MCE_BLOCK_NOT_SLIPPERY = smlua_collision_util_get("mce_block_col_not_s
 local COL_MCE_BLOCK_SLIPPERY = smlua_collision_util_get("mce_block_col_slippery")
 local COL_MCE_BLOCK_VERY_SLIPPERY = smlua_collision_util_get("mce_block_col_very_slippery")
 local COL_MCE_BLOCK_HANGABLE = smlua_collision_util_get("mce_block_col_hangable")
-local COL_MCE_BLOCK_VANISH = smlua_collision_util_get("mce_block_vanish")
+local COL_MCE_BLOCK_VANISH = smlua_collision_util_get("mce_block_col_vanish")
 
 local MCE_BLOCK_NO_COLLISION_ID = -1
 local MCE_BLOCK_DEFAULT_ID = 0
