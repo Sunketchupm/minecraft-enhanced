@@ -148,7 +148,7 @@ function bhv_mock_item_loop(obj)
 		obj_scale_xyz(obj, outline_scale.x, outline_scale.y, outline_scale.z)
 		obj_set_model_extended(obj, current_item.model)
 
-		local mock_settings = current_item.mock
+		local mock_settings = current_item.misc.mock
 		if mock_settings.billboard then
 			obj_set_billboard(obj)
 		end
@@ -187,6 +187,11 @@ local function place_item()
 			obj.oScaleY = current_item.size.y
 			obj.oScaleZ = current_item.size.z
 			obj_scale_xyz(obj, current_item.size.x, current_item.size.y, current_item.size.z)
+			if current_item.misc then
+				if current_item.misc.surface then
+					obj.oSurfaceId = current_item.misc.surface
+				end
+			end
 		end
 	)
 
