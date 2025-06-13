@@ -2,26 +2,28 @@
     ---@field behavior BehaviorId
     ---@field model ModelExtendedId
     ---@field spawnYOffset number
-    ---@field mock table
-    ---@field behaviorParams integer
+    ---@field params integer
     ---@field size Vec3f
+    ---@field misc table
 
 ---@class Object
     ---@field oScaleX number
     ---@field oScaleY number
     ---@field oScaleZ number
+    ---@field oItemParams integer
 
 define_custom_obj_fields({
     oScaleX = "f32",
     oScaleY = "f32",
-    oScaleZ = "f32"
+    oScaleZ = "f32",
+    oItemParams = "u32"
 })
 
 gCurrentItem = {behavior = nil, model = E_MODEL_NONE, params = {}}
 local item_behaviors = {}
 add_first_update(function ()
     ---@type Item
-    gCurrentItem = { behavior = bhvMceBlock, model = E_MODEL_MCE_BLOCK, spawnYOffset = 0, mock = {}, behaviorParams = 0, size = gVec3fOne() }
+    gCurrentItem = { behavior = bhvMceBlock, model = E_MODEL_MCE_BLOCK, spawnYOffset = 0, params = 0, size = gVec3fOne(), misc = { mock = {} } }
     ---@type BehaviorId[]
     item_behaviors = {
         bhvMceBlock,
@@ -101,10 +103,10 @@ function lua_asm_set_color(node, _misc)
     local dl = graphNode.displayList
 
     local obj = geo_get_current_object()
-    local color = obj.oBehParams
-    local r = (obj.oBehParams & 0x00FF0000) >> 16
-    local g = (obj.oBehParams & 0x0000FF00) >> 8
-    local b = (obj.oBehParams & 0x000000FF) >> 0
+    local color = obj.oItemParams
+    local r = (obj.oItemParams & 0x00FF0000) >> 16
+    local g = (obj.oItemParams & 0x0000FF00) >> 8
+    local b = (obj.oItemParams & 0x000000FF) >> 0
     if color then
         gfx_parse(dl, function(cmd, op)
             if op == G_SETPRIMCOLOR then
@@ -175,11 +177,11 @@ function bhv_mce_coin_init(obj)
     obj_set_hitbox(obj, coin_hitbox)
     local model = obj_get_model_id_extended(obj)
     if model == E_MODEL_YELLOW_COIN then
-        obj.oNumLootCoins = 1
+        obj.oDamageOrCoinValue = 1
     elseif model == E_MODEL_RED_COIN then
-        obj.oNumLootCoins = 2
+        obj.oDamageOrCoinValue = 2
     elseif model == E_MODEL_BLUE_COIN then
-        obj.oNumLootCoins = 5
+        obj.oDamageOrCoinValue = 5
         obj_scale_mult_to(obj, 1.25)
     end
 end
@@ -189,6 +191,7 @@ function bhv_mce_coin_loop(obj)
     if obj.oAction == 0 then
         if obj.oInteractStatus & INT_STATUS_INTERACTED ~= 0 then
             spawn_non_sync_object(id_bhvGoldenCoinSparkles, E_MODEL_SPARKLES, obj.oPosX, obj.oPosY, obj.oPosZ, nil)
+            cur_obj_disable_rendering_and_become_intangible(obj)
             obj.oAction = 1
         end
     else
@@ -245,7 +248,7 @@ function bhv_mce_exclamation_box_loop(obj)
             obj.oInteractStatus = 0
             obj.oPosY = obj.oHomeY
             obj.oGraphYOffset = 0
-            local index = obj.oBehParams & 0xFF
+            local index = obj.oItemParams & 0xFF
             if index < 1 or index > 4 then
                 index = 4
             end
@@ -279,7 +282,7 @@ function bhv_mce_exclamation_box_loop(obj)
             obj.oAction = 2
         end
     elseif obj.oAction == 2 then
-        local index = obj.oBehParams & 0xFF
+        local index = obj.oItemParams & 0xFF
         local content = contents[index]
         if content then
             local behavior_id = content.behavior

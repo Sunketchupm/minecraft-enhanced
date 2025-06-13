@@ -140,12 +140,12 @@ function bhv_mock_item_loop(obj)
 		obj.oFaceAngleRoll = outline.oFaceAngleRoll
 		obj.header.gfx.node.flags = obj.header.gfx.node.flags & ~GRAPH_RENDER_BILLBOARD
 		obj.oAnimState = 0
-		obj.oBehParams = current_item.behaviorParams
+		obj.oItemParams = current_item.params
 		local outline_scale = outline.header.gfx.scale
 		obj_scale_xyz(obj, outline_scale.x, outline_scale.y, outline_scale.z)
 		obj_set_model_extended(obj, current_item.model)
 
-		local mock_settings = current_item.mock
+		local mock_settings = current_item.misc.mock
 		if mock_settings.billboard then
 			obj_set_billboard(obj)
 		end
@@ -179,7 +179,7 @@ local function place_item()
 			obj.oMoveAnglePitch = outline.oMoveAnglePitch
 			obj.oMoveAngleYaw = outline.oMoveAngleYaw
 			obj.oMoveAngleRoll = outline.oMoveAngleRoll
-			obj.oBehParams = current_item.behaviorParams
+			obj.oItemParams = current_item.params
 			obj.oScaleX = current_item.size.x
 			obj.oScaleY = current_item.size.y
 			obj.oScaleZ = current_item.size.z

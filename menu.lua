@@ -63,7 +63,15 @@ end
 ---@param icon TextureInfo
 local function add_item(tab, behavior, model, offset, mock_settings, behavior_param, icon)
     ---@type MenuItemLink
-    local item = { item = { behavior = behavior, model = model, spawnYOffset = offset, mock = mock_settings, behaviorParams = behavior_param, size = gVec3fOne() }, icon = icon }
+    local item = { item = {
+        behavior = behavior,
+        model = model,
+        spawnYOffset = offset,
+        params = behavior_param,
+        size = gVec3fOne(),
+        misc = { mock = mock_settings }
+    }, icon = icon }
+
     item.self = item
     table.insert(TabItemList[tab], item)
 end
@@ -81,9 +89,9 @@ add_first_update(function ()
                 behavior = bhvMceBlock,
                 model = E_MODEL_MCE_BLOCK,
                 spawnYOffset = 0,
-                mock = {},
-                behaviorParams = color,
-                size = gVec3fOne()
+                params = color,
+                size = gVec3fOne(),
+                misc = { mock = {} }
             },
             icon = gTextures.star
         }
