@@ -16,6 +16,14 @@ local HOTBAR_SIZE = 10
 local item_list_row_count = 10
 local item_list_column_count = 10
 
+-------------- TEXTURES --------------
+local A_BUTTON_TEX = get_texture_info("Abutton")
+local B_BUTTON_TEX = get_texture_info("Bbutton")
+local L_TRIG_TEX = get_texture_info("Ltrig")
+local R_TRIG_TEX =  get_texture_info("Rtrig")
+local Z_TRIG_TEX =  get_texture_info("Ztrig")
+--------------------------------------
+
 ---@class MenuItemLink
     ---@field item Item
     ---@field icon TextureInfo
@@ -107,7 +115,7 @@ end
 ---@param pixel_size number?
 local function render_pixel_border(x, y, width, height, color, pixel_size)
     local border_color = {r = 0, g = 0, b = 0, a = 255}
-    local size = 1
+    local size = 2
     if color then
         border_color = color
     end
@@ -350,12 +358,6 @@ local function render_interior_rectangle(x, y, width, height)
     djui_hud_set_color_with_table(color)
     djui_hud_render_rect(interior_rect_x, interior_rect_y, interior_rect_width, interior_rect_height)
     render_item_list(interior_rect_x, interior_rect_y, interior_rect_width, interior_rect_height, TabItemList[active_tab])
-
-    ------------------------------------------------------------- SHERBIE HERE ------------------------------------------------------------------
-    -- Useful functions:
-    -- djui_hud_set_color(r, g, b, a)
-    -- djui_hud_print_text(message, x, y, scale)
-    -- djui_hud_measure_text(message)
 end
 
 ------------------------------------------------------------------------------------------------
@@ -394,7 +396,49 @@ end
 ---@param width number
 ---@param height number
 local function render_help_tab(x, y, width, height)
-    render_tab_header(x, y, width, height, "How to use")
+    render_tab_header(x, y, width, height, "Controls")
+
+    -- Useful functions:
+    -- djui_hud_set_color(r, g, b, a)
+    -- djui_hud_print_text(message, x, y, scale)
+    -- djui_hud_measure_text(message)  
+
+    -- rectangles?
+    local rect_x = x + (width * 0.035)
+    local rect_y = y + (height * 0.15)
+    local rect_width = width * 0.93
+    local rect_height = height * 0.09
+    local colors = {{r = 120, g = 120, b = 120, a = 255}, {r = 186, g = 186, b = 186, a = 255}, {r = 98, g = 98, b = 98, a = 255}}
+    render_bordered_rectangle(rect_x, rect_y, rect_width, rect_height, colors, 0.004, 0.06)
+    render_bordered_rectangle(rect_x, rect_y * 1.2, rect_width, rect_height, colors, 0.004, 0.06)
+    render_bordered_rectangle(rect_x, rect_y * 1.4, rect_width, rect_height, colors, 0.004, 0.06)
+    render_bordered_rectangle(rect_x, rect_y * 1.6, rect_width, rect_height, colors, 0.004, 0.06)
+
+    -- control textures
+    local tex_x = x + (width * 0.91)
+    local tex_y = y + (height * 0.16)
+    djui_hud_set_color(255, 255, 255, 255)
+    djui_hud_render_texture(L_TRIG_TEX, tex_x, y + (height * 0.165), 2, 2)
+    djui_hud_render_texture(L_TRIG_TEX, tex_x / 1.04, y + (height * 0.165), 2, 2)
+    djui_hud_render_texture(A_BUTTON_TEX, tex_x, y + (height * 0.265), 2, 2)
+    djui_hud_render_texture(B_BUTTON_TEX, tex_x, y + (height * 0.36), 2, 2)
+    djui_hud_render_texture(Z_TRIG_TEX, tex_x, y + (height * 0.455), 2, 2)
+
+    -- Text Shadow (theres probably a better way to add this)
+    local shadow_x = x + (width * 0.057)
+    djui_hud_set_color(0, 0, 0, 255)
+    djui_hud_print_text("Fly", shadow_x, y + (height * 0.167), 1.1)
+    djui_hud_print_text("Fly Up", shadow_x, y + (height * 0.262), 1.1)
+    djui_hud_print_text("Fly Down", shadow_x, y + (height * 0.357), 1.1)
+    djui_hud_print_text("Sprint Fly", shadow_x, y + (height * 0.452), 1.1)
+
+    -- Actual Text
+    local text_x = x + (width * 0.055)
+    djui_hud_set_color(255, 255, 255, 255)
+    djui_hud_print_text("Fly", text_x, y + (height * 0.165), 1.1)
+    djui_hud_print_text("Fly Up", text_x, y + (height * 0.26), 1.1)
+    djui_hud_print_text("Fly Down", text_x, y + (height * 0.355), 1.1)
+    djui_hud_print_text("Sprint Fly", text_x, y + (height * 0.45), 1.1)
 end
 
 local MenuTabs = {
@@ -437,7 +481,7 @@ local function render_main_rectangle(screen_width, screen_height)
     local y = screen_height * 0.2
     local width = screen_width * 0.5
     local height = screen_height * 0.6
-    local colors = {{r = 200, g = 200, b = 200, a = 255}, {r = 255, g = 255, b = 255, a = 255}, {r = 150, g = 150, b = 150, a = 255}}
+    local colors = {{r = 200, g = 200, b = 200, a = 255}, {r = 255, g = 255, b = 255, a = 255}, {r = 90, g = 88, b = 88, a = 255}}
     for i = 1, TAB_MAIN_END do
         render_menu_tab(x, y, width, height, i)
     end
@@ -453,7 +497,7 @@ local function render_hotbar(screen_width, screen_height)
     local width = screen_width * 0.5
     local height = screen_height * 0.08
     local x = screen_width * 0.25
-    local y = screen_height - (height * 1.4)
+    local y = screen_height - (height * 2)
     local colors = {{r = 64, g = 64, b = 32, a = 192}, {r = 128, g = 128, b = 128, a = 255}, {r = 128, g = 128, b = 128, a = 255}}
     render_bordered_rectangle(x, y, width, height, colors, 0.007, 0.06)
     for index, item in ipairs(HotbarItemList) do
