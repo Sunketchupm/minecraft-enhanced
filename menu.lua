@@ -605,8 +605,9 @@ local function render_hotbar(screen_width, screen_height)
         end
 
         if index == selected_hotbar_index then
-            local slot_colors = {{r = 32, g = 32, b = 0, a = 0}, {r = 192, g = 192, b = 192, a = 255}, {r = 192, g = 192, b = 192, a = 255}}
-            render_bordered_rectangle(slot_x * 0.995, slot_y * 0.995, slot_width + 10, slot_height + 13, slot_colors, 0.1, 0.1)
+            djui_hud_set_color(255, 255, 255, 150)
+            render_colored_rectangle(slot_x, slot_y, slot_width, slot_height, nil, 0.05, 0.05)
+            djui_hud_render_rect(slot_x, slot_y, slot_width, slot_height)
         end
         if item.icon then
             local item_x = (slot_x + slot_width * 0.5) - (item.icon.width * 0.5)
