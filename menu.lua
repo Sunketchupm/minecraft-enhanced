@@ -16,23 +16,26 @@ local HOTBAR_SIZE = 10
 local item_list_row_count = 10
 local item_list_column_count = 10
 
+local tooltip_stay = 60
+local tooltip_timer = 150
+
 -------------- TEXTURES --------------
 local A_BUTTON_TEX = get_texture_info("Abutton")
 local B_BUTTON_TEX = get_texture_info("Bbutton")
-local X_BUTTON_TEX = gTextures.star --get_texture_info("Xbutton")
-local Y_BUTTON_TEX = gTextures.star --get_texture_info("Ybutton")
-local U_JPAD_TEX = gTextures.star --get_texture_info("Ujpad")
-local L_JPAD_TEX = gTextures.star --get_texture_info("Ljpad")
-local D_JPAD_TEX = gTextures.star --get_texture_info("Djpad")
-local R_JPAD_TEX = gTextures.star --get_texture_info("Rjpad")
-local U_CBUTTON_TEX = gTextures.star --get_texture_info("Ucbutton")
-local L_CBUTTON_TEX = gTextures.star --get_texture_info("Lcbutton")
-local D_CBUTTON_TEX = gTextures.star --get_texture_info("Dcbutton")
-local R_CBUTTON_TEX = gTextures.star --get_texture_info("Rcbutton")
+local X_BUTTON_TEX = get_texture_info("Xbutton")
+local Y_BUTTON_TEX = get_texture_info("Ybutton")
+local U_JPAD_TEX = get_texture_info("UJpad")
+local L_JPAD_TEX = get_texture_info("LJpad")
+local D_JPAD_TEX = get_texture_info("DJpad")
+local R_JPAD_TEX = get_texture_info("RJpad")
+local U_CBUTTON_TEX = get_texture_info("Ucbutton")
+local L_CBUTTON_TEX = get_texture_info("Lcbutton")
+local D_CBUTTON_TEX = get_texture_info("Dcbutton")
+local R_CBUTTON_TEX = get_texture_info("Rcbutton")
 local L_TRIG_TEX = get_texture_info("Ltrig")
 local R_TRIG_TEX =  get_texture_info("Rtrig")
 local Z_TRIG_TEX =  get_texture_info("Ztrig")
-local CONTROL_STICK_TEX = gTextures.star --get_texture_info("controlstick")
+local CONTROL_STICK_TEX = get_texture_info("Ctrlstick")
 --------------------------------------
 
 ---@class MenuItemLink
@@ -487,8 +490,8 @@ local function render_help_tab(x, y, width, height)
 
     item_page_max = 3
     if current_item_page == 1 then
-        render_controls_rect(rect_x, rect_y * 1.1, rect_width, rect_height, "Fly / Enter/Exit Build Mode",
-            {{prefix = " + ", texture = L_TRIG_TEX}, {prefix = "(Usable outside Build Mode) ", texture = L_TRIG_TEX}})
+        render_controls_rect(rect_x, rect_y * 1.1, rect_width, rect_height, "Enter/Exit Build Mode (Fly)",
+            {{prefix = " + ", texture = L_TRIG_TEX}, {prefix = "", texture = L_TRIG_TEX}})
         render_controls_rect(rect_x, rect_y * 1.3, rect_width, rect_height, "Fly Up",
             {{texture = A_BUTTON_TEX}})
         render_controls_rect(rect_x, rect_y * 1.5, rect_width, rect_height, "Fly Down",
@@ -497,14 +500,13 @@ local function render_help_tab(x, y, width, height)
             {{texture = B_BUTTON_TEX}})
         render_controls_rect(rect_x, rect_y * 1.9, rect_width, rect_height, "Slow Fly",
             {{prefix = " and ", texture = L_TRIG_TEX}, {prefix = "Hold ", texture = B_BUTTON_TEX}})
-        render_controls_rect(rect_x, rect_y * 2.1, rect_width, rect_height, "Lock Angle",
+        render_controls_rect(rect_x, rect_y * 2.1, rect_width, rect_height, "Lock Facing Angle",
             {{prefix = "Hold ", texture = L_TRIG_TEX}})
 
-        render_tab_header(x, y + height * 0.83, width, height, "Flying Controls")
-    elseif current_item_page == 2 then
+        render_tab_header(x, y + height * 0.83, width, height, "Flying Controls")    elseif current_item_page == 2 then
         render_controls_rect(rect_x, rect_y * 1.1, rect_width, rect_height, "Place/Delete Item",
             {{texture = Y_BUTTON_TEX}})
-        render_controls_rect(rect_x, rect_y * 1.3, rect_width, rect_height, "Change Hotbar Selection",
+        render_controls_rect(rect_x, rect_y * 1.3, rect_width, rect_height, "Cycle Hotbar Selection",
             {{prefix = " / ", texture = R_JPAD_TEX}, {texture = L_JPAD_TEX}})
         render_controls_rect(rect_x, rect_y * 1.5, rect_width, rect_height, "Change Angle (Pitch)",
             {{prefix = " / ", texture = D_JPAD_TEX}, {texture = U_JPAD_TEX}})
@@ -521,13 +523,13 @@ local function render_help_tab(x, y, width, height)
             {{texture = X_BUTTON_TEX}})
         render_controls_rect(rect_x, rect_y * 1.3, rect_width, rect_height, "Change Item Selection",
             {{texture = CONTROL_STICK_TEX}})
-        render_controls_rect(rect_x, rect_y * 1.5, rect_width, rect_height, "Change Pages",
+        render_controls_rect(rect_x, rect_y * 1.5, rect_width, rect_height, "Next/Previous Page",
             {{prefix = " / ", texture = R_CBUTTON_TEX}, {texture = L_CBUTTON_TEX}})
-        render_controls_rect(rect_x, rect_y * 1.7, rect_width, rect_height, "Change Tabs",
+        render_controls_rect(rect_x, rect_y * 1.7, rect_width, rect_height, "Next/Previous Tab",
             {{prefix = " / ", texture = R_TRIG_TEX}, {texture = L_TRIG_TEX}})
-        render_controls_rect(rect_x, rect_y * 1.9, rect_width, rect_height, "Change Hotbar Selection",
+        render_controls_rect(rect_x, rect_y * 1.9, rect_width, rect_height, "Cycle Hotbar Selection (Menu)",
             {{prefix = " / ", texture = R_JPAD_TEX}, {texture = L_JPAD_TEX}})
-        render_controls_rect(rect_x, rect_y * 2.1, rect_width, rect_height, "Send To Hotbar",
+        render_controls_rect(rect_x, rect_y * 2.1, rect_width, rect_height, "Select To Hotbar",
             {{texture = A_BUTTON_TEX}})
 
         render_tab_header(x, y + height * 0.83, width, height, "Menu Navigation Controls")
@@ -590,7 +592,7 @@ local function render_hotbar(screen_width, screen_height)
     local width = screen_width * 0.5
     local height = screen_height * 0.08
     local x = screen_width * 0.25
-    local y = screen_height - (height * 1.5)
+    local y = screen_height - (height * 1.8) --need space for on-screen controls
     local colors = {{r = 64, g = 64, b = 32, a = 192}, {r = 128, g = 128, b = 128, a = 255}, {r = 128, g = 128, b = 128, a = 255}}
     render_bordered_rectangle(x, y, width, height, colors, 0.007, 0.06)
     for index, item in ipairs(HotbarItemList) do
@@ -605,7 +607,6 @@ local function render_hotbar(screen_width, screen_height)
         if index == selected_hotbar_index then
             local slot_colors = {{r = 32, g = 32, b = 0, a = 0}, {r = 192, g = 192, b = 192, a = 255}, {r = 192, g = 192, b = 192, a = 255}}
             render_bordered_rectangle(slot_x * 0.995, slot_y * 0.995, slot_width + 10, slot_height + 13, slot_colors, 0.1, 0.1)
-
         end
         if item.icon then
             local item_x = (slot_x + slot_width * 0.5) - (item.icon.width * 0.5)
@@ -630,11 +631,69 @@ end
 ----------------------------------------------------
 
 local function hud_render()
-    if not CanBuild then return end
     djui_hud_set_resolution(RESOLUTION_DJUI)
-
     local screen_width = djui_hud_get_screen_width()
     local screen_height = djui_hud_get_screen_height()
+----------------------------- ON-SCREEN CONTROLS (tooltips take up too much brain power for a noob like me)-----------------------------
+    local x = screen_width * 0.44
+    local y = screen_height * 0.95
+    if not CanBuild then
+        djui_hud_set_color(0, 0 , 0, 255)
+        djui_hud_print_text("Fly (Enter/Exit Build Mode)", x * 0.972, y * 1.002, 1)
+
+        djui_hud_set_color(255, 255, 255, 255)
+        djui_hud_render_texture(L_TRIG_TEX, x * 0.88, y, 2, 2)
+        djui_hud_render_texture(L_TRIG_TEX, x * 0.91, y, 2, 2)
+        djui_hud_print_text("Fly (Enter/Exit Build Mode)", x * 0.97, y, 1)
+        return
+    else
+        if not MenuOpen then
+            local l_held_modifier = gMarioStates[0].controller.buttonDown & L_TRIG ~= 0
+            if not l_held_modifier then
+                djui_hud_set_color(0, 0, 0, 255)
+                djui_hud_print_text("Fly Up", x * 0.602, y * 1.002, 1)
+                djui_hud_print_text("Fly Down", x * 0.752, y * 1.002, 1)
+                djui_hud_print_text("Sprint Fly", x * 0.932, y * 1.002, 1)
+                djui_hud_print_text("Place Item", x * 1.132, y * 1.002, 1)
+                djui_hud_print_text("Open Menu", x * 1.342, y * 1.002, 1)
+                djui_hud_print_text("Extra Controls", x * 1.552, y * 1.002, 1)
+
+                djui_hud_set_color(255, 255, 255, 255)
+                djui_hud_render_texture(A_BUTTON_TEX, x * 0.54, y, 2, 2)
+                djui_hud_print_text("Fly Up", x * 0.6, y, 1)
+                djui_hud_render_texture(Z_TRIG_TEX, x * 0.7, y, 2, 2)
+                djui_hud_print_text("Fly Down", x * 0.75, y, 1)
+                djui_hud_render_texture(B_BUTTON_TEX, x * 0.88, y, 2, 2)
+                djui_hud_print_text("Sprint Fly", x * 0.93, y, 1)
+                djui_hud_render_texture(Y_BUTTON_TEX, x * 1.08, y, 2, 2)
+                djui_hud_print_text("Place Item", x * 1.13, y, 1)
+                djui_hud_render_texture(X_BUTTON_TEX, x * 1.28, y, 2, 2)
+                djui_hud_print_text("Open Menu", x * 1.34, y, 1)
+                djui_hud_render_texture(L_TRIG_TEX, x * 1.49, y, 2, 2)
+                djui_hud_print_text("Extra Controls", x * 1.55, y, 1)
+            else
+                djui_hud_set_color(0, 0, 0, 255)
+
+                djui_hud_set_color(255, 255, 255, 255)
+                djui_hud_render_texture(L_TRIG_TEX, x * 0.54, y, 2, 2)
+                djui_hud_print_text("Lock Face Angle", x * 0.6, y, 1)
+                djui_hud_render_texture(L_TRIG_TEX, x * 0.83, y, 2, 2)
+                djui_hud_render_texture(B_BUTTON_TEX, x * 0.86, y, 2, 2)
+                djui_hud_print_text("Slow Fly", x * 0.91, y, 1)
+
+                djui_hud_render_texture(B_BUTTON_TEX, x * 0.88, y, 2, 2)
+                djui_hud_print_text("Sprint Fly", x * 0.93, y, 1)
+                --djui_hud_render_texture(Y_BUTTON_TEX, x * 1.08, y, 2, 2)
+                --djui_hud_print_text("Place Item", x * 1.13, y, 1)
+                --djui_hud_render_texture(X_BUTTON_TEX, x * 1.28, y, 2, 2)
+                --djui_hud_print_text("Open Menu", x * 1.34, y, 1)
+                --djui_hud_render_texture(L_TRIG_TEX, x * 1.49, y, 2, 2)
+                --djui_hud_print_text("Extra Controls", x * 1.55, y, 1)
+            end
+            
+        end
+---------------------------------------------------------------------------------------------------------------------------------------
+    end
     render_menu(screen_width, screen_height)
 end
 
