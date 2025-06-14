@@ -16,9 +16,6 @@ local HOTBAR_SIZE = 10
 local item_list_row_count = 10
 local item_list_column_count = 10
 
-local tooltip_stay = 60
-local tooltip_timer = 150
-
 -------------- TEXTURES --------------
 local A_BUTTON_TEX = get_texture_info("Abutton")
 local B_BUTTON_TEX = get_texture_info("Bbutton")
@@ -226,6 +223,7 @@ local mouse_has_right_clicked = false
 --local mouse_hold_timer = 0
 local mouse_prev_item_index = 1
 local mouse_tab_was_clicked_on = 0
+local mouse_has_scrolled = 0
 
 local function render_mouse()
     if moved_mouse then
@@ -248,6 +246,7 @@ local function handle_mouse_input()
     end
     mouse_has_clicked = djui_hud_get_mouse_buttons_pressed() == 1
     mouse_has_right_clicked = djui_hud_get_mouse_buttons_pressed() == 4
+    mouse_has_scrolled = djui_hud_get_mouse_scroll_y()
     --[[
     mouse_click_held = djui_hud_get_mouse_buttons_down() == 1
     mouse_hold_released = djui_hud_get_mouse_buttons_released() == 1
@@ -802,10 +801,10 @@ end
 
 ---@param pressed integer
 local function handle_paging_inputs(pressed)
-    if pressed & L_CBUTTONS ~= 0 and current_item_page > 1 then
+    if (pressed & L_CBUTTONS ~= 0 or (moved_mouse and mouse_has_scrolled < 0)) and current_item_page > 1 then
         current_item_page = current_item_page - 1
         play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
-    elseif pressed & R_CBUTTONS ~= 0 and current_item_page < item_page_max then
+    elseif (pressed & R_CBUTTONS ~= 0 or (moved_mouse and mouse_has_scrolled > 0)) and current_item_page < item_page_max then
         current_item_page = current_item_page + 1
         play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
     end
