@@ -181,7 +181,7 @@ end
 local function place_item()
 	local current_item = gCurrentItem
 	if not outline or not current_item or not current_item.behavior or not current_item.model then return end
-	spawn_sync_object(
+	local item = spawn_sync_object(
 		current_item.behavior,
 		current_item.model,
 		outline.oPosX, outline.oPosY - (current_item.spawnYOffset * current_item.size.y), outline.oPosZ,
@@ -203,7 +203,12 @@ local function place_item()
 		end
 	)
 
-	play_sound(SOUND_GENERAL_BOX_LANDING, gMarioStates[0].marioObj.header.gfx.cameraToObject)
+	if item then
+		play_sound(SOUND_GENERAL_BOX_LANDING, gMarioStates[0].marioObj.header.gfx.cameraToObject)
+	else
+		play_sound(SOUND_MENU_CAMERA_BUZZ, gMarioStates[0].marioObj.header.gfx.cameraToObject)
+		djui_chat_message_create("Item failed to place. Perhaps the object limit was reached?")
+	end
 end
 
 local function determine_place_or_delete()
@@ -219,6 +224,7 @@ local function determine_place_or_delete()
 		if dists.x >= GridSize.x or dists.y >= GridSize.y or dists.z >= GridSize.z then
 			place_item()
 		else
+			play_sound(SOUND_GENERAL_BOX_LANDING, gMarioStates[0].marioObj.header.gfx.cameraToObject)
 			obj_mark_for_deletion(nearest)
 		end
 	else
