@@ -655,7 +655,7 @@ end
 
 ---@param x number
 ---@param y number
----@param buttons {prefix: string?, texture: TextureInfo}[]
+---@param buttons {prefix: string?, postfix: string?, texture: TextureInfo}[]
 local function render_controls_tip(x, y, buttons)
     local text_scale = 1
     local texture_scale = 2
@@ -675,6 +675,14 @@ local function render_controls_tip(x, y, buttons)
             render_shadowed_text(prefix, text_x, texture_y, text_scale)
             initial_x = texture_x + texture.width * texture_scale
         end
+        if button.postfix then
+            ---@type string
+            local postfix = button.postfix
+            local text_size = djui_hud_measure_text(postfix) * text_scale
+            local text_x = texture_x + texture.width * text_scale
+            render_shadowed_text(postfix, text_x, texture_y, text_scale)
+            initial_x = text_x + text_size
+        end
         djui_hud_render_texture(texture, texture_x, texture_y, texture_scale, texture_scale)
     end
 end
@@ -687,6 +695,9 @@ local function render_controls(screen_width, screen_height)
     if not CanBuild then
         djui_hud_set_color(0, 0, 0, 60)
         render_controls_tip(x, y, {{prefix = "Start Flying: ", texture = L_TRIG_TEX}, {prefix = " + ", texture = L_TRIG_TEX}})
+        -------------------------------------------------------- This thing --------------------------------------------------
+        render_controls_tip(x, y * 2, {{postfix = " : Postfix test", texture = L_TRIG_TEX}})
+        -----------------------------------------------------------------------------------------------------------------------
     else
         if not MenuOpen then
             local l_held_modifier = gMarioStates[0].controller.buttonDown & L_TRIG ~= 0
