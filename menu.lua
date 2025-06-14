@@ -27,6 +27,8 @@ local U_JPAD_TEX = get_texture_info("UJpad")
 local L_JPAD_TEX = get_texture_info("LJpad")
 local D_JPAD_TEX = get_texture_info("DJpad")
 local R_JPAD_TEX = get_texture_info("RJpad")
+local UD_JPAD_TEX = get_texture_info("U-Djpad")
+local LR_JPAD_TEX = get_texture_info("L-Rjpad")
 local U_CBUTTON_TEX = get_texture_info("Ucbutton")
 local L_CBUTTON_TEX = get_texture_info("Lcbutton")
 local D_CBUTTON_TEX = get_texture_info("Dcbutton")
@@ -692,44 +694,56 @@ end
 ---@param screen_width number
 ---@param screen_height number
 local function render_controls(screen_width, screen_height)
-    local x = screen_width * 0.05
-    local y = screen_height * 0.16
+    local x = screen_width * 0.02
+    local y = screen_height * 0.955
     if not CanBuild then
         djui_hud_set_color(0, 0, 0, 60)
-        render_controls_tip(x, y, {{prefix = "Start Flying: ", texture = L_TRIG_TEX}, {prefix = " + ", texture = L_TRIG_TEX}})
-        -------------------------------------------------------- This thing --------------------------------------------------
-        render_controls_tip(x, y * 2, {{postfix = " : Postfix test", texture = L_TRIG_TEX}})
-        -----------------------------------------------------------------------------------------------------------------------
+        render_controls_tip(x * 0.98, y, {{prefix = "", texture = L_TRIG_TEX}, {postfix = "  Fly (Enter Build Mode)", texture = L_TRIG_TEX}})
     else
         if not MenuOpen then
             local l_held_modifier = gMarioStates[0].controller.buttonDown & L_TRIG ~= 0
             if not l_held_modifier then
-                render_controls_tip(x, y * 1.0, {{prefix = "Fly Up: ", texture = A_BUTTON_TEX}})
-                render_controls_tip(x, y * 1.2, {{prefix = "Fly Down: ", texture = Z_TRIG_TEX}})
-                render_controls_tip(x, y * 1.4, {{prefix = "Sprint Fly: ", texture = B_BUTTON_TEX}})
-                render_controls_tip(x, y * 1.6, {{prefix = "Place Item: ", texture = Y_BUTTON_TEX}})
-                render_controls_tip(x, y * 1.8, {{prefix = "Open Menu: ", texture = X_BUTTON_TEX}})
-                render_controls_tip(x, y * 2.0, {{prefix = "Change Item Height: ", texture = U_JPAD_TEX}, {prefix = " / ", texture = D_JPAD_TEX}})
-                render_controls_tip(x, y * 2.2, {{prefix = "Change Hotbar: ", texture = L_JPAD_TEX}, {prefix = " / ", texture = R_JPAD_TEX}})
-                render_controls_tip(x, y * 2.4, {{prefix = "Lock Angle: Hold ", texture = L_TRIG_TEX}})
-                render_controls_tip(x, y * 2.6, {{prefix = "Extra Controls: Hold ", texture = L_TRIG_TEX}})
-                render_controls_tip(x, y * 2.8, {{prefix = "Stop Flying: ", texture = L_TRIG_TEX}, {prefix = " + ", texture = L_TRIG_TEX}})
+                if not gCurrentItem then
+                    render_controls_tip(x, y, {{postfix = "  Fly Up", texture = A_BUTTON_TEX}})
+                    render_controls_tip(x * 5.5, y, {{postfix = "  Fly Down", texture = Z_TRIG_TEX}})
+                    render_controls_tip(x * 11, y, {{postfix = "  Sprint Fly", texture = B_BUTTON_TEX}})
+                    render_controls_tip(x * 17.2, y, {{postfix = "  Open Menu", texture = X_BUTTON_TEX}})
+                    render_controls_tip(x * 23.1, y, {{postfix = "  Cycle Hotbar", texture = LR_JPAD_TEX}})
+                    render_controls_tip(x * 30.2, y, {{prefix = "", texture = L_TRIG_TEX}, {postfix = "  Stop Flying", texture = L_TRIG_TEX}})
+                    render_controls_tip(x * 37.9, y, {{postfix = "  Lock Face Angle / More", texture = L_TRIG_TEX}})
+                else
+                    render_controls_tip(x, y, {{postfix = "  Open Menu", texture = X_BUTTON_TEX}})
+                    render_controls_tip(x * 6.9, y, {{postfix = "  Place Item", texture = Y_BUTTON_TEX}})
+                    render_controls_tip(x * 13.2, y, {{postfix = "  Item Elevation", texture = UD_JPAD_TEX}})
+                    render_controls_tip(x * 21.2, y, {{prefix = "", texture = L_TRIG_TEX}, {postfix = "  Stop Flying", texture = L_TRIG_TEX}})
+                    render_controls_tip(x * 29.4, y, {{postfix = "  Lock Face Angle", texture = L_TRIG_TEX}})
+                end
             else
-                render_controls_tip(x, y * 1.0, {{prefix = "While Holding ", texture = L_TRIG_TEX}})
-                render_controls_tip(x, y * 1.2, {{prefix = "Slow Fly: ", texture = B_BUTTON_TEX}})
-                render_controls_tip(x, y * 1.4, {{prefix = "Change Item Size: ", texture = U_JPAD_TEX}, {prefix = " / ", texture = D_JPAD_TEX}})
-                render_controls_tip(x, y * 1.6, {{prefix = "Change Item Angle (Pitch): ", texture = U_CBUTTON_TEX}, {prefix = " / ", texture = D_CBUTTON_TEX}})
-                render_controls_tip(x, y * 1.8, {{prefix = "Change Item Angle (Yaw): ", texture = L_CBUTTON_TEX}, {prefix = " / ", texture = R_CBUTTON_TEX}})
-                render_controls_tip(x, y * 2.0, {{prefix = "Change Item Angle (Roll): ", texture = L_JPAD_TEX}, {prefix = " / ", texture = R_JPAD_TEX}})
-                render_controls_tip(x, y * 2.2, {{prefix = "Reset Item Angle: ", texture = X_BUTTON_TEX}})
+                if not gCurrentItem then
+                    render_controls_tip(x, y, {{postfix = "  Slow Fly", texture = B_BUTTON_TEX}})
+                    render_controls_tip(x * 6.4, y, {{prefix = "", texture = U_CBUTTON_TEX}, {postfix = "  Adjust Pitch", texture = D_CBUTTON_TEX}})
+                    render_controls_tip(x * 14.3, y, {{prefix = "", texture = L_CBUTTON_TEX}, {postfix = "  Adjust Yaw", texture = R_CBUTTON_TEX}})
+                    render_controls_tip(x * 21.5, y, {{postfix = "  Adjust Roll", texture = LR_JPAD_TEX}})
+                    render_controls_tip(x * 28.1, y, {{postfix = "  Reset Angle", texture = X_BUTTON_TEX}})
+                else
+                    render_controls_tip(x, y, {{postfix = "  Slow Fly", texture = B_BUTTON_TEX}})
+                    render_controls_tip(x * 6.6, y, {{postfix = "  Place Item", texture = Y_BUTTON_TEX}})
+                    render_controls_tip(x * 13, y, {{postfix = "  Adjust Size", texture = UD_JPAD_TEX}})
+                    render_controls_tip(x * 19.7, y, {{prefix = "", texture = U_CBUTTON_TEX}, {postfix = "  Adjust Pitch", texture = D_CBUTTON_TEX}})
+                    render_controls_tip(x * 27.7, y, {{prefix = "", texture = L_CBUTTON_TEX}, {postfix = "  Adjust Yaw", texture = R_CBUTTON_TEX}})
+                    render_controls_tip(x * 34.9, y, {{postfix = "  Adjust Roll", texture = LR_JPAD_TEX}})
+                    render_controls_tip(x * 41.5, y, {{postfix = "  Reset Angle", texture = X_BUTTON_TEX}})
+                end
             end
         else
-            render_controls_tip(x, y * 1.0, {{prefix = "Move Selection: ", texture = CONTROL_STICK_TEX}})
-            render_controls_tip(x, y * 1.2, {{prefix = "Select Item: ", texture = A_BUTTON_TEX}})
-            render_controls_tip(x, y * 1.4, {{prefix = "Change Page: ", texture = L_CBUTTON_TEX}, {prefix = " / ", texture = R_CBUTTON_TEX}})
-            render_controls_tip(x, y * 1.6, {{prefix = "Change Tab: ", texture = L_TRIG_TEX}, {prefix = " / ", texture = R_TRIG_TEX}})
-            render_controls_tip(x, y * 1.8, {{prefix = "Change Hotbar: ", texture = L_JPAD_TEX}, {prefix = " / ", texture = R_JPAD_TEX}})
-            render_controls_tip(x, y * 2.0, {{prefix = "Close Menu: ", texture = X_BUTTON_TEX}})
+            
+            render_controls_tip(x, y, {{postfix = "  Move Selection", texture = CONTROL_STICK_TEX}})
+            render_controls_tip(x * 8.9, y, {{postfix = "  Select Item", texture = A_BUTTON_TEX}})
+            render_controls_tip(x * 15.5, y, {{postfix = "  Close Menu", texture = X_BUTTON_TEX}})
+            render_controls_tip(x * 21.7, y , {{prefix = "", texture = L_CBUTTON_TEX}, {postfix = "  Next/Previous Page", texture = R_CBUTTON_TEX}})
+            render_controls_tip(x * 32.1, y, {{prefix = "", texture = L_TRIG_TEX}, {postfix = "  Next/Previous Tab", texture = R_TRIG_TEX}})
+            render_controls_tip(x * 42, y, {{postfix = "  Cycle Hotbar", texture = LR_JPAD_TEX}})
+            
         end
     end
 end
