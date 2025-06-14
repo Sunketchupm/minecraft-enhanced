@@ -69,7 +69,7 @@ local function on_grid_size_chat_command(msg)
 	if sizes_count == 1 then
 		local new_size = (tonumber(sizes[1]) or 1) * 200
 		vec3f_set(GridSize, new_size, new_size, new_size)
-		djui_chat_message_create("Set grid size to " .. new_size)
+		djui_chat_message_create("Set grid size to " .. sizes[1])
 	elseif sizes_count == 3 then
 		local new_size_x = (tonumber(sizes[1]) or 1) * 200
 		local new_size_y = (tonumber(sizes[2]) or 1) * 200
