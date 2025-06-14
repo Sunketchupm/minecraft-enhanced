@@ -617,7 +617,7 @@ local function render_hotbar(screen_width, screen_height)
     local width = screen_width * 0.5
     local height = screen_height * 0.08
     local x = screen_width * 0.25
-    local y = screen_height - (height * 1.8) --need space for on-screen controls
+    local y = screen_height - (show_controls and (height * 1.8) or (height))
     djui_hud_set_color(64, 64, 32, 192)
     djui_hud_render_rect(x, y, width, height)
     for index, item in ipairs(HotbarItemList) do
@@ -736,14 +736,12 @@ local function render_controls(screen_width, screen_height)
                 end
             end
         else
-            
             render_controls_tip(x, y, {{postfix = "  Move Selection", texture = CONTROL_STICK_TEX}})
             render_controls_tip(x * 8.9, y, {{postfix = "  Select Item", texture = A_BUTTON_TEX}})
             render_controls_tip(x * 15.5, y, {{postfix = "  Close Menu", texture = X_BUTTON_TEX}})
             render_controls_tip(x * 21.7, y , {{prefix = "", texture = L_CBUTTON_TEX}, {postfix = "  Next/Previous Page", texture = R_CBUTTON_TEX}})
             render_controls_tip(x * 32.1, y, {{prefix = "", texture = L_TRIG_TEX}, {postfix = "  Next/Previous Tab", texture = R_TRIG_TEX}})
             render_controls_tip(x * 42, y, {{postfix = "  Cycle Hotbar", texture = LR_JPAD_TEX}})
-            
         end
     end
 end
