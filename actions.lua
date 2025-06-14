@@ -110,6 +110,11 @@ local function allow_force_water_action(m)
     if m.action == ACT_FREE_MOVE then return false end
 end
 
+---@param m MarioState
+local function allow_hazard_surface(m)
+    if m.action == ACT_FREE_MOVE then return false end
+end
+
 local timer = 0
 local start_timer = false
 ---@param m MarioState
@@ -159,6 +164,7 @@ hook_event(HOOK_ALLOW_INTERACT, allow_interact)
 hook_event(HOOK_ON_DEATH, on_death)
 hook_event(HOOK_ALLOW_FORCE_WATER_ACTION, allow_force_water_action)
 hook_event(HOOK_MARIO_UPDATE, mario_update)
+hook_event(HOOK_ALLOW_HAZARD_SURFACE, allow_hazard_surface)
 
 -----------------------------------------------------------------------------------------------------------
 

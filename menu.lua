@@ -767,10 +767,16 @@ end
 local function handle_hotbar_inputs(m)
     if m.controller.buttonDown & L_TRIG ~= 0 then return end
 
-    if m.controller.buttonPressed & L_JPAD ~= 0 and SelectedHotbarIndex > 1 then
+    if m.controller.buttonPressed & L_JPAD ~= 0 then
         SelectedHotbarIndex = SelectedHotbarIndex - 1
-    elseif m.controller.buttonPressed & R_JPAD ~= 0 and SelectedHotbarIndex < HOTBAR_SIZE then
+        if SelectedHotbarIndex < 1 then
+            SelectedHotbarIndex = HOTBAR_SIZE
+        end
+    elseif m.controller.buttonPressed & R_JPAD ~= 0 then
         SelectedHotbarIndex = SelectedHotbarIndex + 1
+        if SelectedHotbarIndex > HOTBAR_SIZE then
+            SelectedHotbarIndex = 1
+        end
     end
     m.controller.buttonPressed = m.controller.buttonPressed & ~(L_JPAD | R_JPAD)
 end
