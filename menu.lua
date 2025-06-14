@@ -4,6 +4,8 @@ local active_tab = 1
 local selected_item_index = 1
 local current_item_page = 1
 local item_page_max = 1
+---@type MenuItemLink[][]
+local item_pages = {}
 
 local TAB_BUILDING_BLOCKS = 1
 local TAB_ITEMS = 2
@@ -419,7 +421,7 @@ end
 local function determine_pages(column_count, row_count, items)
     local max_items_per_page = column_count * row_count
     ---@type MenuItemLink[][]
-    local item_pages = {{}}
+    local new_item_pages = {{}}
     local stored_page = 1
     local item_in_page_index = 0
     for i = 1, #items do
@@ -427,12 +429,12 @@ local function determine_pages(column_count, row_count, items)
         if item_in_page_index > max_items_per_page then
             item_in_page_index = 1
             stored_page = stored_page + 1
-            item_pages[stored_page] = {}
+            new_item_pages[stored_page] = {}
         end
-        item_pages[stored_page][item_in_page_index] = items[i]
+        new_item_pages[stored_page][item_in_page_index] = items[i]
     end
     item_page_max = stored_page
-    return item_pages
+    return new_item_pages
 end
 
 ---@param x number
@@ -444,7 +446,7 @@ local function render_item_list(x, y, width, height, items)
     local hovering_over_item = false
     local slot_width, column_count = determine_slot_width(65, width)
     local slot_height, row_count = determine_slot_height(65, height)
-    local item_pages = determine_pages(column_count, row_count, items)
+    item_pages = determine_pages(column_count, row_count, items)
     local items_per_page = column_count * row_count
 
     for index, item in ipairs(item_pages[current_item_page]) do
@@ -769,6 +771,7 @@ local function handle_change_tab_inputs(pressed)
         if active_tab < 1 then
             active_tab = TAB_MAIN_END
         end
+        mouse_tab_was_clicked_on = 0
         selected_item_index = 0
         current_item_page = 1
         play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
@@ -777,6 +780,7 @@ local function handle_change_tab_inputs(pressed)
         if active_tab > TAB_MAIN_END then
             active_tab = 1
         end
+        mouse_tab_was_clicked_on = 0
         selected_item_index = 0
         current_item_page = 1
         play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
@@ -800,33 +804,38 @@ local function handle_control_stick_inputs(m)
     if not csd.down and controller.stickY >= -30 then used_csd.down = false end
     if not csd.left and controller.stickX >= -30 then used_csd.left = false end
     if not csd.right and controller.stickX <= 30 then used_csd.right = false end
-    if not used_csd.up and controller.stickY > 30 then csd.up = true used_csd.up = true else csd.up = false end
-    if not used_csd.down and controller.stickY < -30 then csd.down = true used_csd.down = true else csd.down = false end
-    if not used_csd.left and controller.stickX < -30 then csd.left = true used_csd.left = true else csd.left = false end
-    if not used_csd.right and controller.stickX > 30 then csd.right = true used_csd.right = true else csd.right = false end
+    if not used_csd.up and controller.stickY > 30 then csd.up = true used_csd.up = true moved_mouse = false else csd.up = false end
+    if not used_csd.down and controller.stickY < -30 then csd.down = true used_csd.down = true moved_mouse = false else csd.down = false end
+    if not used_csd.left and controller.stickX < -30 then csd.left = true used_csd.left = true moved_mouse = false else csd.left = false end
+    if not used_csd.right and controller.stickX > 30 then csd.right = true used_csd.right = true moved_mouse = false else csd.right = false end
 end
 
 ---@param m MarioState
 local function handle_item_selection_inputs(m)
-    local current_item_set_count = #TabItemList[active_tab]
+    local current_item_set_count = #item_pages[current_item_page]
     if current_item_set_count == 0 then return end
     handle_control_stick_inputs(m)
+    local items_per_page = item_list_row_count * item_list_column_count
+    local selected_item_offset = items_per_page * (current_item_page - 1)
+    local relative_item_index = selected_item_index - selected_item_offset
+
+    if selected_item_index == 0 then
+        selected_item_index = 1 + selected_item_offset
+        relative_item_index = 1
+    end
 
     if csd.up or csd.left or csd.down or csd.right then
         play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource)
-        if selected_item_index == 0 then
-            selected_item_index = 1
-        end
-
-        if csd.up and selected_item_index > item_list_column_count then
-            selected_item_index = selected_item_index - item_list_column_count
-        elseif csd.down and selected_item_index < current_item_set_count then
-            local remaining = math.min(current_item_set_count - selected_item_index, item_list_column_count)
+        if csd.up and relative_item_index > 1 then
+            local remaining = relative_item_index - (relative_item_index - item_list_column_count)
+            selected_item_index = math.max(selected_item_index - remaining, selected_item_offset + 1)
+        elseif csd.down and relative_item_index < current_item_set_count then
+            local remaining = math.min(current_item_set_count - relative_item_index, item_list_column_count)
             selected_item_index = selected_item_index + remaining
         end
-        if csd.left and selected_item_index > 1 then
+        if csd.left and relative_item_index > 1 then
             selected_item_index = selected_item_index - 1
-        elseif csd.right and selected_item_index < current_item_set_count then
+        elseif csd.right and relative_item_index < current_item_set_count then
             selected_item_index = selected_item_index + 1
         end
     end
@@ -853,9 +862,11 @@ end
 local function handle_paging_inputs(pressed)
     if (pressed & L_CBUTTONS ~= 0 or (moved_mouse and mouse_has_scrolled < 0)) and current_item_page > 1 then
         current_item_page = current_item_page - 1
+        selected_item_index = 0
         play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
     elseif (pressed & R_CBUTTONS ~= 0 or (moved_mouse and mouse_has_scrolled > 0)) and current_item_page < item_page_max then
         current_item_page = current_item_page + 1
+        selected_item_index = 0
         play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
     end
 end
