@@ -402,19 +402,25 @@ local function on_set_item_size_chat_command(msg)
 		return true
 	end
 
-    local current_selected = HotbarItemList[selected_hotbar_index].item
+    local current_selected = HotbarItemList[SelectedHotbarIndex].item
     if current_selected then
             current_selected.size = gVec3fOne()
         if sizes_count == 1 then
-            local size = math.clamp(tonumber(sizes[1]) or 200, 0.01, 10)
-            vec3f_set(current_selected.size, size, size, size)
-            djui_chat_message_create("Set item size to " .. size)
+            local new_size = math.clamp(tonumber(sizes[1]) or 1, 0.01, 10)
+            local grid_size = new_size * 200
+            vec3f_set(current_selected.size, new_size, new_size, new_size)
+		    vec3f_set(GridSize, grid_size, grid_size, grid_size)
+            djui_chat_message_create("Set item size to " .. new_size)
         elseif sizes_count == 3 then
-            local size_x = math.clamp(tonumber(sizes[1]) or 200, 0.01, 10)
-            local size_y = math.clamp(tonumber(sizes[2]) or 200, 0.01, 10)
-            local size_z = math.clamp(tonumber(sizes[3]) or 200, 0.01, 10)
-            vec3f_set(current_selected.size, size_x, size_y, size_z)
-            djui_chat_message_create("Set item size to (" .. sizes[1], sizes[2], sizes[3] .. ")")
+            local new_size_x = math.clamp(tonumber(sizes[1]) or 1, 0.01, 10)
+            local new_size_y = math.clamp(tonumber(sizes[2]) or 1, 0.01, 10)
+            local new_size_z = math.clamp(tonumber(sizes[3]) or 1, 0.01, 10)
+            local grid_size_x = new_size_x * 200
+            local grid_size_y = new_size_y * 200
+            local grid_size_z = new_size_z * 200
+            vec3f_set(GridSize, grid_size_x, grid_size_y, grid_size_z)
+            vec3f_set(current_selected.size, new_size_x, new_size_y, new_size_z)
+            djui_chat_message_create("Set item size to (" .. new_size_x, new_size_y, new_size_z .. ")")
         else
             djui_chat_message_create("Usage: [num] or [x y z] or [on|off]")
         end
@@ -446,8 +452,8 @@ local block_id_lookup = {
 ---@param msg string
 local function on_set_surface_chat_command(msg)
     if block_id_lookup[msg:lower()] then
-        if HotbarItemList[selected_hotbar_index].item and HotbarItemList[selected_hotbar_index].item.behavior == bhvMceBlock then
-            HotbarItemList[selected_hotbar_index].item.params = block_id_lookup[msg:lower()]
+        if HotbarItemList[SelectedHotbarIndex].item and HotbarItemList[SelectedHotbarIndex].item.behavior == bhvMceBlock then
+            HotbarItemList[SelectedHotbarIndex].item.params = block_id_lookup[msg:lower()]
             djui_chat_message_create("Set the surface type to " .. msg)
         else
             djui_chat_message_create("You must have a block selected to change its surface type!")

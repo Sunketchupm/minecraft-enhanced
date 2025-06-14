@@ -16,11 +16,11 @@ E_MODEL_OUTLINE = smlua_model_util_get_id("mce_outline")
 -------------------------------------------------------------------------------
 
 local on_grid = true
-local grid_size = {x = 200, y = 200, z = 200}
+GridSize = {x = 200, y = 200, z = 200}
 
 local function to_grid_x(n)
 	if on_grid then
-		return math.floor(n/grid_size.x + .5) * grid_size.x
+		return math.floor(n/GridSize.x + .5) * GridSize.x
 	else
 		return n
 	end
@@ -28,7 +28,7 @@ end
 
 local function to_grid_y(n)
 	if on_grid then
-		return math.floor(n/grid_size.y + .5) * grid_size.y
+		return math.floor(n/GridSize.y + .5) * GridSize.y
 	else
 		return n
 	end
@@ -36,7 +36,7 @@ end
 
 local function to_grid_z(n)
 	if on_grid then
-		return math.floor(n/grid_size.z + .5) * grid_size.z
+		return math.floor(n/GridSize.z + .5) * GridSize.z
 	else
 		return n
 	end
@@ -67,29 +67,29 @@ local function on_grid_size_chat_command(msg)
 	end
 
 	if sizes_count == 1 then
-		local size = tonumber(sizes[1]) or 200
-		vec3f_set(grid_size, size, size, size)
-		djui_chat_message_create("Set grid size to " .. size)
+		local new_size = (tonumber(sizes[1]) or 1) * 200
+		vec3f_set(GridSize, new_size, new_size, new_size)
+		djui_chat_message_create("Set grid size to " .. new_size)
 	elseif sizes_count == 3 then
-		vec3f_set(grid_size, tonumber(sizes[1]) or 200, tonumber(sizes[2]) or 200, tonumber(sizes[3]) or 200)
-		djui_chat_message_create("Set grid size to (" .. sizes[1], sizes[2], sizes[3] .. ")")
+		local new_size_x = (tonumber(sizes[1]) or 1) * 200
+		local new_size_y = (tonumber(sizes[2]) or 1) * 200
+		local new_size_z = (tonumber(sizes[3]) or 1) * 200
+		vec3f_set(GridSize, new_size_x, new_size_y, new_size_z)
+		djui_chat_message_create("Set grid size to (" .. new_size_x, new_size_y, new_size_z .. ")")
 	else
 		djui_chat_message_create("Usage: [num] or [x y z] or [on|off]")
 	end
 	return true
 end
 
-hook_chat_command("grid", "[num] or [x|y|z] or [on|off] | Change the shape of the grid. Default is 200 in each dimension", on_grid_size_chat_command)
-
-hook_mod_menu_inputbox("Grid Size X", "200", 10, function (index, value) grid_size.x = tonumber(value) or 200 update_mod_menu_element_inputbox(index, tostring(grid_size.x)) end)
-hook_mod_menu_inputbox("Grid Size Y", "200", 10, function (index, value) grid_size.y = tonumber(value) or 200 update_mod_menu_element_inputbox(index, tostring(grid_size.y)) end)
-hook_mod_menu_inputbox("Grid Size Z", "200", 10, function (index, value) grid_size.z = tonumber(value) or 200 update_mod_menu_element_inputbox(index, tostring(grid_size.z)) end)
+hook_chat_command("grid", "[num] or [x|y|z] or [on|off] | Change the shape of the grid. Default is 1 in each dimension", on_grid_size_chat_command)
 
 -------------------------------------------------------------------------------
 
 ---@type Object?
 local outline = nil
 local outline_stored_rotation = {pitch = 0, yaw = 0, roll = 0}
+local outline_grid_y_offset = 0
 
 --- Called from bhvOutline.bhv
 
@@ -111,9 +111,9 @@ function bhv_outline_loop(obj)
 	local facing_x = sins(m.intendedYaw)
 	local facing_z = coss(m.intendedYaw)
 
-	local posX = to_grid_x( m.pos.x + facing_x*grid_size.x )
-	local posY = to_grid_y( m.pos.y )
-	local posZ = to_grid_z( m.pos.z + facing_z*grid_size.z )
+	local posX = to_grid_x( m.pos.x + facing_x*GridSize.x )
+	local posY = to_grid_y( m.pos.y ) + (GridSize.y * outline_grid_y_offset)
+	local posZ = to_grid_z( m.pos.z + facing_z*GridSize.z )
 
 	outline.oPosX = posX
 	outline.oPosY = posY
@@ -216,7 +216,7 @@ local function determine_place_or_delete()
 			y = math.abs(nearest.oPosY - outline.oPosY),
 			z = math.abs(nearest.oPosZ - outline.oPosZ)
 		}
-		if dists.x >= grid_size.x or dists.y >= grid_size.y or dists.z >= grid_size.z then
+		if dists.x >= GridSize.x or dists.y >= GridSize.y or dists.z >= GridSize.z then
 			place_item()
 		else
 			obj_mark_for_deletion(nearest)
@@ -226,46 +226,97 @@ local function determine_place_or_delete()
 	end
 end
 
----@param down integer
----@param pressed integer
-local function set_outline_rotation(down, pressed)
-	if not outline then return end
-	local l_held_modifier = down & L_TRIG ~= 0
-	if pressed & U_JPAD ~= 0 then
-		if l_held_modifier then
-			outline.oFaceAngleRoll = outline.oFaceAngleRoll + 0x400
-			outline.oMoveAngleRoll = outline.oMoveAngleRoll + 0x400
-		else
-			outline.oFaceAnglePitch = outline.oFaceAnglePitch + 0x400
-			outline.oMoveAnglePitch = outline.oMoveAnglePitch + 0x400
+---@param m MarioState
+local function set_item_size_control(m)
+	if not outline or m.controller.buttonDown & L_TRIG == 0 then return end
+
+	local current_selected = HotbarItemList[SelectedHotbarIndex].item
+	if current_selected then
+		local pressed = m.controller.buttonPressed
+		local size = current_selected.size
+
+		local largest_side = size.x
+		if size.x < size.y then
+			largest_side = size.y
+			if size.y < size.z then
+				largest_side = size.z
+			end
+		elseif size.x < size.z then
+			largest_side = size.z
+			if size.z < size.y then
+				largest_side = size.y
+			end
 		end
-	elseif pressed & D_JPAD ~= 0 then
-		if l_held_modifier then
-			outline.oFaceAngleRoll = outline.oFaceAngleRoll - 0x400
-			outline.oMoveAngleRoll = outline.oMoveAngleRoll - 0x400
-		else
-			outline.oFaceAnglePitch = outline.oFaceAnglePitch - 0x400
-			outline.oMoveAnglePitch = outline.oMoveAnglePitch - 0x400
+		local smallest_side = size.x
+		if size.x > size.y then
+			smallest_side = size.y
+			if size.y > size.z then
+				smallest_side = size.z
+			end
+		elseif size.x > size.z then
+			smallest_side = size.z
+			if size.z > size.y then
+				smallest_side = size.y
+			end
+		end
+
+		if pressed & U_JPAD ~= 0 and largest_side < 10 then
+			vec3f_set(size, size.x + 0.1, size.y + 0.1, size.z + 0.1)
+		elseif pressed & D_JPAD ~= 0 and smallest_side > 0.1 then
+			vec3f_set(size, size.x - 0.1, size.y - 0.1, size.z - 0.1)
 		end
 	end
-	if l_held_modifier then
-		if pressed & L_JPAD ~= 0 then
-			outline.oFaceAngleYaw = outline.oFaceAngleYaw - 0x400
-			outline.oMoveAngleYaw = outline.oMoveAngleYaw - 0x400
-		elseif pressed & R_JPAD ~= 0 then
-			outline.oFaceAngleYaw = outline.oFaceAngleYaw + 0x400
-			outline.oMoveAngleYaw = outline.oMoveAngleYaw + 0x400
-		end
-		if pressed & X_BUTTON ~= 0 then
-			outline.oFaceAnglePitch = 0
-			outline.oFaceAngleYaw = 0
-			outline.oFaceAngleRoll = 0
-		end
+end
+
+---@param m MarioState
+local function set_outline_offset(m)
+	if not outline or m.controller.buttonDown & L_TRIG ~= 0 then return end
+	local pressed = m.controller.buttonPressed
+
+	if pressed & U_JPAD ~= 0 then
+		outline_grid_y_offset = outline_grid_y_offset + 1
+	elseif pressed & D_JPAD ~= 0 then
+		outline_grid_y_offset = outline_grid_y_offset - 1
+	end
+end
+
+---@param m MarioState
+local function set_outline_rotation(m)
+	if not outline or m.controller.buttonDown & L_TRIG == 0 then return end
+	local pressed = m.controller.buttonPressed
+
+	if pressed & U_CBUTTONS ~= 0 then
+		outline.oFaceAnglePitch = outline.oFaceAnglePitch + 0x400
+		outline.oMoveAnglePitch = outline.oMoveAnglePitch + 0x400
+	elseif pressed & D_CBUTTONS ~= 0 then
+		outline.oFaceAnglePitch = outline.oFaceAnglePitch - 0x400
+		outline.oMoveAnglePitch = outline.oMoveAnglePitch - 0x400
+	end
+	if pressed & L_CBUTTONS ~= 0 then
+		outline.oFaceAngleYaw = outline.oFaceAngleYaw - 0x400
+		outline.oMoveAngleYaw = outline.oMoveAngleYaw - 0x400
+	elseif pressed & R_CBUTTONS ~= 0 then
+		outline.oFaceAngleYaw = outline.oFaceAngleYaw + 0x400
+		outline.oMoveAngleYaw = outline.oMoveAngleYaw + 0x400
+	end
+	if pressed & L_JPAD ~= 0 then
+		outline.oFaceAngleRoll = outline.oFaceAngleRoll + 0x400
+		outline.oMoveAngleRoll = outline.oMoveAngleRoll + 0x400
+	elseif pressed & R_JPAD ~= 0 then
+		outline.oFaceAngleRoll = outline.oFaceAngleRoll - 0x400
+		outline.oMoveAngleRoll = outline.oMoveAngleRoll - 0x400
+	end
+	if pressed & X_BUTTON ~= 0 then
+		outline.oFaceAnglePitch = 0
+		outline.oFaceAngleYaw = 0
+		outline.oFaceAngleRoll = 0
 	end
 
 	outline_stored_rotation.pitch = outline.oFaceAnglePitch
 	outline_stored_rotation.yaw = outline.oFaceAngleYaw
 	outline_stored_rotation.roll = outline.oFaceAngleRoll
+
+	m.controller.buttonPressed = m.controller.buttonPressed & ~(U_CBUTTONS | L_CBUTTONS | D_CBUTTONS | R_CBUTTONS | X_BUTTON)
 end
 
 local function delete_outline()
@@ -282,9 +333,6 @@ end
 
 ---@param m MarioState
 local function builder_mario_update(m)
-	local down = m.controller.buttonDown
-	local pressed = m.controller.buttonPressed
-
 	if not obj_get_first_with_behavior_id(bhvOutline) then
 		spawn_non_sync_object(
 			bhvOutline,
@@ -295,8 +343,10 @@ local function builder_mario_update(m)
 		return
 	end
 
-	set_outline_rotation(down, pressed)
-	if pressed & Y_BUTTON ~= 0 then
+	set_item_size_control(m)
+	set_outline_offset(m)
+	set_outline_rotation(m)
+	if m.controller.buttonPressed & Y_BUTTON ~= 0 then
 		determine_place_or_delete()
     end
 end
@@ -323,4 +373,4 @@ end
 
 
 hook_event(HOOK_ON_WARP, on_warp)
-hook_event(HOOK_MARIO_UPDATE, mario_update)
+hook_event(HOOK_BEFORE_MARIO_UPDATE, mario_update)
