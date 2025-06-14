@@ -1,4 +1,4 @@
--- name: Minecraft Enhanced Rewrite
+-- name: Minecraft Enhanced
 -- description: An improved version of the Minecraft mod, originally by zKevin
 
 gLevelValues.fixCollisionBugs = true
@@ -68,7 +68,7 @@ local function on_grid_size_chat_command(msg)
 
 	if sizes_count == 1 then
 		local new_size = (tonumber(sizes[1]) or 1) * 200
-		vec3f_set(GridSize, sizes[1], sizes[1], sizes[1])
+		vec3f_set(GridSize, new_size, new_size, new_size)
 		djui_chat_message_create("Set grid size to " .. new_size)
 	elseif sizes_count == 3 then
 		local new_size_x = (tonumber(sizes[1]) or 1) * 200
