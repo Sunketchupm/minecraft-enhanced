@@ -84,8 +84,124 @@ local function add_item(tab, behavior, model, offset, anim_state, mock_settings,
     table.insert(TabItemList[tab], item)
 end
 
+-- If TextureInfo, use the texture
+-- If a table of coordinates, use the coordinates
+local block_icons = {
+    get_texture_info("outside_09000000"),
+    get_texture_info("outside_0900B400"),
+    get_texture_info("outside_09004000"),
+    get_texture_info("outside_09008000"),
+    get_texture_info("outside_09009800"),
+    get_texture_info("outside_09009000"),
+    get_texture_info("outside_09000800"),
+    get_texture_info("outside_09007800"),
+    get_texture_info("outside_09003000"),
+    get_texture_info("outside_09005800"),
+    get_texture_info("cave_09006800"),
+    get_texture_info("cave_09009800"),
+    get_texture_info("cave_09001000"),
+    get_texture_info("fire_0900A000"),
+    get_texture_info("fire_0900A800"),
+    get_texture_info("fire_0900B000"),
+    get_texture_info("fire_0900B800"),
+    get_texture_info("fire_09000800"),
+    get_texture_info("fire_09001000"),
+    get_texture_info("fire_09001800"),
+    get_texture_info("fire_09002000"),
+    get_texture_info("fire_09002800"),
+    get_texture_info("fire_09003000"),
+    get_texture_info("fire_09003800"),
+    get_texture_info("fire_09004000"),
+    get_texture_info("fire_09004800"),
+    get_texture_info("fire_09005000"),
+    get_texture_info("fire_09005800"),
+    get_texture_info("fire_09006000"),
+    get_texture_info("fire_09007000"),
+    get_texture_info("fire_09008000"),
+    get_texture_info("fire_09009000"),
+    get_texture_info("generic_0900A000"),
+    get_texture_info("generic_0900A800"),
+    get_texture_info("generic_09000800"),
+    get_texture_info("generic_09001000"),
+    get_texture_info("generic_09001800"),
+    get_texture_info("generic_09002000"),
+    get_texture_info("generic_09002800"),
+    get_texture_info("generic_09003000"),
+    get_texture_info("generic_09003800"),
+    get_texture_info("generic_09004800"),
+    get_texture_info("generic_09005000"),
+    get_texture_info("generic_09007800"),
+    get_texture_info("generic_09008000"),
+    get_texture_info("generic_09008800"),
+    get_texture_info("generic_09009000"),
+    get_texture_info("grass_09000000"),
+    get_texture_info("grass_0900A800"),
+    get_texture_info("grass_09000800"),
+    get_texture_info("grass_09001000"),
+    get_texture_info("grass_09002000"),
+    get_texture_info("grass_09003000"),
+    get_texture_info("grass_09003800"),
+    get_texture_info("grass_09004000"),
+    get_texture_info("grass_09004800"),
+    get_texture_info("grass_09006800"),
+    get_texture_info("grass_09007000"),
+    get_texture_info("grass_09008000"),
+    get_texture_info("grass_09008800"),
+    get_texture_info("grass_09009000"),
+    get_texture_info("grass_09009800"),
+    get_texture_info("inside_09003000"),
+    get_texture_info("inside_09003800"),
+    get_texture_info("inside_09004000"),
+    get_texture_info("inside_09005000"),
+    get_texture_info("machine_09000000"),
+    get_texture_info("machine_09001000"),
+    get_texture_info("machine_09002000"),
+    get_texture_info("machine_09002800"),
+    get_texture_info("machine_09003800"),
+    get_texture_info("machine_09005000"),
+    get_texture_info("machine_09007000"),
+    get_texture_info("machine_09008400"),
+    get_texture_info("mountain_09000000"),
+    get_texture_info("mountain_0900A800"),
+    get_texture_info("mountain_0900B800"),
+    get_texture_info("mountain_0900C000"),
+    get_texture_info("mountain_09003800"),
+    get_texture_info("mountain_09004000"),
+    get_texture_info("mountain_09004800"),
+    get_texture_info("mountain_09005000"),
+    get_texture_info("mountain_09006800"),
+    get_texture_info("mountain_09007000"),
+    get_texture_info("sky_09000800"),
+    get_texture_info("sky_09001000"),
+    get_texture_info("sky_09001800"),
+    get_texture_info("sky_09003000"),
+    get_texture_info("sky_09004800"),
+    get_texture_info("sky_09007000"),
+    get_texture_info("sky_09007800"),
+    get_texture_info("snow_09000800"),
+    get_texture_info("snow_09002000"),
+    get_texture_info("snow_09002800"),
+    get_texture_info("snow_09003000"),
+    get_texture_info("snow_09003800"),
+    get_texture_info("snow_09004000"),
+    get_texture_info("snow_09004800"),
+    get_texture_info("snow_09005000"),
+    get_texture_info("snow_09006000"),
+    get_texture_info("snow_09008000"),
+    get_texture_info("snow_09008800"),
+    get_texture_info("spooky_09000000"),
+    get_texture_info("spooky_0900A000"),
+    get_texture_info("spooky_09004800"),
+    get_texture_info("spooky_09006000"),
+    get_texture_info("spooky_09006800"),
+    get_texture_info("water_09000000"),
+    get_texture_info("water_0900A000"),
+    get_texture_info("water_09005800"),
+}
+
 add_first_update(function ()
-    for i = 1, 100, 1 do
+    for i = 1, 110, 1 do
+        local texture = block_icons[i] or gTextures.no_camera
         ---@type MenuItemLink
         local menu_item = {
             item = {
@@ -97,7 +213,7 @@ add_first_update(function ()
                 animState = i,
                 mock = {}
             },
-            icon = gTextures.star
+            icon = texture
         }
         menu_item.self = menu_item
         TabItemList[TAB_BUILDING_BLOCKS][i] = menu_item
@@ -329,16 +445,17 @@ local function render_item_list(x, y, width, height, items)
     local slot_width, column_count = determine_slot_width(65, width)
     local slot_height, row_count = determine_slot_height(65, height)
     local item_pages = determine_pages(column_count, row_count, items)
+    local items_per_page = column_count * row_count
 
     for index, item in ipairs(item_pages[current_item_page]) do
         local slot_x = x + ((slot_width * ((index - 1) % item_list_column_count)))
         local slot_y = y + ((slot_height * ((index - 1) // item_list_column_count)))
         if moved_mouse and mouse_is_within(slot_x, slot_y, slot_x + slot_width, slot_y + slot_height) then
-            selected_item_index = index
+            selected_item_index = index + (items_per_page * (current_item_page - 1))
             hovering_over_item = true
         end
 
-        if index == selected_item_index then
+        if index + (items_per_page * (current_item_page - 1)) == selected_item_index then
             djui_hud_set_color(255, 255, 255, 150)
             djui_hud_render_rect(slot_x, slot_y, slot_width, slot_height)
         end

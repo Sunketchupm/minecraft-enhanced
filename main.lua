@@ -118,7 +118,6 @@ function bhv_outline_loop(obj)
 	outline.oPosX = posX
 	outline.oPosY = posY
 	outline.oPosZ = posZ
-	outline.oOpacity = 127
 
 	local current_item = gCurrentItem
 	if current_item then
