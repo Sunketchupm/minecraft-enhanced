@@ -25,10 +25,10 @@ local A_BUTTON_TEX = get_texture_info("Abutton")
 local B_BUTTON_TEX = get_texture_info("Bbutton")
 local X_BUTTON_TEX = get_texture_info("Xbutton")
 local Y_BUTTON_TEX = get_texture_info("Ybutton")
-local U_JPAD_TEX = get_texture_info("UJpad")
-local L_JPAD_TEX = get_texture_info("LJpad")
-local D_JPAD_TEX = get_texture_info("DJpad")
-local R_JPAD_TEX = get_texture_info("RJpad")
+--local U_JPAD_TEX = get_texture_info("UJpad")
+--local L_JPAD_TEX = get_texture_info("LJpad")
+--local D_JPAD_TEX = get_texture_info("DJpad")
+--local R_JPAD_TEX = get_texture_info("RJpad")
 local UD_JPAD_TEX = get_texture_info("U-Djpad")
 local LR_JPAD_TEX = get_texture_info("L-Rjpad")
 local U_CBUTTON_TEX = get_texture_info("Ucbutton")
@@ -82,6 +82,7 @@ local function add_item(tab, behavior, model, offset, anim_state, mock_settings,
         spawnYOffset = offset,
         params = behavior_param,
         size = gVec3fOne(),
+        rotation = gVec3sZero(),
         animState = anim_state,
         mock = mock_settings
     }, icon = icon }
@@ -217,6 +218,7 @@ add_first_update(function ()
                 spawnYOffset = 0,
                 params = 0,
                 size = gVec3fOne(),
+                rotation = gVec3sZero(),
                 animState = i,
                 mock = {}
             },
@@ -888,6 +890,7 @@ local function on_pick_item_input()
         hotbar_item.item.animState = hotbar_item.item.animState + BLOCK_ANIM_STATE_TRANSPARENT_START
     end
     HotbarItemList[SelectedHotbarIndex] = hotbar_item
+    vec3f_set(GridSize, 200, 200, 200)
     play_sound(SOUND_MENU_CLICK_FILE_SELECT, gGlobalSoundSource)
 end
 

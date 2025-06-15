@@ -4,6 +4,7 @@
     ---@field spawnYOffset number
     ---@field params integer
     ---@field size Vec3f
+    ---@field rotation Vec3s x = pitch, y = yaw, z = roll
     ---@field animState integer
     ---@field mock table
 
@@ -26,7 +27,16 @@ gCurrentItem = {behavior = nil, model = E_MODEL_NONE, params = {}}
 local item_behaviors = {}
 add_first_update(function ()
     ---@type Item
-    gCurrentItem = { behavior = bhvMceBlock, model = E_MODEL_MCE_BLOCK, spawnYOffset = 0, params = 0, size = gVec3fOne(), animState = 0, mock = {} }
+    gCurrentItem = {
+        behavior = bhvMceBlock,
+        model = E_MODEL_MCE_BLOCK,
+        spawnYOffset = 0,
+        params = 0,
+        size = gVec3fOne(),
+        rotation = gVec3sZero(),
+        animState = 0,
+        mock = {}
+    }
     ---@type BehaviorId[]
     item_behaviors = {
         bhvMceBlock,
@@ -119,6 +129,9 @@ local MCE_BLOCK_SLIPPERY_ID = 6
 local MCE_BLOCK_VERY_SLIPPERY_ID = 7
 local MCE_BLOCK_HANGABLE_ID = 8
 local MCE_BLOCK_VANISH_ID = 9
+local MCE_BLOCK_ID_VERTICAL_WIND = 10
+local MCE_BLOCK_ID_HORIZONTAL_WIND = 11
+local MCE_BLOCK_ID_WATER = 12
 
 BLOCK_ANIM_STATE_TRANSPARENT_START = 110
 BLOCK_BARRIER_ANIM = (BLOCK_ANIM_STATE_TRANSPARENT_START * 2) + 1
@@ -136,12 +149,18 @@ local standard_collision_lookup = {
     [MCE_BLOCK_VANISH_ID] = COL_MCE_BLOCK_VANISH,
 }
 
+local ignore_collision_lookup = {
+    [MCE_BLOCK_ID_VERTICAL_WIND] = true,
+    [MCE_BLOCK_ID_HORIZONTAL_WIND] = true,
+    [MCE_BLOCK_ID_WATER] = true,
+}
+
 --- Called from bhvMceBlock.bhv
 
 ---@param obj Object
 function bhv_mce_block_init(obj)
     local surface_id = obj.oItemParams & 0xFF
-    if surface_id ~= MCE_BLOCK_NO_COLLISION_ID then
+    if not ignore_collision_lookup[surface_id] then
         local collision = COL_MCE_BLOCK_DEFAULT
         if standard_collision_lookup[surface_id] then
             collision = standard_collision_lookup[surface_id]
@@ -218,12 +237,7 @@ function bhv_mce_star_loop(obj)
     if obj.oAction == 0 then
         if obj.oInteractStatus & INT_STATUS_INTERACTED ~= 0 then
             obj.oAction = 1
-        end
-    else
-        cur_obj_disable_rendering_and_become_intangible(obj)
-        if obj.oTimer > 300 then
-            obj.oAction = 0
-            cur_obj_enable_rendering_and_become_tangible(obj)
+            cur_obj_disable_rendering_and_become_intangible(obj)
         end
     end
 
@@ -277,12 +291,6 @@ function bhv_mce_coin_loop(obj)
             spawn_non_sync_object(id_bhvGoldenCoinSparkles, E_MODEL_SPARKLES, obj.oPosX, obj.oPosY, obj.oPosZ, nil)
             cur_obj_disable_rendering_and_become_intangible(obj)
             obj.oAction = 1
-        end
-    else
-        cur_obj_disable_rendering_and_become_intangible(obj)
-        if obj.oTimer > 300 then
-            obj.oAction = 0
-            cur_obj_enable_rendering_and_become_tangible(obj)
         end
     end
 
@@ -441,7 +449,10 @@ local function unrendered_items_update()
             while obj do
                 local render_flags = obj.header.gfx.node.flags
                 if gMarioStates[0].action == ACT_FREE_MOVE and (render_flags & GRAPH_RENDER_INVISIBLE ~= 0 or render_flags & GRAPH_RENDER_ACTIVE == 0) then
-                    obj.oTimer = 301
+                    obj.header.gfx.node.flags = obj.header.gfx.node.flags &~ GRAPH_RENDER_INVISIBLE
+                    obj.header.gfx.node.flags = obj.header.gfx.node.flags | GRAPH_RENDER_ACTIVE
+                    obj_become_tangible(obj)
+                    obj.oAction = 0
                 end
                 obj = obj_get_next_with_same_behavior_id(obj)
             end

@@ -88,7 +88,6 @@ hook_chat_command("grid", "[num] or [x|y|z] or [on|off] | Change the shape of th
 
 ---@type Object?
 local outline = nil
-local outline_stored_rotation = {pitch = 0, yaw = 0, roll = 0}
 local outline_grid_y_offset = 0
 
 --- Called from bhvOutline.bhv
@@ -97,9 +96,9 @@ local outline_grid_y_offset = 0
 function bhv_outline_init(obj)
 	outline = obj
 	obj.oOpacity = 255
-	obj.oFaceAnglePitch = outline_stored_rotation.pitch
-	obj.oFaceAngleYaw = outline_stored_rotation.yaw
-	obj.oFaceAngleRoll = outline_stored_rotation.roll
+	obj.oFaceAnglePitch = 0
+	obj.oFaceAngleYaw = 0
+	obj.oFaceAngleRoll = 0
 	spawn_non_sync_object(bhvMockItem, E_MODEL_NONE, obj.oPosX, obj.oPosY, obj.oPosZ, nil)
 end
 
@@ -122,6 +121,13 @@ function bhv_outline_loop(obj)
 	local current_item = gCurrentItem
 	if current_item then
 		obj_scale_xyz(obj, current_item.size.x, current_item.size.y, current_item.size.z)
+
+		outline.oFaceAnglePitch = current_item.rotation.x
+		outline.oFaceAngleYaw = current_item.rotation.y
+		outline.oFaceAngleRoll = current_item.rotation.z
+		outline.oMoveAnglePitch = current_item.rotation.x
+		outline.oMoveAngleYaw = current_item.rotation.y
+		outline.oMoveAngleRoll = current_item.rotation.z
 	else
 		obj_scale(obj, 1)
 	end
@@ -303,40 +309,31 @@ local function set_outline_offset(m)
 end
 
 ---@param m MarioState
-local function set_outline_rotation(m)
+local function set_item_rotation(m)
 	if not outline or m.controller.buttonDown & L_TRIG == 0 then return end
+	local current_item = gCurrentItem
+	if not current_item then return end
 	local pressed = m.controller.buttonPressed
+	local item_rotation = current_item.rotation
 
 	if pressed & U_CBUTTONS ~= 0 then
-		outline.oFaceAnglePitch = outline.oFaceAnglePitch + 0x400
-		outline.oMoveAnglePitch = outline.oMoveAnglePitch + 0x400
+		item_rotation.x = item_rotation.x + 0x400
 	elseif pressed & D_CBUTTONS ~= 0 then
-		outline.oFaceAnglePitch = outline.oFaceAnglePitch - 0x400
-		outline.oMoveAnglePitch = outline.oMoveAnglePitch - 0x400
+		item_rotation.x = item_rotation.x - 0x400
 	end
 	if pressed & L_CBUTTONS ~= 0 then
-		outline.oFaceAngleYaw = outline.oFaceAngleYaw - 0x400
-		outline.oMoveAngleYaw = outline.oMoveAngleYaw - 0x400
+		item_rotation.y = item_rotation.y + 0x400
 	elseif pressed & R_CBUTTONS ~= 0 then
-		outline.oFaceAngleYaw = outline.oFaceAngleYaw + 0x400
-		outline.oMoveAngleYaw = outline.oMoveAngleYaw + 0x400
+		item_rotation.y = item_rotation.y - 0x400
 	end
 	if pressed & L_JPAD ~= 0 then
-		outline.oFaceAngleRoll = outline.oFaceAngleRoll + 0x400
-		outline.oMoveAngleRoll = outline.oMoveAngleRoll + 0x400
+		item_rotation.z = item_rotation.z + 0x400
 	elseif pressed & R_JPAD ~= 0 then
-		outline.oFaceAngleRoll = outline.oFaceAngleRoll - 0x400
-		outline.oMoveAngleRoll = outline.oMoveAngleRoll - 0x400
+		item_rotation.z = item_rotation.z - 0x400
 	end
 	if pressed & X_BUTTON ~= 0 then
-		outline.oFaceAnglePitch = 0
-		outline.oFaceAngleYaw = 0
-		outline.oFaceAngleRoll = 0
+		gCurrentItem.rotation = gVec3sZero()
 	end
-
-	outline_stored_rotation.pitch = outline.oFaceAnglePitch
-	outline_stored_rotation.yaw = outline.oFaceAngleYaw
-	outline_stored_rotation.roll = outline.oFaceAngleRoll
 
 	m.controller.buttonPressed = m.controller.buttonPressed & ~(U_CBUTTONS | L_CBUTTONS | D_CBUTTONS | R_CBUTTONS | X_BUTTON)
 end
@@ -368,7 +365,7 @@ local function builder_mario_update(m)
 
 	set_item_size_control(m)
 	set_outline_offset(m)
-	set_outline_rotation(m)
+	set_item_rotation(m)
 	if m.controller.buttonPressed & Y_BUTTON ~= 0 then
 		determine_place_or_delete()
     end
