@@ -80,7 +80,9 @@ function split_string(s, delimiter)
     return result
 end
 
+---@param x number
+---@return integer
 convert_s16 = function (x)
     x = math.floor(x) & (1 << 16) - 1
-    return x - ((x & (1 << (16 - 1))) << 1)
+    return x - ((x & (1 << 15)) << 1)
 end

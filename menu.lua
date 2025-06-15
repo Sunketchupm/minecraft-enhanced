@@ -553,9 +553,14 @@ local function render_building_blocks_tab(x, y, width, height)
     local text_scale = 1.25
     local text = "Transparent?"
     local text_size = djui_hud_measure_text(text) * text_scale
-    local text_x = (x + width * 0.5) - (text_size * 0.5)
+    local text_x = (x + width * 0.55) - (text_size * 0.5)
     local text_y = (y + height) - 50 * text_scale
+    local texture_scale = 2.5
+    local texture_x = (x + width * 0.46) - (text_size * 0.5)
+    local texture_y = (y + height) - 24 * texture_scale
     local color = transparent_active and {r = 0, g = 255, b = 0, a = 255} or {r = 255, g = 0, b = 0, a = 255}
+    djui_hud_set_color(255, 255, 255, 255)
+    djui_hud_render_texture(Y_BUTTON_TEX, texture_x, texture_y, texture_scale, texture_scale)
     djui_hud_set_color_with_table(color)
     djui_hud_print_text(text, text_x, text_y, text_scale)
 end
@@ -686,8 +691,10 @@ end
 ---@param y number
 ---@param buttons {prefix: string?, postfix: string?, texture: TextureInfo}[]
 local function render_controls_tip(x, y, buttons)
-    local text_scale = 0.9
-    local texture_scale = 1.8
+    local screen_width = djui_hud_get_screen_width()
+    local screen_height = djui_hud_get_screen_height()
+    local text_scale = (screen_width / screen_height) * 0.55
+    local texture_scale = (screen_width / screen_height) * 1.1
     local initial_x = x
     local texture_y = y
 

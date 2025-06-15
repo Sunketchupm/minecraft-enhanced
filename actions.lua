@@ -172,6 +172,45 @@ hook_event(HOOK_ALLOW_HAZARD_SURFACE, allow_hazard_surface)
 
 -----------------------------------------------------------------------------------------------------------
 
+ACT_CUSTOM_VERTICAL_WIND = allocate_mario_action(ACT_GROUP_AIRBORNE | ACT_FLAG_AIR | ACT_FLAG_DIVING | ACT_FLAG_SWIMMING_OR_FLYING)
+
+---@param m MarioState
+local function act_custom_vertical_wind(m)
+    local intendedDYaw = -convert_s16(m.intendedYaw - m.faceAngle.y)
+    djui_chat_message_create(intendedDYaw)
+    local intendedMag = m.intendedMag / 32.0
+
+    play_character_sound_if_no_flag(m, CHAR_SOUND_HERE_WE_GO, MARIO_MARIO_SOUND_PLAYED)
+    if m.actionState == 0 then
+        set_character_animation(m, CHAR_ANIM_FORWARD_SPINNING_FLIP)
+        if m.marioObj.header.gfx.animInfo.animFrame == 1 then
+            play_sound(SOUND_ACTION_SPIN, m.marioObj.header.gfx.cameraToObject)
+            queue_rumble_data_mario(m, 8, 80)
+        end
+
+        if is_anim_past_end(m) ~= 0 then
+            m.actionState = 1
+        end
+    else
+        set_character_animation(m, CHAR_ANIM_AIRBORNE_ON_STOMACH)
+    end
+
+    update_air_without_turn(m)
+    local step = perform_air_step(m, 0)
+    if step == AIR_STEP_LANDED then
+        set_mario_action(m, ACT_DIVE_SLIDE, 0)
+    elseif step == AIR_STEP_HIT_WALL then
+        mario_set_forward_vel(m, -16)
+    end
+
+    m.marioObj.header.gfx.angle.x = convert_s16(6144 * intendedMag * convert_s16(coss(intendedDYaw)))
+    m.marioObj.header.gfx.angle.y = convert_s16(-4096 * intendedMag * convert_s16(sins(intendedDYaw)))
+    --djui_chat_message_create(intendedMag, sins(intendedDYaw), -4096 * intendedMag * sins(intendedDYaw), convert_s16(-4096 * intendedMag * sins(intendedDYaw)))
+    return false
+end
+
+hook_mario_action(ACT_CUSTOM_VERTICAL_WIND, { every_frame = act_custom_vertical_wind })
+
 -----------------------------------------------------------------------------------------------------------
 
 -- Remove double bonks

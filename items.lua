@@ -105,6 +105,14 @@ local function network_send_object_owner_only(obj)
     end
 end
 
+---@param m MarioState
+---@param block Object
+local function mario_is_within_block(m, block)
+    return m.pos.x > block.oPosX - (100 * block.oScaleX) and m.pos.x < block.oPosX + (100 * block.oScaleX) and
+            m.pos.y > block.oPosY - (100 * block.oScaleY) and m.pos.y < block.oPosY + (100 * block.oScaleY) and
+            m.pos.z > block.oPosZ - (100 * block.oScaleZ) and m.pos.z < block.oPosZ + (100 * block.oScaleZ)
+end
+
 ------------------------------------------------------------------------------------------
 
 local COL_MCE_BLOCK_DEFAULT = smlua_collision_util_get("mce_block_col_default")
@@ -118,41 +126,42 @@ local COL_MCE_BLOCK_VERY_SLIPPERY = smlua_collision_util_get("mce_block_col_very
 local COL_MCE_BLOCK_HANGABLE = smlua_collision_util_get("mce_block_col_hangable")
 local COL_MCE_BLOCK_VANISH = smlua_collision_util_get("mce_block_col_vanish")
 
-local MCE_BLOCK_NO_COLLISION_ID = 0xFF
-local MCE_BLOCK_DEFAULT_ID = 0
-local MCE_BLOCK_LAVA_ID = 1
-local MCE_BLOCK_DEATH_ID = 2
-local MCE_BLOCK_QUICKSAND_ID = 3
-local MCE_BLOCK_SHALLOW_QUICKSAND_ID = 4
-local MCE_BLOCK_NOT_SLIPPERY_ID = 5
-local MCE_BLOCK_SLIPPERY_ID = 6
-local MCE_BLOCK_VERY_SLIPPERY_ID = 7
-local MCE_BLOCK_HANGABLE_ID = 8
-local MCE_BLOCK_VANISH_ID = 9
-local MCE_BLOCK_ID_VERTICAL_WIND = 10
-local MCE_BLOCK_ID_HORIZONTAL_WIND = 11
-local MCE_BLOCK_ID_WATER = 12
+local MCE_BLOCK_COL_ID_NO_COLLISION = 0xFF
+local MCE_BLOCK_COL_ID_DEFAULT = 0
+local MCE_BLOCK_COL_ID_LAVA = 1
+local MCE_BLOCK_COL_ID_DEATH = 2
+local MCE_BLOCK_COL_ID_QUICKSAND = 3
+local MCE_BLOCK_COL_ID_SHALLOW_QUICKSAND = 4
+local MCE_BLOCK_COL_ID_NOT_SLIPPERY = 5
+local MCE_BLOCK_COL_ID_SLIPPERY = 6
+local MCE_BLOCK_COL_ID_VERY_SLIPPERY = 7
+local MCE_BLOCK_COL_ID_HANGABLE = 8
+local MCE_BLOCK_COL_ID_VANISH = 9
+local MCE_BLOCK_COL_ID_VERTICAL_WIND = 10
+local MCE_BLOCK_COL_ID_HORIZONTAL_WIND = 11
+local MCE_BLOCK_COL_ID_WATER = 12
 
 BLOCK_ANIM_STATE_TRANSPARENT_START = 110
 BLOCK_BARRIER_ANIM = (BLOCK_ANIM_STATE_TRANSPARENT_START * 2) + 1
 
 local standard_collision_lookup = {
-    [MCE_BLOCK_DEFAULT_ID] = COL_MCE_BLOCK_DEFAULT,
-    [MCE_BLOCK_LAVA_ID] = COL_MCE_BLOCK_LAVA,
-    [MCE_BLOCK_DEATH_ID] = COL_MCE_BLOCK_DEATH,
-    [MCE_BLOCK_QUICKSAND_ID] = COL_MCE_BLOCK_QUICKSAND,
-    [MCE_BLOCK_SHALLOW_QUICKSAND_ID] = COL_MCE_BLOCK_SHALLOW_QUICKSAND,
-    [MCE_BLOCK_NOT_SLIPPERY_ID] = COL_MCE_BLOCK_NOT_SLIPPERY,
-    [MCE_BLOCK_SLIPPERY_ID] = COL_MCE_BLOCK_SLIPPERY,
-    [MCE_BLOCK_VERY_SLIPPERY_ID] = COL_MCE_BLOCK_VERY_SLIPPERY,
-    [MCE_BLOCK_HANGABLE_ID] = COL_MCE_BLOCK_HANGABLE,
-    [MCE_BLOCK_VANISH_ID] = COL_MCE_BLOCK_VANISH,
+    [MCE_BLOCK_COL_ID_DEFAULT] = COL_MCE_BLOCK_DEFAULT,
+    [MCE_BLOCK_COL_ID_LAVA] = COL_MCE_BLOCK_LAVA,
+    [MCE_BLOCK_COL_ID_DEATH] = COL_MCE_BLOCK_DEATH,
+    [MCE_BLOCK_COL_ID_QUICKSAND] = COL_MCE_BLOCK_QUICKSAND,
+    [MCE_BLOCK_COL_ID_SHALLOW_QUICKSAND] = COL_MCE_BLOCK_SHALLOW_QUICKSAND,
+    [MCE_BLOCK_COL_ID_NOT_SLIPPERY] = COL_MCE_BLOCK_NOT_SLIPPERY,
+    [MCE_BLOCK_COL_ID_SLIPPERY] = COL_MCE_BLOCK_SLIPPERY,
+    [MCE_BLOCK_COL_ID_VERY_SLIPPERY] = COL_MCE_BLOCK_VERY_SLIPPERY,
+    [MCE_BLOCK_COL_ID_HANGABLE] = COL_MCE_BLOCK_HANGABLE,
+    [MCE_BLOCK_COL_ID_VANISH] = COL_MCE_BLOCK_VANISH,
 }
 
 local ignore_collision_lookup = {
-    [MCE_BLOCK_ID_VERTICAL_WIND] = true,
-    [MCE_BLOCK_ID_HORIZONTAL_WIND] = true,
-    [MCE_BLOCK_ID_WATER] = true,
+    [MCE_BLOCK_COL_ID_NO_COLLISION] = true,
+    [MCE_BLOCK_COL_ID_VERTICAL_WIND] = true,
+    [MCE_BLOCK_COL_ID_HORIZONTAL_WIND] = true,
+    [MCE_BLOCK_COL_ID_WATER] = true,
 }
 
 --- Called from bhvMceBlock.bhv
@@ -202,9 +211,38 @@ function bhv_mce_block_loop(obj)
         obj.header.gfx.node.flags = obj.header.gfx.node.flags & ~GRAPH_RENDER_INVISIBLE
     end
     network_send_object_owner_only(obj)
+
+    ----------------------- Custom surfaces -----------------------
+    -- Handle surfaces that affect the block itself
 end
 
----------------------------------------------
+----------------------- Custom surfaces -----------------------
+
+---@param m MarioState
+local function custom_surface_mario_update(m)
+    if m.playerIndex ~= 0 then return end
+    local block = (m.floor and m.floor.object) or (m.wall and m.wall.object) or (m.ceil and m.ceil.object)
+
+    block = obj_get_first_with_behavior_id(bhvMceBlock)
+    while block do
+        local surface_id = block.oItemParams & 0xFF
+        if surface_id == MCE_BLOCK_COL_ID_VERTICAL_WIND and mario_is_within_block(m, block) then
+            if m.action ~= ACT_CUSTOM_VERTICAL_WIND then
+                drop_and_set_mario_action(m, ACT_CUSTOM_VERTICAL_WIND, 0)
+            end
+            m.vel.y = m.vel.y + 15
+            if m.vel.y > 50 then
+                m.vel.y = 50
+            end
+            spawn_wind_particles(1, 0)
+            play_sound(SOUND_ENV_WIND2, m.marioObj.header.gfx.cameraToObject)
+        end
+        block = obj_get_next_with_same_behavior_id(block)
+    end
+end
+hook_event(HOOK_MARIO_UPDATE, custom_surface_mario_update)
+
+------------------------------------------------------------------------------------------
 
 local star_hitbox = {
     interactType = INTERACT_STAR_OR_KEY,
@@ -246,7 +284,7 @@ function bhv_mce_star_loop(obj)
     network_send_object_owner_only(obj)
 end
 
----------------------------------------------
+------------------------------------------------------------------------------------------
 
 local coin_hitbox = {
     interactType = INTERACT_COIN,
@@ -299,7 +337,7 @@ function bhv_mce_coin_loop(obj)
     network_send_object_owner_only(obj)
 end
 
----------------------------------------------
+------------------------------------------------------------------------------------------
 
 local exclamation_box_hitbox = {
     interactType = INTERACT_BREAKABLE,
@@ -417,7 +455,7 @@ end
 
 hook_event(HOOK_UPDATE, koopa_shell_delete_if_unused)
 
-------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------
 
 local function on_object_count_chat_commmand()
     local count = 0
@@ -505,21 +543,29 @@ local function on_set_item_size_chat_command(msg)
 end
 
 local block_id_lookup = {
-    ["default"] = MCE_BLOCK_DEFAULT_ID,
-    ["normal"] = MCE_BLOCK_DEFAULT_ID,
+    ["default"] = MCE_BLOCK_COL_ID_DEFAULT,
+    ["normal"] = MCE_BLOCK_COL_ID_DEFAULT,
     ["none"] = -1,
     ["no collision"] = -1,
     ["intangible"] = -1,
-    ["lava"] = MCE_BLOCK_LAVA_ID,
-    ["death"] = MCE_BLOCK_DEATH_ID,
-    ["quicksand"] = MCE_BLOCK_QUICKSAND_ID,
-    ["shallow quicksand"] = MCE_BLOCK_SHALLOW_QUICKSAND_ID,
-    ["shallowsand"] = MCE_BLOCK_SHALLOW_QUICKSAND_ID,
-    ["not slippery"] = MCE_BLOCK_NOT_SLIPPERY_ID,
-    ["slippery"] = MCE_BLOCK_SLIPPERY_ID,
-    ["very slippery"] = MCE_BLOCK_VERY_SLIPPERY_ID,
-    ["hangable"] = MCE_BLOCK_HANGABLE_ID,
-    ["vanish"] = MCE_BLOCK_VANISH_ID,
+    ["lava"] = MCE_BLOCK_COL_ID_LAVA,
+    ["death"] = MCE_BLOCK_COL_ID_DEATH,
+    ["quicksand"] = MCE_BLOCK_COL_ID_QUICKSAND,
+    ["shallow quicksand"] = MCE_BLOCK_COL_ID_SHALLOW_QUICKSAND,
+    ["shallowsand"] = MCE_BLOCK_COL_ID_SHALLOW_QUICKSAND,
+    ["s sand"] = MCE_BLOCK_COL_ID_SHALLOW_QUICKSAND,
+    ["not slippery"] = MCE_BLOCK_COL_ID_NOT_SLIPPERY,
+    ["n slippery"] = MCE_BLOCK_COL_ID_NOT_SLIPPERY,
+    ["slippery"] = MCE_BLOCK_COL_ID_SLIPPERY,
+    ["very slippery"] = MCE_BLOCK_COL_ID_VERY_SLIPPERY,
+    ["v slippery"] = MCE_BLOCK_COL_ID_VERY_SLIPPERY,
+    ["hangable"] = MCE_BLOCK_COL_ID_HANGABLE,
+    ["vanish"] = MCE_BLOCK_COL_ID_VANISH,
+    ["vertical wind"] = MCE_BLOCK_COL_ID_VERTICAL_WIND,
+    ["v wind"] = MCE_BLOCK_COL_ID_VERTICAL_WIND,
+    ["horizontal wind"] = MCE_BLOCK_COL_ID_HORIZONTAL_WIND,
+    ["h wind"] = MCE_BLOCK_COL_ID_HORIZONTAL_WIND,
+    ["wind"] = MCE_BLOCK_COL_ID_HORIZONTAL_WIND
 }
 
 ---@param msg string
