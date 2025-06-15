@@ -202,7 +202,7 @@ local function act_custom_vertical_wind(m)
         mario_set_forward_vel(m, -16)
     end
 
-    m.marioObj.header.gfx.angle.x = convert_s16(6144 * intendedMag * convert_s16(coss(intendedDYaw)))
+    m.marioObj.header.gfx.angle.x = convert_s16(6144 * intendedMag * coss(intendedDYaw))
     --m.marioObj.header.gfx.angle.y = convert_s16(-4096 * intendedMag * convert_s16(sins(intendedDYaw)))
     return false
 end

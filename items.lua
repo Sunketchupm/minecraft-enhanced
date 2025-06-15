@@ -227,7 +227,7 @@ local function custom_surface_mario_update(m)
     while block do
         local surface_id = block.oItemParams & 0xFF
         if surface_id == MCE_BLOCK_COL_ID_VERTICAL_WIND and mario_is_within_block(m, block) then
-            if m.action ~= ACT_CUSTOM_VERTICAL_WIND then
+            if m.action ~= ACT_CUSTOM_VERTICAL_WIND and m.action & ACT_FLAG_ALLOW_VERTICAL_WIND_ACTION ~= 0 then
                 drop_and_set_mario_action(m, ACT_CUSTOM_VERTICAL_WIND, 0)
             end
             m.vel.y = m.vel.y + 15
@@ -235,6 +235,49 @@ local function custom_surface_mario_update(m)
                 m.vel.y = 50
             end
             spawn_wind_particles(1, 0)
+            play_sound(SOUND_ENV_WIND2, m.marioObj.header.gfx.cameraToObject)
+        elseif surface_id == MCE_BLOCK_COL_ID_HORIZONTAL_WIND and mario_is_within_block(m, block) then
+            local pushAngle = block.oFaceAngleYaw
+            djui_chat_message_create(sins(pushAngle))
+            djui_chat_message_create(coss(pushAngle))
+            if m.action & ACT_FLAG_AIR ~= 0 then
+                m.slideVelX = m.slideVelX + m.forwardVel * sins(pushAngle)
+                m.slideVelZ = m.slideVelZ + m.forwardVel * coss(pushAngle)
+
+                local speed = math.sqrt(m.slideVelX * m.slideVelX + m.slideVelZ * m.slideVelZ)
+
+                if speed > 48 then
+                    m.slideVelX = m.slideVelX * 48.0 / speed
+                    m.slideVelZ = m.slideVelZ * 48.0 / speed
+                    speed = 32
+                elseif speed > 32 then
+                    speed = 32
+                end
+
+                m.vel.x = m.slideVelX
+                m.vel.z = m.slideVelZ
+                m.slideYaw = atan2s(m.slideVelZ, m.slideVelX)
+                m.forwardVel = speed * coss(convert_s16(m.faceAngle.y - m.slideYaw))
+            elseif m.action & (ACT_FLAG_STATIONARY | ACT_FLAG_MOVING) ~= 0 then
+                local pushSpeed = 0
+                if m.action & ACT_FLAG_MOVING ~= 0 then
+                    local pushDYaw = convert_s16(m.faceAngle.y - pushAngle)
+
+                    pushSpeed = (m.forwardVel > 0.0) and -m.forwardVel * 0.5 or -8.0
+
+                    if pushDYaw > -0x4000 and pushDYaw < 0x4000 then
+                        pushSpeed = pushSpeed * -1.0
+                    end
+
+                    pushSpeed = pushSpeed * coss(pushDYaw)
+                else
+                    pushSpeed = 3.2
+                end
+
+                m.vel.x = m.vel.x + pushSpeed * sins(pushAngle)
+                m.vel.z = m.vel.z + pushSpeed * coss(pushAngle)
+            end
+            spawn_wind_particles(0, pushAngle);
             play_sound(SOUND_ENV_WIND2, m.marioObj.header.gfx.cameraToObject)
         end
         block = obj_get_next_with_same_behavior_id(block)
