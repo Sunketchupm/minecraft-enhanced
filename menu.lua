@@ -481,10 +481,10 @@ local function render_item_list(x, y, width, height, items)
             djui_hud_render_rect(slot_x, slot_y, slot_width, slot_height)
         end
         if item.icon then
-            local item_x = (slot_x + slot_width * 0.5) - (item.icon.width * 0.5)
-            local item_y = (slot_y + slot_height * 0.5) - (item.icon.height * 0.5)
+            local item_x = (slot_x + slot_width * 0.33) - (item.icon.width * 0.33)
+            local item_y = (slot_y + slot_height * 0.33) - (item.icon.height * 0.33)
             djui_hud_set_color(255, 255, 255, 255)
-            djui_hud_render_texture(item.icon, item_x, item_y, 1, 1)
+            djui_hud_render_texture(item.icon, item_x, item_y, 1.5, 1.5)
         end
     end
 
@@ -664,10 +664,10 @@ local function render_hotbar(screen_width, screen_height)
             djui_hud_render_rect(slot_x, slot_y, slot_width, slot_height)
         end
         if item.icon then
-            local item_x = (slot_x + slot_width * 0.5) - (item.icon.width * 0.5)
-            local item_y = (slot_y + slot_height * 0.5) - (item.icon.height * 0.5)
+            local item_x = (slot_x + slot_width * 0.33) - (item.icon.width * 0.33)
+            local item_y = (slot_y + slot_height * 0.33) - (item.icon.height * 0.33)
             djui_hud_set_color(255, 255, 255, 255)
-            djui_hud_render_texture(item.icon, item_x, item_y, 1, 1)
+            djui_hud_render_texture(item.icon, item_x, item_y, 1.5, 1.5)
         end
         djui_hud_set_color(128, 128, 128, 255)
         djui_hud_render_rect(slot_x, y, 3, slot_height)
@@ -693,8 +693,8 @@ end
 local function render_controls_tip(x, y, buttons)
     local screen_width = djui_hud_get_screen_width()
     local screen_height = djui_hud_get_screen_height()
-    local text_scale = (screen_width / screen_height) * 0.55
-    local texture_scale = (screen_width / screen_height) * 1.1
+    local text_scale = (screen_width/screen_height) * 0.55
+    local texture_scale = (screen_width/screen_height) * 1.1
     local initial_x = x
     local texture_y = y
 
