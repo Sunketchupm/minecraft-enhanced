@@ -180,7 +180,7 @@ function bhv_mock_item_loop(obj)
 				obj.oOpacity = 100
 			else
 				obj.oAnimState = current_item.animState + BLOCK_ANIM_STATE_TRANSPARENT_START
-				obj.oOpacity = 225
+				obj.oOpacity = 200
 			end
 			if obj.oAnimState > BLOCK_BARRIER_ANIM then
 				obj.oAnimState = BLOCK_BARRIER_ANIM
