@@ -108,7 +108,7 @@ local COL_MCE_BLOCK_VERY_SLIPPERY = smlua_collision_util_get("mce_block_col_very
 local COL_MCE_BLOCK_HANGABLE = smlua_collision_util_get("mce_block_col_hangable")
 local COL_MCE_BLOCK_VANISH = smlua_collision_util_get("mce_block_col_vanish")
 
-local MCE_BLOCK_NO_COLLISION_ID = -1
+local MCE_BLOCK_NO_COLLISION_ID = 0xFF
 local MCE_BLOCK_DEFAULT_ID = 0
 local MCE_BLOCK_LAVA_ID = 1
 local MCE_BLOCK_DEATH_ID = 2
