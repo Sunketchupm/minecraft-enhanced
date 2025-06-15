@@ -64,7 +64,7 @@ const BehaviorScript bhvMceExclamationBox[] = {
     LOAD_COLLISION_DATA(exclamation_box_outline_seg8_collision_08025F78),
     SET_FLOAT(oCollisionDistance, 300),
     SET_HOME(),
-    //CALL_NATIVE(bhv_mce_exclamation_box_init),
+    CALL_NATIVE(bhv_mce_exclamation_box_init),
     BEGIN_LOOP(),
         CALL_NATIVE(bhv_mce_exclamation_box_loop),
     END_LOOP(),

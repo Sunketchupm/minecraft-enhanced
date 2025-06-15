@@ -145,12 +145,15 @@ function bhv_mock_item_loop(obj)
 		obj_set_model_extended(obj, current_item.model)
 
 		local mock_settings = current_item.mock
+
 		if mock_settings.billboard then
 			obj_set_billboard(obj)
 		end
+
 		if mock_settings.scale then
 			obj_scale_mult_to(obj, mock_settings.scale)
 		end
+
 		if mock_settings.animateAnimState then
 			if mock_settings.animateFrame then
 				obj.oAnimState = obj.oAnimState + (1 % mock_settings.animateFrame)
@@ -163,6 +166,7 @@ function bhv_mock_item_loop(obj)
 		else
 			obj.oAnimState = current_item.animState
 		end
+
 		if mock_settings.animateFaceAngleYaw then
 			obj.oFaceAngleYaw = convert_s16(obj.oFaceAngleYaw + mock_settings.animateFaceAngleYaw)
 		else
@@ -170,6 +174,18 @@ function bhv_mock_item_loop(obj)
 		end
 		obj.oFaceAnglePitch = outline.oFaceAnglePitch
 		obj.oFaceAngleRoll = outline.oFaceAngleRoll
+
+		if current_item.model == E_MODEL_MCE_BLOCK then
+			if obj.oAnimState >= BLOCK_ANIM_STATE_TRANSPARENT_START then
+				obj.oOpacity = 100
+			else
+				obj.oAnimState = current_item.animState + BLOCK_ANIM_STATE_TRANSPARENT_START
+				obj.oOpacity = 225
+			end
+			if obj.oAnimState > BLOCK_BARRIER_ANIM then
+				obj.oAnimState = BLOCK_BARRIER_ANIM
+			end
+		end
 	else
 		obj_set_model_extended(obj, E_MODEL_NONE)
 	end
@@ -199,6 +215,7 @@ local function place_item()
 			obj.oScaleZ = current_item.size.z
 			obj_scale_xyz(obj, current_item.size.x, current_item.size.y, current_item.size.z)
 			obj.oAnimState = current_item.animState
+			obj.oOwner = network_global_index_from_local(0) + 1
 		end
 	)
 
@@ -220,7 +237,7 @@ local function determine_place_or_delete()
 			y = math.abs(nearest.oPosY - outline.oPosY),
 			z = math.abs(nearest.oPosZ - outline.oPosZ)
 		}
-		if dists.x >= GridSize.x or dists.y >= GridSize.y or dists.z >= GridSize.z then
+		if dists.x >= GridSize.x * 0.5 or dists.y >= GridSize.y * 0.5 or dists.z >= GridSize.z * 0.5 then
 			place_item()
 		else
 			play_sound(SOUND_GENERAL_BOX_LANDING, gMarioStates[0].marioObj.header.gfx.cameraToObject)
@@ -278,9 +295,9 @@ local function set_outline_offset(m)
 	if not outline or m.controller.buttonDown & L_TRIG ~= 0 then return end
 	local pressed = m.controller.buttonPressed
 
-	if pressed & U_JPAD ~= 0 then
+	if pressed & U_JPAD ~= 0 and outline_grid_y_offset < 3 then
 		outline_grid_y_offset = outline_grid_y_offset + 1
-	elseif pressed & D_JPAD ~= 0 then
+	elseif pressed & D_JPAD ~= 0 and outline_grid_y_offset > -3 then
 		outline_grid_y_offset = outline_grid_y_offset - 1
 	end
 end
@@ -339,6 +356,7 @@ end
 ---@param m MarioState
 local function builder_mario_update(m)
 	if not obj_get_first_with_behavior_id(bhvOutline) then
+		outline = nil
 		spawn_non_sync_object(
 			bhvOutline,
 			E_MODEL_OUTLINE,

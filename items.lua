@@ -12,12 +12,14 @@
     ---@field oScaleY number
     ---@field oScaleZ number
     ---@field oItemParams integer
+    ---@field oOwner integer
 
 define_custom_obj_fields({
     oScaleX = "f32",
     oScaleY = "f32",
     oScaleZ = "f32",
     oItemParams = "u32",
+    oOwner = "s32"
 })
 
 gCurrentItem = {behavior = nil, model = E_MODEL_NONE, params = {}}
@@ -59,13 +61,6 @@ local function obj_set_hitbox(obj, hitbox)
 end
 
 ---@param obj Object
-local function obj_is_hidden_or_unrendered(obj)
-    if not obj then return false end
-    local render_flags = obj.header.gfx.node.flags
-    return render_flags & (GRAPH_RENDER_INVISIBLE) ~= 0 or render_flags & (GRAPH_RENDER_ACTIVE) == 0
-end
-
----@param obj Object
 ---@param scale number
 function obj_scale_mult_to(obj, scale)
     obj.header.gfx.scale.x = obj.header.gfx.scale.x * scale
@@ -91,9 +86,12 @@ function obj_get_any_nearest_item(obj)
     return nearest_item
 end
 
-local function show_pos_in_free_move(obj)
-    if obj_is_hidden_or_unrendered(obj) and gMarioStates[0].action == ACT_FREE_MOVE then
-        spawn_non_sync_object(id_bhvSparkleParticleSpawner, E_MODEL_SPARKLES_ANIMATION, obj.oPosX, obj.oPosY, obj.oPosZ, nil)
+---@param obj Object
+local function network_send_object_owner_only(obj)
+    if obj.oOwner == network_global_index_from_local(0) + 1 then
+        if obj.oTimer >= 300 then
+            network_send_object(obj, true)
+        end
     end
 end
 
@@ -122,6 +120,9 @@ local MCE_BLOCK_VERY_SLIPPERY_ID = 7
 local MCE_BLOCK_HANGABLE_ID = 8
 local MCE_BLOCK_VANISH_ID = 9
 
+BLOCK_ANIM_STATE_TRANSPARENT_START = 110
+BLOCK_BARRIER_ANIM = (BLOCK_ANIM_STATE_TRANSPARENT_START * 2) + 1
+
 local standard_collision_lookup = {
     [MCE_BLOCK_DEFAULT_ID] = COL_MCE_BLOCK_DEFAULT,
     [MCE_BLOCK_LAVA_ID] = COL_MCE_BLOCK_LAVA,
@@ -147,27 +148,42 @@ function bhv_mce_block_init(obj)
         end
         obj.collisionData = collision
     end
-    obj.oCollisionDistance = 5000
+    if obj.oAnimState >= BLOCK_ANIM_STATE_TRANSPARENT_START then
+        obj.oOpacity = 100
+    end
+    obj.oCollisionDistance = 500 * vec3f_length({x = obj.oScaleX, y = obj.oScaleY, z = obj.oScaleZ})
     obj.header.gfx.skipInViewCheck = true
+    network_init_object(obj, false, {
+        "activeFlags",
+        "oOpacity",
+        "oAnimState",
+        "oOwner",
+        "oFaceAnglePitch",
+        "oMoveAnglePitch",
+        "oFaceAngleYaw",
+        "oMoveAngleYaw",
+        "oFaceAngleRoll",
+        "oMoveAngleRoll",
+        "oScaleX",
+        "oScaleY",
+        "oScaleZ",
+        "oItemParams",
+        "oCollisionDistance"
+    })
 end
 
 ---@param obj Object
 function bhv_mce_block_loop(obj)
-    obj.oOpacity = 50
+    if obj.oAnimState > BLOCK_BARRIER_ANIM then
+        obj.oAnimState = BLOCK_BARRIER_ANIM
+    end
+    if obj.oAnimState == BLOCK_BARRIER_ANIM and gMarioStates[0].action ~= ACT_FREE_MOVE then
+        obj.header.gfx.node.flags = obj.header.gfx.node.flags | GRAPH_RENDER_INVISIBLE
+    else
+        obj.header.gfx.node.flags = obj.header.gfx.node.flags & ~GRAPH_RENDER_INVISIBLE
+    end
+    network_send_object_owner_only(obj)
 end
-
---- Called from mce_box.geo
-
-function lua_asm_set_color(node, _misc)
-    local graphNode = cast_graph_node(node.next)
-    local dl = graphNode.displayList
-    gfx_parse(dl, function(cmd, op)
-        if op == G_SETPRIMCOLOR then
-            gfx_set_command(cmd, "gsDPSetPrimColor(0, 0, %i, %i, %i, %i)", 255, 255, 255, 255)
-        end
-    end)
-end
-
 
 ---------------------------------------------
 
@@ -188,6 +204,13 @@ local star_hitbox = {
 ---@param obj Object
 function bhv_mce_star_init(obj)
     obj_set_hitbox(obj, star_hitbox)
+    network_init_object(obj, false, {
+        "activeFlags",
+        "oOwner",
+        "oScaleX",
+        "oScaleY",
+        "oScaleZ",
+    })
 end
 
 ---@param obj Object
@@ -204,8 +227,9 @@ function bhv_mce_star_loop(obj)
         end
     end
 
-    show_pos_in_free_move(obj)
     obj.oInteractStatus = 0
+
+    network_send_object_owner_only(obj)
 end
 
 ---------------------------------------------
@@ -236,6 +260,14 @@ function bhv_mce_coin_init(obj)
         obj.oDamageOrCoinValue = 5
         obj_scale_mult_to(obj, 1.25)
     end
+
+    network_init_object(obj, false, {
+        "activeFlags",
+        "oOwner",
+        "oScaleX",
+        "oScaleY",
+        "oScaleZ",
+    })
 end
 
 ---@param obj Object
@@ -254,8 +286,9 @@ function bhv_mce_coin_loop(obj)
         end
     end
 
-    show_pos_in_free_move(obj)
     obj.oInteractStatus = 0
+
+    network_send_object_owner_only(obj)
 end
 
 ---------------------------------------------
@@ -281,13 +314,16 @@ local contents = {
 
 --- Called from bhvMceExclamationBox.bhv
 
---[[ -- Unused for now
 ---@param obj Object
 function bhv_mce_exclamation_box_init(obj)
-    
+    network_init_object(obj, false, {
+        "activeFlags",
+        "oOwner",
+        "oScaleX",
+        "oScaleY",
+        "oScaleZ",
+    })
 end
-]]
-
 
 ---@param obj Object
 function bhv_mce_exclamation_box_loop(obj)
@@ -358,7 +394,7 @@ function bhv_mce_exclamation_box_loop(obj)
         end
     end
 
-    show_pos_in_free_move(obj)
+    network_send_object_owner_only(obj)
 end
 
 local function koopa_shell_delete_if_unused()
@@ -388,7 +424,33 @@ local function on_object_count_chat_commmand()
     return true
 end
 
+---@param obj Object
+local function bhv_barrier_init(obj)
+    obj.oFlags = OBJ_FLAG_UPDATE_GFX_POS_AND_ANGLE
+    obj.oFaceAnglePitch = 0
+    obj.oFaceAngleYaw = 0
+    obj.oFaceAngleRoll = 0
+end
+
+id_bhvBarrier = hook_behavior(nil, OBJ_LIST_UNIMPORTANT, false, bhv_barrier_init, function (obj) obj_mark_for_deletion(obj) end)
+
+local function unrendered_items_update()
+    for _, behavior in ipairs(item_behaviors) do
+        if behavior ~= bhvMceBlock then
+            local obj = obj_get_first_with_behavior_id(behavior)
+            while obj do
+                local render_flags = obj.header.gfx.node.flags
+                if gMarioStates[0].action == ACT_FREE_MOVE and (render_flags & GRAPH_RENDER_INVISIBLE ~= 0 or render_flags & GRAPH_RENDER_ACTIVE == 0) then
+                    obj.oTimer = 301
+                end
+                obj = obj_get_next_with_same_behavior_id(obj)
+            end
+        end
+    end
+end
+
 hook_chat_command("objects", "Counts the amount of objects in the current area", on_object_count_chat_commmand)
+hook_event(HOOK_UPDATE, unrendered_items_update)
 
 ------------------------------------------------------------------------------------------
 

@@ -95,13 +95,13 @@ local function on_death(m)
     local spawn = obj_get_nearest_object_with_behavior_id(m.marioObj, id_bhvSpinAirborneWarp)
     if spawn then
         vec3f_set(m.pos, spawn.oPosX, spawn.oPosY, spawn.oPosZ)
-        m.health = 0x880
-        m.capTimer = 1
     else
         warp_to_start_level()
     end
+    mario_pop_bubble(m)
     set_mario_action(m, ACT_FREEFALL, 0)
-    soft_reset_camera(m.area.camera)
+    m.invincTimer = 1
+    m.capTimer = 1
     return false
 end
 

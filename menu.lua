@@ -18,6 +18,8 @@ local item_list_column_count = 10
 
 local show_controls = true
 
+local transparent_active = false
+
 -------------- TEXTURES --------------
 local A_BUTTON_TEX = get_texture_info("Abutton")
 local B_BUTTON_TEX = get_texture_info("Bbutton")
@@ -201,6 +203,7 @@ local block_icons = {
     get_texture_info("water_09000000"),
     get_texture_info("water_0900A000"),
     get_texture_info("water_09005800"),
+    get_texture_info("barrier")
 }
 
 add_first_update(function ()
@@ -222,6 +225,18 @@ add_first_update(function ()
         menu_item.self = menu_item
         TabItemList[TAB_BUILDING_BLOCKS][i] = menu_item
     end
+    table.insert(TabItemList[TAB_BUILDING_BLOCKS], {
+        item = {
+            behavior = bhvMceBlock,
+            model = E_MODEL_MCE_BLOCK,
+            spawnYOffset = 0,
+            params = 0,
+            size = gVec3fOne(),
+            animState = BLOCK_BARRIER_ANIM,
+            mock = {}
+        },
+        icon = get_texture_info("barrier")
+    })
 
     local star_offset = 6
     add_item(TAB_ITEMS, bhvMceStar, E_MODEL_STAR, star_offset, 0, { animateFaceAngleYaw = 0x800 }, 0, gTextures.star)
@@ -533,6 +548,14 @@ end
 ---@param height number
 local function render_building_blocks_tab(x, y, width, height)
     render_standard_tab(x, y, width, height, "Building Blocks")
+    local text_scale = 1.25
+    local text = "Transparent?"
+    local text_size = djui_hud_measure_text(text) * text_scale
+    local text_x = (x + width * 0.5) - (text_size * 0.5)
+    local text_y = (y + height) - 50 * text_scale
+    local color = transparent_active and {r = 0, g = 255, b = 0, a = 255} or {r = 255, g = 0, b = 0, a = 255}
+    djui_hud_set_color_with_table(color)
+    djui_hud_print_text(text, text_x, text_y, text_scale)
 end
 
 ---@param x number
@@ -617,7 +640,7 @@ local function render_hotbar(screen_width, screen_height)
     local width = screen_width * 0.5
     local height = screen_height * 0.08
     local x = screen_width * 0.25
-    local y = screen_height - (show_controls and (height * 1.8) or (height))
+    local y = screen_height - ((show_controls and height * 1.8) or height) --need space for on-screen controls
     djui_hud_set_color(64, 64, 32, 192)
     djui_hud_render_rect(x, y, width, height)
     for index, item in ipairs(HotbarItemList) do
@@ -642,7 +665,7 @@ local function render_hotbar(screen_width, screen_height)
         djui_hud_set_color(128, 128, 128, 255)
         djui_hud_render_rect(slot_x, y, 3, slot_height)
     end
-    render_rectangle_borders(x, y, width, height, {r = 128, g = 128, b = 128, a = 255}, {r = 128, g = 128, b = 128, a = 255}, 0.007, 0.06)
+    render_rectangle_borders(x, y, width, height, {r = 128, g = 128, b = 128, a = 255}, {r = 128, g = 128, b = 128, a = 255}, 0.01, 0.08)
     render_pixel_border(x, y, width, height, {r = 0, g = 0, b = 0, a = 255}, 2)
 end
 
@@ -661,8 +684,8 @@ end
 ---@param y number
 ---@param buttons {prefix: string?, postfix: string?, texture: TextureInfo}[]
 local function render_controls_tip(x, y, buttons)
-    local text_scale = 1
-    local texture_scale = 2
+    local text_scale = 0.9
+    local texture_scale = 1.8
     local initial_x = x
     local texture_y = y
 
@@ -703,45 +726,46 @@ local function render_controls(screen_width, screen_height)
         if not MenuOpen then
             local l_held_modifier = gMarioStates[0].controller.buttonDown & L_TRIG ~= 0
             if not l_held_modifier then
-                if not gCurrentItem then
+                if not gCurrentItem then -- no hold L, no selected item
                     render_controls_tip(x, y, {{postfix = "  Fly Up", texture = A_BUTTON_TEX}})
-                    render_controls_tip(x * 5.5, y, {{postfix = "  Fly Down", texture = Z_TRIG_TEX}})
-                    render_controls_tip(x * 11, y, {{postfix = "  Sprint Fly", texture = B_BUTTON_TEX}})
-                    render_controls_tip(x * 17.2, y, {{postfix = "  Open Menu", texture = X_BUTTON_TEX}})
-                    render_controls_tip(x * 23.1, y, {{postfix = "  Cycle Hotbar", texture = LR_JPAD_TEX}})
-                    render_controls_tip(x * 30.2, y, {{prefix = "", texture = L_TRIG_TEX}, {postfix = "  Stop Flying", texture = L_TRIG_TEX}})
-                    render_controls_tip(x * 37.9, y, {{postfix = "  Lock Face Angle / More", texture = L_TRIG_TEX}})
-                else
+                    render_controls_tip(x * 5.3, y, {{postfix = "  Fly Down", texture = Z_TRIG_TEX}})
+                    render_controls_tip(x * 10.4, y, {{postfix = "  Sprint Fly", texture = B_BUTTON_TEX}})
+                    render_controls_tip(x * 16.2, y, {{postfix = "  Open Menu", texture = X_BUTTON_TEX}})
+                    render_controls_tip(x * 21.7, y, {{postfix = "  Cycle Hotbar", texture = LR_JPAD_TEX}})
+                    render_controls_tip(x * 28.4, y, {{prefix = "", texture = L_TRIG_TEX}, {postfix = "  Stop Flying", texture = L_TRIG_TEX}})
+                    render_controls_tip(x * 35.6, y, {{postfix = "  Lock Face Angle/More", texture = L_TRIG_TEX}})
+                else -- no hold L, item selected
                     render_controls_tip(x, y, {{postfix = "  Open Menu", texture = X_BUTTON_TEX}})
-                    render_controls_tip(x * 6.9, y, {{postfix = "  Place Item", texture = Y_BUTTON_TEX}})
-                    render_controls_tip(x * 13.2, y, {{postfix = "  Item Elevation", texture = UD_JPAD_TEX}})
-                    render_controls_tip(x * 21.2, y, {{prefix = "", texture = L_TRIG_TEX}, {postfix = "  Stop Flying", texture = L_TRIG_TEX}})
-                    render_controls_tip(x * 29.4, y, {{postfix = "  Lock Face Angle", texture = L_TRIG_TEX}})
+                    render_controls_tip(x * 6.4, y, {{postfix = "  Place/Delete Item", texture = Y_BUTTON_TEX}})
+                    render_controls_tip(x * 14.7, y, {{postfix = "  Item Elevation", texture = UD_JPAD_TEX}})
+                     render_controls_tip(x * 22, y, {{postfix = "  Cycle Hotbar", texture = LR_JPAD_TEX}})
+                    render_controls_tip(x * 28.6, y, {{prefix = "", texture = L_TRIG_TEX}, {postfix = "  Stop Flying", texture = L_TRIG_TEX}})
+                    render_controls_tip(x * 35.7, y, {{postfix = "  Lock Face Angle/More", texture = L_TRIG_TEX}})
                 end
             else
-                if not gCurrentItem then
+                if not gCurrentItem then -- L held, no selected item
                     render_controls_tip(x, y, {{postfix = "  Slow Fly", texture = B_BUTTON_TEX}})
-                    render_controls_tip(x * 6.4, y, {{prefix = "", texture = U_CBUTTON_TEX}, {postfix = "  Adjust Pitch", texture = D_CBUTTON_TEX}})
-                    render_controls_tip(x * 14.3, y, {{prefix = "", texture = L_CBUTTON_TEX}, {postfix = "  Adjust Yaw", texture = R_CBUTTON_TEX}})
-                    render_controls_tip(x * 21.5, y, {{postfix = "  Adjust Roll", texture = LR_JPAD_TEX}})
-                    render_controls_tip(x * 28.1, y, {{postfix = "  Reset Angle", texture = X_BUTTON_TEX}})
-                else
+                    render_controls_tip(x * 6.1, y, {{prefix = "", texture = U_CBUTTON_TEX}, {postfix = "  Adjust Pitch", texture = D_CBUTTON_TEX}})
+                    render_controls_tip(x * 13.4, y, {{prefix = "", texture = L_CBUTTON_TEX}, {postfix = "  Adjust Yaw", texture = R_CBUTTON_TEX}})
+                    render_controls_tip(x * 20.1, y, {{postfix = "  Adjust Roll", texture = LR_JPAD_TEX}})
+                    render_controls_tip(x * 26.2, y, {{postfix = "  Reset Angle", texture = X_BUTTON_TEX}})
+                else -- L held, item selected
                     render_controls_tip(x, y, {{postfix = "  Slow Fly", texture = B_BUTTON_TEX}})
-                    render_controls_tip(x * 6.6, y, {{postfix = "  Place Item", texture = Y_BUTTON_TEX}})
-                    render_controls_tip(x * 13, y, {{postfix = "  Adjust Size", texture = UD_JPAD_TEX}})
-                    render_controls_tip(x * 19.7, y, {{prefix = "", texture = U_CBUTTON_TEX}, {postfix = "  Adjust Pitch", texture = D_CBUTTON_TEX}})
-                    render_controls_tip(x * 27.7, y, {{prefix = "", texture = L_CBUTTON_TEX}, {postfix = "  Adjust Yaw", texture = R_CBUTTON_TEX}})
-                    render_controls_tip(x * 34.9, y, {{postfix = "  Adjust Roll", texture = LR_JPAD_TEX}})
-                    render_controls_tip(x * 41.5, y, {{postfix = "  Reset Angle", texture = X_BUTTON_TEX}})
+                    render_controls_tip(x * 6.1, y, {{postfix = "  Place/Delete Item", texture = Y_BUTTON_TEX}})
+                    render_controls_tip(x * 14.4, y, {{postfix = "  Adjust Size", texture = UD_JPAD_TEX}})
+                    render_controls_tip(x * 20.5, y, {{prefix = "", texture = U_CBUTTON_TEX}, {postfix = "  Adjust Pitch", texture = D_CBUTTON_TEX}})
+                    render_controls_tip(x * 27.8, y, {{prefix = "", texture = L_CBUTTON_TEX}, {postfix = "  Adjust Yaw", texture = R_CBUTTON_TEX}})
+                    render_controls_tip(x * 34.5, y, {{postfix = "  Adjust Roll", texture = LR_JPAD_TEX}})
+                    render_controls_tip(x * 40.6, y, {{postfix = "  Reset Angle", texture = X_BUTTON_TEX}})
                 end
             end
         else
             render_controls_tip(x, y, {{postfix = "  Move Selection", texture = CONTROL_STICK_TEX}})
-            render_controls_tip(x * 8.9, y, {{postfix = "  Select Item", texture = A_BUTTON_TEX}})
-            render_controls_tip(x * 15.5, y, {{postfix = "  Close Menu", texture = X_BUTTON_TEX}})
-            render_controls_tip(x * 21.7, y , {{prefix = "", texture = L_CBUTTON_TEX}, {postfix = "  Next/Previous Page", texture = R_CBUTTON_TEX}})
-            render_controls_tip(x * 32.1, y, {{prefix = "", texture = L_TRIG_TEX}, {postfix = "  Next/Previous Tab", texture = R_TRIG_TEX}})
-            render_controls_tip(x * 42, y, {{postfix = "  Cycle Hotbar", texture = LR_JPAD_TEX}})
+            render_controls_tip(x * 8.3, y, {{postfix = "  Select Item", texture = A_BUTTON_TEX}})
+            render_controls_tip(x * 14.5, y, {{postfix = "  Close Menu", texture = X_BUTTON_TEX}})
+            render_controls_tip(x * 20.3, y , {{prefix = "", texture = L_CBUTTON_TEX}, {postfix = "  Next/Previous Page", texture = R_CBUTTON_TEX}})
+            render_controls_tip(x * 29.9, y, {{prefix = "", texture = L_TRIG_TEX}, {postfix = "  Next/Previous Tab", texture = R_TRIG_TEX}})
+            render_controls_tip(x * 39, y, {{postfix = "  Cycle Hotbar", texture = LR_JPAD_TEX}})
         end
     end
 end
@@ -783,31 +807,29 @@ end
 
 ----------------------------------------------------
 
+local function on_change_tab_input()
+    mouse_tab_was_clicked_on = 0
+    selected_item_index = 0
+    current_item_page = 1
+    play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
+end
+
 local function handle_change_tab_inputs(pressed)
     if pressed & L_TRIG ~= 0 then
         active_tab = active_tab - 1
         if active_tab < 1 then
             active_tab = TAB_MAIN_END
         end
-        mouse_tab_was_clicked_on = 0
-        selected_item_index = 0
-        current_item_page = 1
-        play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
+        on_change_tab_input()
     elseif pressed & R_TRIG ~= 0 then
         active_tab = active_tab + 1
         if active_tab > TAB_MAIN_END then
             active_tab = 1
         end
-        mouse_tab_was_clicked_on = 0
-        selected_item_index = 0
-        current_item_page = 1
-        play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
+        on_change_tab_input()
     elseif mouse_tab_was_clicked_on > 0 then
         active_tab = mouse_tab_was_clicked_on
-        mouse_tab_was_clicked_on = 0
-        selected_item_index = 0
-        current_item_page = 1
-        play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
+        on_change_tab_input()
     end
 end
 
@@ -838,7 +860,7 @@ local function handle_item_selection_inputs(m)
     local relative_item_index = selected_item_index - selected_item_offset
 
     if selected_item_index == 0 then
-        selected_item_index = 1 + selected_item_offset
+        selected_item_index = selected_item_offset
         relative_item_index = 1
     end
 
@@ -859,20 +881,29 @@ local function handle_item_selection_inputs(m)
     end
 end
 
+local function on_pick_item_input()
+    ---@type MenuItemLink
+    local hotbar_item = table.deepcopy(TabItemList[active_tab][selected_item_index])
+    if transparent_active and hotbar_item.item.model == E_MODEL_MCE_BLOCK then
+        hotbar_item.item.animState = hotbar_item.item.animState + BLOCK_ANIM_STATE_TRANSPARENT_START
+    end
+    HotbarItemList[SelectedHotbarIndex] = hotbar_item
+    play_sound(SOUND_MENU_CLICK_FILE_SELECT, gGlobalSoundSource)
+end
+
 ---@param pressed integer
 local function handle_pick_item_inputs(pressed)
+    if not TabItemList[active_tab] or not TabItemList[active_tab][selected_item_index] then return end
     if moved_mouse then
         if mouse_prev_item_index ~= selected_item_index then
             play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource)
         end
         mouse_prev_item_index = selected_item_index
-        if mouse_has_clicked and TabItemList[active_tab] and TabItemList[active_tab][selected_item_index] then
-            HotbarItemList[SelectedHotbarIndex] = table.deepcopy(TabItemList[active_tab][selected_item_index])
-            play_sound(SOUND_MENU_CLICK_FILE_SELECT, gGlobalSoundSource)
+        if mouse_has_clicked then
+            on_pick_item_input()
         end
-    elseif not moved_mouse and pressed & A_BUTTON ~= 0 and TabItemList[active_tab] and TabItemList[active_tab][selected_item_index] then
-        HotbarItemList[SelectedHotbarIndex] = table.deepcopy(TabItemList[active_tab][selected_item_index])
-        play_sound(SOUND_MENU_CLICK_FILE_SELECT, gGlobalSoundSource)
+    elseif pressed & A_BUTTON ~= 0 then
+        on_pick_item_input()
     end
 end
 
@@ -886,6 +917,15 @@ local function handle_paging_inputs(pressed)
         current_item_page = current_item_page + 1
         selected_item_index = 0
         play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
+    end
+end
+
+---@param pressed integer
+local function handle_extra_inputs(pressed)
+    if pressed & Y_BUTTON ~= 0 then
+        if active_tab == TAB_BUILDING_BLOCKS then
+            transparent_active = not transparent_active
+        end
     end
 end
 
@@ -903,6 +943,7 @@ local function handle_standard_inputs(m)
     handle_change_tab_inputs(pressed)
     handle_item_selection_inputs(m)
     handle_paging_inputs(pressed)
+    handle_extra_inputs(pressed)
     if selected_item_index > 0 then
         handle_pick_item_inputs(pressed)
     end
