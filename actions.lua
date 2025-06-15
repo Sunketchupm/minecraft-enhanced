@@ -177,7 +177,6 @@ ACT_CUSTOM_VERTICAL_WIND = allocate_mario_action(ACT_GROUP_AIRBORNE | ACT_FLAG_A
 ---@param m MarioState
 local function act_custom_vertical_wind(m)
     local intendedDYaw = -convert_s16(m.intendedYaw - m.faceAngle.y)
-    djui_chat_message_create(intendedDYaw)
     local intendedMag = m.intendedMag / 32.0
 
     play_character_sound_if_no_flag(m, CHAR_SOUND_HERE_WE_GO, MARIO_MARIO_SOUND_PLAYED)
@@ -204,8 +203,7 @@ local function act_custom_vertical_wind(m)
     end
 
     m.marioObj.header.gfx.angle.x = convert_s16(6144 * intendedMag * convert_s16(coss(intendedDYaw)))
-    m.marioObj.header.gfx.angle.y = convert_s16(-4096 * intendedMag * convert_s16(sins(intendedDYaw)))
-    --djui_chat_message_create(intendedMag, sins(intendedDYaw), -4096 * intendedMag * sins(intendedDYaw), convert_s16(-4096 * intendedMag * sins(intendedDYaw)))
+    --m.marioObj.header.gfx.angle.y = convert_s16(-4096 * intendedMag * convert_s16(sins(intendedDYaw)))
     return false
 end
 
