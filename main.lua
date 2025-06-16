@@ -122,12 +122,14 @@ function bhv_outline_loop(obj)
 	if current_item then
 		obj_scale_xyz(obj, current_item.size.x, current_item.size.y, current_item.size.z)
 
-		outline.oFaceAnglePitch = current_item.rotation.x
-		outline.oFaceAngleYaw = current_item.rotation.y
-		outline.oFaceAngleRoll = current_item.rotation.z
-		outline.oMoveAnglePitch = current_item.rotation.x
-		outline.oMoveAngleYaw = current_item.rotation.y
-		outline.oMoveAngleRoll = current_item.rotation.z
+		if current_item.rotation then
+			outline.oFaceAnglePitch = current_item.rotation.x
+			outline.oFaceAngleYaw = current_item.rotation.y
+			outline.oFaceAngleRoll = current_item.rotation.z
+			outline.oMoveAnglePitch = current_item.rotation.x
+			outline.oMoveAngleYaw = current_item.rotation.y
+			outline.oMoveAngleRoll = current_item.rotation.z
+		end
 	else
 		obj_scale(obj, 1)
 	end
@@ -221,6 +223,7 @@ local function place_item()
 			obj.oScaleZ = current_item.size.z
 			obj_scale_xyz(obj, current_item.size.x, current_item.size.y, current_item.size.z)
 			obj.oAnimState = current_item.animState
+			obj.globalPlayerIndex = network_global_index_from_local(0)
 			obj.oOwner = network_global_index_from_local(0) + 1
 		end
 	)
@@ -308,6 +311,7 @@ local function set_outline_offset(m)
 	end
 end
 
+local rotation_increment = 0xAAA
 ---@param m MarioState
 local function set_item_rotation(m)
 	if not outline or m.controller.buttonDown & L_TRIG == 0 then return end
@@ -317,19 +321,19 @@ local function set_item_rotation(m)
 	local item_rotation = current_item.rotation
 
 	if pressed & U_CBUTTONS ~= 0 then
-		item_rotation.x = item_rotation.x + 0x400
+		item_rotation.x = item_rotation.x + rotation_increment
 	elseif pressed & D_CBUTTONS ~= 0 then
-		item_rotation.x = item_rotation.x - 0x400
+		item_rotation.x = item_rotation.x - rotation_increment
 	end
 	if pressed & L_CBUTTONS ~= 0 then
-		item_rotation.y = item_rotation.y + 0x400
+		item_rotation.y = item_rotation.y + rotation_increment
 	elseif pressed & R_CBUTTONS ~= 0 then
-		item_rotation.y = item_rotation.y - 0x400
+		item_rotation.y = item_rotation.y - rotation_increment
 	end
 	if pressed & L_JPAD ~= 0 then
-		item_rotation.z = item_rotation.z + 0x400
+		item_rotation.z = item_rotation.z + rotation_increment
 	elseif pressed & R_JPAD ~= 0 then
-		item_rotation.z = item_rotation.z - 0x400
+		item_rotation.z = item_rotation.z - rotation_increment
 	end
 	if pressed & X_BUTTON ~= 0 then
 		gCurrentItem.rotation = gVec3sZero()

@@ -96,15 +96,6 @@ function obj_get_any_nearest_item(obj)
     return nearest_item
 end
 
----@param obj Object
-local function network_send_object_owner_only(obj)
-    if obj.oOwner == network_global_index_from_local(0) + 1 then
-        if obj.oTimer >= 300 then
-            network_send_object(obj, true)
-        end
-    end
-end
-
 ---@param m MarioState
 ---@param block Object
 local function mario_is_within_block(m, block)
@@ -210,7 +201,6 @@ function bhv_mce_block_loop(obj)
     else
         obj.header.gfx.node.flags = obj.header.gfx.node.flags & ~GRAPH_RENDER_INVISIBLE
     end
-    network_send_object_owner_only(obj)
 
     ----------------------- Custom surfaces -----------------------
     -- Handle surfaces that affect the block itself
@@ -323,8 +313,6 @@ function bhv_mce_star_loop(obj)
     end
 
     obj.oInteractStatus = 0
-
-    network_send_object_owner_only(obj)
 end
 
 ------------------------------------------------------------------------------------------
@@ -376,8 +364,6 @@ function bhv_mce_coin_loop(obj)
     end
 
     obj.oInteractStatus = 0
-
-    network_send_object_owner_only(obj)
 end
 
 ------------------------------------------------------------------------------------------
@@ -482,8 +468,6 @@ function bhv_mce_exclamation_box_loop(obj)
             obj.oAction = 0
         end
     end
-
-    network_send_object_owner_only(obj)
 end
 
 local function koopa_shell_delete_if_unused()
@@ -606,9 +590,9 @@ local block_id_lookup = {
     ["vanish"] = MCE_BLOCK_COL_ID_VANISH,
     ["vertical wind"] = MCE_BLOCK_COL_ID_VERTICAL_WIND,
     ["v wind"] = MCE_BLOCK_COL_ID_VERTICAL_WIND,
-    ["horizontal wind"] = MCE_BLOCK_COL_ID_HORIZONTAL_WIND,
-    ["h wind"] = MCE_BLOCK_COL_ID_HORIZONTAL_WIND,
-    ["wind"] = MCE_BLOCK_COL_ID_HORIZONTAL_WIND
+    --["horizontal wind"] = MCE_BLOCK_COL_ID_HORIZONTAL_WIND,
+    --["h wind"] = MCE_BLOCK_COL_ID_HORIZONTAL_WIND,
+    --["wind"] = MCE_BLOCK_COL_ID_HORIZONTAL_WIND
 }
 
 ---@param msg string

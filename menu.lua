@@ -18,8 +18,6 @@ local item_list_column_count = 10
 
 local show_controls = true
 
-local transparent_active = false
-
 -------------- TEXTURES --------------
 local A_BUTTON_TEX = get_texture_info("Abutton")
 local B_BUTTON_TEX = get_texture_info("Bbutton")
@@ -45,10 +43,6 @@ local CONTROL_STICK_TEX = get_texture_info("Ctrlstick")
     ---@field item Item
     ---@field icon TextureInfo
     ---@field self MenuItemLink?
-
----@class ControlsTip
-    ---@field prefix string?
-    ---@field texture TextureInfo
 
 ---@type table<integer, MenuItemLink[]>
 local TabItemList = {
@@ -234,6 +228,7 @@ add_first_update(function ()
             spawnYOffset = 0,
             params = 0,
             size = gVec3fOne(),
+            rotation = gVec3sZero(),
             animState = BLOCK_BARRIER_ANIM,
             mock = {}
         },
@@ -551,17 +546,16 @@ end
 local function render_building_blocks_tab(x, y, width, height)
     render_standard_tab(x, y, width, height, "Building Blocks")
     local text_scale = 1.25
-    local text = "Transparent?"
+    local text = "Clear Hotbar"
     local text_size = djui_hud_measure_text(text) * text_scale
     local text_x = (x + width * 0.55) - (text_size * 0.5)
     local text_y = (y + height) - 50 * text_scale
     local texture_scale = 2.5
     local texture_x = (x + width * 0.46) - (text_size * 0.5)
     local texture_y = (y + height) - 24 * texture_scale
-    local color = transparent_active and {r = 0, g = 255, b = 0, a = 255} or {r = 255, g = 0, b = 0, a = 255}
     djui_hud_set_color(255, 255, 255, 255)
     djui_hud_render_texture(Y_BUTTON_TEX, texture_x, texture_y, texture_scale, texture_scale)
-    djui_hud_set_color_with_table(color)
+    djui_hud_set_color(255, 255, 255, 255)
     djui_hud_print_text(text, text_x, text_y, text_scale)
 end
 
@@ -747,7 +741,7 @@ local function render_controls(screen_width, screen_height)
                     render_controls_tip(x, y, {{postfix = "  Open Menu", texture = X_BUTTON_TEX}})
                     render_controls_tip(x * 6.4, y, {{postfix = "  Place/Delete Item", texture = Y_BUTTON_TEX}})
                     render_controls_tip(x * 14.7, y, {{postfix = "  Item Elevation", texture = UD_JPAD_TEX}})
-                     render_controls_tip(x * 22, y, {{postfix = "  Cycle Hotbar", texture = LR_JPAD_TEX}})
+                    render_controls_tip(x * 22, y, {{postfix = "  Cycle Hotbar", texture = LR_JPAD_TEX}})
                     render_controls_tip(x * 28.6, y, {{prefix = "", texture = L_TRIG_TEX}, {postfix = "  Stop Flying", texture = L_TRIG_TEX}})
                     render_controls_tip(x * 35.7, y, {{postfix = "  Lock Face Angle/More", texture = L_TRIG_TEX}})
                 end
@@ -893,9 +887,6 @@ end
 local function on_pick_item_input()
     ---@type MenuItemLink
     local hotbar_item = table.deepcopy(TabItemList[active_tab][selected_item_index])
-    if transparent_active and hotbar_item.item.model == E_MODEL_MCE_BLOCK then
-        hotbar_item.item.animState = hotbar_item.item.animState + BLOCK_ANIM_STATE_TRANSPARENT_START
-    end
     HotbarItemList[SelectedHotbarIndex] = hotbar_item
     vec3f_set(GridSize, 200, 200, 200)
     play_sound(SOUND_MENU_CLICK_FILE_SELECT, gGlobalSoundSource)
@@ -933,9 +924,10 @@ end
 ---@param pressed integer
 local function handle_extra_inputs(pressed)
     if pressed & Y_BUTTON ~= 0 then
-        if active_tab == TAB_BUILDING_BLOCKS then
-            transparent_active = not transparent_active
+        for i = 1, HOTBAR_SIZE, 1 do
+            HotbarItemList[i] = { item = nil, icon = nil } ---@diagnostic disable-line: assign-type-mismatch
         end
+        play_sound(SOUND_MENU_LET_GO_MARIO_FACE, gGlobalSoundSource)
     end
 end
 
@@ -1012,3 +1004,24 @@ local function on_show_controls_mod_menu(_, show)
 end
 
 hook_mod_menu_checkbox("Show Controls", true, on_show_controls_mod_menu)
+
+local function on_transparent_chat_command()
+    local item = HotbarItemList[SelectedHotbarIndex].item
+    if item and item.model == E_MODEL_MCE_BLOCK then
+        if item.animState >= BLOCK_ANIM_STATE_TRANSPARENT_START then
+            item.animState = item.animState - BLOCK_ANIM_STATE_TRANSPARENT_START
+            djui_chat_message_create("The current block is no longer transparent")
+        else
+            item.animState = item.animState + BLOCK_ANIM_STATE_TRANSPARENT_START
+            if item.animState > BLOCK_BARRIER_ANIM then
+                item.animState = BLOCK_BARRIER_ANIM
+            end
+            djui_chat_message_create("The current block is now transparent")
+        end
+    else
+        djui_chat_message_create("A block must be selected in the hotbar")
+    end
+    return true
+end
+
+hook_chat_command("transparent", "Makes the current selected block transparent", on_transparent_chat_command)

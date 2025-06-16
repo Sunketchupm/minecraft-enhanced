@@ -13,8 +13,8 @@ local function act_free_move(m)
     m.health = 0x880
     m.capTimer = 1
     m.squishTimer = 0
-    if m.area.camera.cutscene ~= 0 then
-        reset_camera(m.area.camera)
+    if m.area.camera.cutscene == CUTSCENE_QUICKSAND_DEATH then
+        soft_reset_camera(m.area.camera)
     end
 
     local lHeld = (m.controller.buttonDown & L_TRIG) ~= 0
