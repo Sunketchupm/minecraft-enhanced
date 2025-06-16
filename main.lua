@@ -239,8 +239,11 @@ local function place_item()
 	end
 end
 
-local function determine_place_or_delete()
-	if not outline then return end
+---@param allow_build_delete {build: boolean, delete: boolean}?
+---@return boolean
+local function determine_place_or_delete(allow_build_delete)
+	if not outline then return false end
+	if allow_build_delete == nil then allow_build_delete = {build = true, delete = true} end
 	local nearest = obj_get_any_nearest_item(outline)
 
 	if nearest then
@@ -249,15 +252,19 @@ local function determine_place_or_delete()
 			y = math.abs(nearest.oPosY - outline.oPosY),
 			z = math.abs(nearest.oPosZ - outline.oPosZ)
 		}
-		if dists.x >= GridSize.x * 0.5 or dists.y >= GridSize.y * 0.5 or dists.z >= GridSize.z * 0.5 then
+		if allow_build_delete.build and (dists.x >= GridSize.x * 0.5 or dists.y >= GridSize.y * 0.5 or dists.z >= GridSize.z * 0.5) then
 			place_item()
-		else
+			return true
+		elseif allow_build_delete.delete then
 			play_sound(SOUND_GENERAL_BOX_LANDING, gMarioStates[0].marioObj.header.gfx.cameraToObject)
 			obj_mark_for_deletion(nearest)
+			return false
 		end
-	else
+	elseif allow_build_delete.build then
 		place_item()
+		return true
 	end
+	return false
 end
 
 ---@param m MarioState
@@ -362,6 +369,10 @@ end
 
 ---------------------------------------
 
+local auto_build = true
+local auto_build_timer = 0
+local initial_block_placed = false
+
 ---@param m MarioState
 local function builder_mario_update(m)
 	if not obj_get_first_with_behavior_id(bhvOutline) then
@@ -381,9 +392,22 @@ local function builder_mario_update(m)
 	set_outline_offset(m)
 	set_item_rotation(m)
 	if m.controller.buttonPressed & Y_BUTTON ~= 0 then
-		determine_place_or_delete()
+		initial_block_placed = determine_place_or_delete()
+		auto_build_timer = 5
     end
+	if auto_build and m.controller.buttonDown & Y_BUTTON ~= 0 then
+		if auto_build_timer > 0 then
+			auto_build_timer = auto_build_timer - 1
+		else
+			determine_place_or_delete({build = initial_block_placed, delete = not initial_block_placed})
+			auto_build_timer = 5
+		end
+	end
 end
+
+hook_mod_menu_checkbox("Autobuild", true, function (_, value)
+	auto_build = value
+end)
 
 -------------------------------------------------------------------------------
 
