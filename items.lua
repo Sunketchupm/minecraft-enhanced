@@ -15,6 +15,7 @@
     ---@field oModelId integer
     ---@field oItemParams integer
     ---@field oOwner integer
+    ---@field oPrevAnimState integer
 
 define_custom_obj_fields({
     oScaleX = "f32",
@@ -22,7 +23,8 @@ define_custom_obj_fields({
     oScaleZ = "f32",
     oModelId = "u32",
     oItemParams = "u32",
-    oOwner = "s32"
+    oOwner = "s32",
+    oPrevAnimState = "u32"
 })
 
 gCurrentItem = {behavior = nil, model = E_MODEL_NONE, params = {}}
@@ -162,9 +164,11 @@ MCE_BLOCK_COL_ID_NO_WALLKICKS = 25
 MCE_BLOCK_COL_ID_DASH_PANEL = 26
 MCE_BLOCK_COL_ID_TOXIC_GAS = 27
 MCE_BLOCK_COL_ID_JUMP_PAD = 28
+MCE_BLOCK_COL_ID_SHRINKING = 29
 
 BLOCK_ANIM_STATE_TRANSPARENT_START = 110
 BLOCK_BARRIER_ANIM = (BLOCK_ANIM_STATE_TRANSPARENT_START * 2) + 1
+BLOCK_ACT_RESET = 10
 
 local standard_collision_lookup = {
     [MCE_BLOCK_COL_ID_DEFAULT] = COL_MCE_BLOCK_DEFAULT,
@@ -186,10 +190,8 @@ local ignore_collision_lookup = {
     [MCE_BLOCK_COL_ID_TOXIC_GAS] = true,
 }
 
---- Called from bhvMceBlock.bhv
-
 ---@param obj Object
-function bhv_mce_block_init(obj)
+local function block_collision_lookup(obj)
     local surface_id = obj.oItemParams & 0xFF
     if not ignore_collision_lookup[surface_id] then
         local collision = COL_MCE_BLOCK_DEFAULT
@@ -201,11 +203,19 @@ function bhv_mce_block_init(obj)
             obj.collisionData = COL_MCE_BLOCK_HANGABLE
         end
     end
+end
+
+--- Called from bhvMceBlock.bhv
+
+---@param obj Object
+function bhv_mce_block_init(obj)
+    block_collision_lookup(obj)
     if obj.oAnimState >= BLOCK_ANIM_STATE_TRANSPARENT_START then
         obj.oOpacity = 100
     end
     obj.oCollisionDistance = 500 * vec3f_length({x = obj.oScaleX, y = obj.oScaleY, z = obj.oScaleZ})
     obj.header.gfx.skipInViewCheck = true
+    obj.oPrevAnimState = obj.oAnimState
     network_init_object(obj, false, {
         "activeFlags",
         "oOpacity",
@@ -227,6 +237,18 @@ end
 
 ---@param obj Object
 function bhv_mce_block_loop(obj)
+    if obj.oAction == BLOCK_ACT_RESET then
+        block_collision_lookup(obj)
+        if obj.oAnimState >= BLOCK_ANIM_STATE_TRANSPARENT_START then
+            obj.oOpacity = 100
+        else
+            obj.oOpacity = 255
+        end
+        obj.oAnimState = obj.oPrevAnimState
+        obj_scale_xyz(obj, obj.oScaleX, obj.oScaleY, obj.oScaleZ)
+        obj.oAction = 0
+    end
+
     if obj.oAnimState > BLOCK_BARRIER_ANIM then
         obj.oAnimState = BLOCK_BARRIER_ANIM
     end
@@ -234,6 +256,35 @@ function bhv_mce_block_loop(obj)
         obj.header.gfx.node.flags = obj.header.gfx.node.flags | GRAPH_RENDER_INVISIBLE
     else
         obj.header.gfx.node.flags = obj.header.gfx.node.flags & ~GRAPH_RENDER_INVISIBLE
+    end
+
+    -- Handle breakable surfaces, so that their particles properly spawn
+    local surface_id = obj.oItemParams & 0xFF
+    if surface_id == MCE_BLOCK_COL_ID_BREAKABLE then
+        if hit_breakable_block == obj then
+            obj.oAction = 1
+            obj.oTimer = 0
+            hit_breakable_block = nil
+        end
+
+        if obj.oAction == 1 then
+            ---@type MarioState
+            local m = gMarioStates[0]
+            if m.action == ACT_WALL_KICK_AIR then
+                obj.oAction = 2
+            elseif obj.oTimer > 5 then
+                obj.oAction = 0
+                obj.oTimer = 0
+            end
+        elseif obj.oAction == 2 then
+            spawn_mist_particles()
+            spawn_triangle_break_particles(20, 138, 0.7, 3)
+            create_sound_spawner(SOUND_GENERAL_BREAK_BOX)
+            obj.oAnimState = BLOCK_ANIM_STATE_TRANSPARENT_START + 1
+            obj.oOpacity = 0
+            obj.collisionData = nil
+            obj.oAction = 3
+        end
     end
 end
 
@@ -660,6 +711,8 @@ local block_id_lookup = {
     ["no fall"] = MCE_BLOCK_COL_ID_NO_FALL_DAMAGE,
     ["conveyor"] = MCE_BLOCK_COL_ID_CONVEYOR,
     ["breakable"] = MCE_BLOCK_COL_ID_BREAKABLE,
+    ["break"] = MCE_BLOCK_COL_ID_BREAKABLE,
+    ["disappear"] = MCE_BLOCK_COL_ID_DISAPPEARING,
     ["disappearing"] = MCE_BLOCK_COL_ID_DISAPPEARING,
     ["remove caps"] = MCE_BLOCK_COL_ID_REMOVE_CAPS,
     ["no wallkicks"] = MCE_BLOCK_COL_ID_NO_WALLKICKS,
@@ -669,6 +722,8 @@ local block_id_lookup = {
     ["toxic gas"] = MCE_BLOCK_COL_ID_TOXIC_GAS,
     ["toxic"] = MCE_BLOCK_COL_ID_TOXIC_GAS,
     ["jump pad"] = MCE_BLOCK_COL_ID_JUMP_PAD,
+    ["shrink"] = MCE_BLOCK_COL_ID_SHRINKING,
+    ["shrinking"] = MCE_BLOCK_COL_ID_SHRINKING,
 }
 
 ---@param msg string
