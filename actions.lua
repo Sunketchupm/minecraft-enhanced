@@ -95,21 +95,24 @@ local function allow_interact(m)
     end
 end
 
+local spawn_location = {x = 0, y = 0, z = 0}
+
 ---@param m MarioState
 local function on_death(m)
     if m.action == ACT_FREE_MOVE then return false end
-    local spawn = obj_get_nearest_object_with_behavior_id(m.marioObj, id_bhvSpinAirborneWarp)
-    if spawn then
-        vec3f_set(m.pos, spawn.oPosX, spawn.oPosY, spawn.oPosZ)
-    else
-        warp_to_start_level()
-    end
+    vec3f_copy(m.pos, spawn_location)
     mario_pop_bubble(m)
     set_mario_action(m, ACT_FREEFALL, 0)
     m.invincTimer = 1
     m.capTimer = 1
     m.squishTimer = 1
     return false
+end
+
+local function on_warp()
+    local m = gMarioStates[0]
+    vec3f_copy(spawn_location, m.pos)
+    spawn_location = {x = 0, y = 0, z = 0}
 end
 
 ---@param m MarioState
@@ -168,9 +171,10 @@ end
 hook_mario_action(ACT_FREE_MOVE, act_free_move)
 hook_event(HOOK_ALLOW_INTERACT, allow_interact)
 hook_event(HOOK_ON_DEATH, on_death)
+hook_event(HOOK_ON_WARP, on_warp)
 hook_event(HOOK_ALLOW_FORCE_WATER_ACTION, allow_force_water_action)
-hook_event(HOOK_MARIO_UPDATE, mario_update)
 hook_event(HOOK_ALLOW_HAZARD_SURFACE, allow_hazard_surface)
+hook_event(HOOK_MARIO_UPDATE, mario_update)
 
 -----------------------------------------------------------------------------------------------------------
 
