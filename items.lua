@@ -119,15 +119,6 @@ function obj_get_any_nearest_item(obj)
     return nearest_item
 end
 
----@param m MarioState
----@param block Object
-local function mario_is_within_block(m, block)
-    -- ! Use a better checking system as this does not at all account for angles
-    return m.pos.x > block.oPosX - (100 * block.oScaleX) and m.pos.x < block.oPosX + (100 * block.oScaleX) and
-            m.pos.y > block.oPosY - (100 * block.oScaleY) and m.pos.y < block.oPosY + (100 * block.oScaleY) and
-            m.pos.z > block.oPosZ - (100 * block.oScaleZ) and m.pos.z < block.oPosZ + (100 * block.oScaleZ)
-end
-
 ------------------------------------------------------------------------------------------
 
 local COL_MCE_BLOCK_DEFAULT = smlua_collision_util_get("mce_block_col_default")
@@ -141,36 +132,36 @@ local COL_MCE_BLOCK_VERY_SLIPPERY = smlua_collision_util_get("mce_block_col_very
 local COL_MCE_BLOCK_HANGABLE = smlua_collision_util_get("mce_block_col_hangable")
 local COL_MCE_BLOCK_VANISH = smlua_collision_util_get("mce_block_col_vanish")
 
-local MCE_BLOCK_COL_ID_NO_COLLISION = 0xFF
-local MCE_BLOCK_COL_ID_DEFAULT = 0
-local MCE_BLOCK_COL_ID_LAVA = 1
-local MCE_BLOCK_COL_ID_DEATH = 2
-local MCE_BLOCK_COL_ID_QUICKSAND = 3
-local MCE_BLOCK_COL_ID_SHALLOW_QUICKSAND = 4
-local MCE_BLOCK_COL_ID_NOT_SLIPPERY = 5
-local MCE_BLOCK_COL_ID_SLIPPERY = 6
-local MCE_BLOCK_COL_ID_VERY_SLIPPERY = 7
-local MCE_BLOCK_COL_ID_HANGABLE = 8
-local MCE_BLOCK_COL_ID_VANISH = 9
-local MCE_BLOCK_COL_ID_VERTICAL_WIND = 10
-local MCE_BLOCK_COL_ID_WATER = 11
-local MCE_BLOCK_COL_ID_CHECKPOINT = 12
-local MCE_BLOCK_COL_ID_BOUNCE = 13
-local MCE_BLOCK_COL_ID_FIRSTY = 14
-local MCE_BLOCK_COL_ID_WIDE_WALLKICK = 15
-local MCE_BLOCK_COL_ID_BOOSTER = 16
-local MCE_BLOCK_COL_ID_HEAL = 17
-local MCE_BLOCK_COL_ID_NO_A = 18
-local MCE_BLOCK_COL_ID_ANY_BONK_WALLKICK = 19
-local MCE_BLOCK_COL_ID_NO_FALL_DAMAGE = 20
-local MCE_BLOCK_COL_ID_CONVEYOR = 21
-local MCE_BLOCK_COL_ID_BREAKABLE = 22
-local MCE_BLOCK_COL_ID_DISAPPEARING = 23
-local MCE_BLOCK_COL_ID_REMOVE_CAPS = 24
-local MCE_BLOCK_COL_ID_NO_WALLKICKS = 25
-local MCE_BLOCK_COL_ID_DASH_PANEL = 26
-local MCE_BLOCK_COL_ID_TOXIC_GAS = 27
-local MCE_BLOCK_COL_ID_JUMP_PAD = 28
+MCE_BLOCK_COL_ID_NO_COLLISION = 0xFF
+MCE_BLOCK_COL_ID_DEFAULT = 0
+MCE_BLOCK_COL_ID_LAVA = 1
+MCE_BLOCK_COL_ID_DEATH = 2
+MCE_BLOCK_COL_ID_QUICKSAND = 3
+MCE_BLOCK_COL_ID_SHALLOW_QUICKSAND = 4
+MCE_BLOCK_COL_ID_NOT_SLIPPERY = 5
+MCE_BLOCK_COL_ID_SLIPPERY = 6
+MCE_BLOCK_COL_ID_VERY_SLIPPERY = 7
+MCE_BLOCK_COL_ID_HANGABLE = 8
+MCE_BLOCK_COL_ID_VANISH = 9
+MCE_BLOCK_COL_ID_VERTICAL_WIND = 10
+MCE_BLOCK_COL_ID_WATER = 11
+MCE_BLOCK_COL_ID_CHECKPOINT = 12
+MCE_BLOCK_COL_ID_BOUNCE = 13
+MCE_BLOCK_COL_ID_FIRSTY = 14
+MCE_BLOCK_COL_ID_WIDE_WALLKICK = 15
+MCE_BLOCK_COL_ID_BOOSTER = 16
+MCE_BLOCK_COL_ID_HEAL = 17
+MCE_BLOCK_COL_ID_NO_A = 18
+MCE_BLOCK_COL_ID_ANY_BONK_WALLKICK = 19
+MCE_BLOCK_COL_ID_NO_FALL_DAMAGE = 20
+MCE_BLOCK_COL_ID_CONVEYOR = 21
+MCE_BLOCK_COL_ID_BREAKABLE = 22
+MCE_BLOCK_COL_ID_DISAPPEARING = 23
+MCE_BLOCK_COL_ID_REMOVE_CAPS = 24
+MCE_BLOCK_COL_ID_NO_WALLKICKS = 25
+MCE_BLOCK_COL_ID_DASH_PANEL = 26
+MCE_BLOCK_COL_ID_TOXIC_GAS = 27
+MCE_BLOCK_COL_ID_JUMP_PAD = 28
 
 BLOCK_ANIM_STATE_TRANSPARENT_START = 110
 BLOCK_BARRIER_ANIM = (BLOCK_ANIM_STATE_TRANSPARENT_START * 2) + 1
@@ -240,208 +231,7 @@ function bhv_mce_block_loop(obj)
     else
         obj.header.gfx.node.flags = obj.header.gfx.node.flags & ~GRAPH_RENDER_INVISIBLE
     end
-
-    ----------------------- Custom surfaces -----------------------
-    -- Handle surfaces that affect the block itself
 end
-
------------------------ Custom surfaces -----------------------
-
-local actions_can_bonk_can_wallkick = {
-    [ACT_JUMP] = true,
-    [ACT_HOLD_JUMP] = true,
-    [ACT_DOUBLE_JUMP] = true,
-    [ACT_TRIPLE_JUMP] = true,
-    [ACT_SIDE_FLIP] = true,
-    [ACT_BACKFLIP] = true,
-    [ACT_LONG_JUMP] = true,
-    [ACT_WALL_KICK_AIR] = true,
-    [ACT_TOP_OF_POLE_JUMP] = true,
-    [ACT_FREEFALL] = true,
-}
-
-local prev_speed = 0
-local hit_firsty_wall = false
-
----@param m MarioState
-local function vanilla_mario_update_geometry_inputs(m)
-    resolve_and_return_wall_collisions(m.pos, 60, 50)
-    resolve_and_return_wall_collisions(m.pos, 30, 24)
-
-    m.floor = collision_find_floor(m.pos.x, m.pos.y, m.pos.z)
-    m.floorHeight = find_floor_height(m.pos.x, m.pos.y, m.pos.z)
-
-    -- If Mario is OOB, move his position to his graphical position (which was not updated)
-    -- and check for the floor there.
-    -- This can cause errant behavior when combined with astral projection,
-    -- since the graphical position was not Mario's previous location.
-    if not m.floor then
-        vec3f_copy(m.pos, m.marioObj.header.gfx.pos)
-        m.floorHeight = find_floor_height(m.pos.x, m.pos.y, m.pos.z)
-    end
-
-    m.ceil = collision_find_ceil(m.pos.x, m.floorHeight, m.pos.z)
-    m.ceilHeight = find_ceil_height(m.pos.x, m.floorHeight, m.pos.z)
-    gasLevel = find_poison_gas_level(m.pos.x, m.pos.z)
-    m.waterLevel = find_water_level(m.pos.x, m.pos.z)
-
-    if m.floor then
-        m.floorAngle = atan2s(m.floor.normal.z, m.floor.normal.x)
-        m.terrainSoundAddend = mario_get_terrain_sound_addend(m)
-
-        if m.pos.y > m.waterLevel - 40 and mario_floor_is_slippery(m) ~= 0 then
-            m.input = m.input | INPUT_ABOVE_SLIDE
-        end
-
-        if (m.floor.flags & SURFACE_FLAG_DYNAMIC ~= 0)
-            or (m.ceil and m.ceil.flags & SURFACE_FLAG_DYNAMIC ~= 0) then
-            ceilToFloorDist = m.ceilHeight - m.floorHeight
-
-            if 0.0 <= ceilToFloorDist and ceilToFloorDist <= 150.0 then
-                m.input = m.input | INPUT_SQUISHED
-            end
-        end
-
-        if m.pos.y > m.floorHeight + 100.0 then
-            m.input = m.input | INPUT_OFF_FLOOR
-        end
-
-        if m.pos.y < m.waterLevel - 10 then
-            m.input = m.input | INPUT_IN_WATER
-        end
-
-        if m.pos.y < gasLevel - 100.0 then
-            m.input = m.input | INPUT_IN_POISON_GAS
-        end
-    end
-end
-
----@param m MarioState
-local function custom_surface_mario_update(m)
-    if m.playerIndex ~= 0 then return end
-
-    local block_wall = m.wall and m.wall.object
-    local block_floor = m.floor and m.floor.object
-    local block_ceiling = m.ceil and m.ceil.object
-
-    if block_wall then
-        local block = block_wall
-        local surface_id = block.oItemParams & 0xFF
-
-        if surface_id == MCE_BLOCK_COL_ID_WIDE_WALLKICK then
-            local wall = m.wall
-            local wallDYaw = (atan2s(wall.normal.z, wall.normal.x) - (m.faceAngle.y))
-            local limit = convert_s16(180 - 89)
-            wallDYaw = convert_s16(wallDYaw)
-
-            --Standard air hit wall requirements
-            if m.forwardVel >= 16 and actions_can_bonk_can_wallkick[m.action] then
-                if wallDYaw >= limit or wallDYaw <= -limit then
-                    mario_bonk_reflection(m, 0)
-                    m.faceAngle.y = m.faceAngle.y + 0x8000
-                    m.wallKickTimer = 5
-                    set_mario_action(m, ACT_AIR_HIT_WALL, 0)
-                end
-            end
-        end
-    end
-    if block_floor then
-        local block = block_floor
-        local surface_id = block.oItemParams & 0xFF
-
-        if surface_id == MCE_BLOCK_COL_ID_CHECKPOINT and m.pos.y == m.floorHeight then
-            respawn_location = {x = block.oPosX, y = block.oPosY + block.oScaleY * 200, z = block.oPosZ}
-        end
-    end
-
-    local block = obj_get_first_with_behavior_id(bhvMceBlock)
-    while block do
-        surface_id = block.oItemParams & 0xFF
-
-        if surface_id == MCE_BLOCK_COL_ID_VERTICAL_WIND and mario_is_within_block(m, block) then
-            if m.action ~= ACT_CUSTOM_VERTICAL_WIND and m.action & ACT_FLAG_ALLOW_VERTICAL_WIND_ACTION ~= 0 then
-                drop_and_set_mario_action(m, ACT_CUSTOM_VERTICAL_WIND, 0)
-            end
-            m.vel.y = m.vel.y + 15
-            if m.vel.y > 50 then
-                m.vel.y = 50
-            end
-            spawn_wind_particles(1, 0)
-            play_sound(SOUND_ENV_WIND2, m.marioObj.header.gfx.cameraToObject)
-        end
-        block = obj_get_next_with_same_behavior_id(block)
-    end
-end
-
----@param m MarioState
-local function custom_surface_set_mario_action(m)
-    if m.playerIndex ~= 0 then return end
-
-    local block_wall = m.wall and m.wall.object
-    local block_floor = m.floor and m.floor.object
-    local block_ceiling = m.ceil and m.ceil.object
-
-    if block_wall then
-        local block = block_wall
-        local surface_id = block.oItemParams & 0xFF
-
-        if surface_id == MCE_BLOCK_COL_ID_FIRSTY then
-            local wall = m.wall
-            if wall and m.action == ACT_AIR_HIT_WALL then
-                prev_speed = m.forwardVel
-                hit_firsty_wall = true
-            end
-        end
-    end
-
-    if m.action & ACT_FLAG_AIR == 0 then
-        hit_firsty_wall = false
-    end
-
-    if hit_firsty_wall and m.action == ACT_WALL_KICK_AIR then
-        if prev_speed < 20 then
-            prev_speed = 20
-        end
-        m.forwardVel = prev_speed
-        hit_firsty_wall = false
-    end
-end
-
----@param m MarioState
-local function custom_surface_override_geometry_inputs(m)
-    if m.playerIndex ~= 0 then return end
-
-    local block = obj_get_first_with_behavior_id(bhvMceBlock)
-    local highest_water_y = gLevelValues.floorLowerLimit
-    local first_check = true
-    local in_water_block = false
-    while block do
-        local surface_id = block.oItemParams & 0xFF
-        if surface_id == MCE_BLOCK_COL_ID_WATER and mario_is_within_block(m, block) then
-            if first_check then
-                vanilla_mario_update_geometry_inputs(m)
-                first_check = false
-                highest_water_y = m.waterLevel
-            end
-            local new_water_level = block.oPosY + block.oScaleY * 100
-            if new_water_level > highest_water_y then
-                m.waterLevel = new_water_level
-                highest_water_y = new_water_level
-            else
-                m.waterLevel = highest_water_y
-            end
-            in_water_block = true
-        end
-        block = obj_get_next_with_same_behavior_id(block)
-    end
-    if in_water_block then
-        return false
-    end
-end
-
-hook_event(HOOK_MARIO_UPDATE, custom_surface_mario_update)
-hook_event(HOOK_ON_SET_MARIO_ACTION, custom_surface_set_mario_action)
-hook_event(HOOK_MARIO_OVERRIDE_GEOMETRY_INPUTS, custom_surface_override_geometry_inputs)
 
 ------------------------------------------------------------------------------------------
 
