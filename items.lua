@@ -390,7 +390,6 @@ local function custom_surface_set_mario_action(m)
             if wall and m.action == ACT_AIR_HIT_WALL then
                 prev_speed = m.forwardVel
                 hit_firsty_wall = true
-                djui_chat_message_create("a")
             end
         end
     end

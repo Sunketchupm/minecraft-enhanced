@@ -252,10 +252,11 @@ local function determine_place_or_delete(allow_build_delete)
 			y = math.abs(nearest.oPosY - outline.oPosY),
 			z = math.abs(nearest.oPosZ - outline.oPosZ)
 		}
-		if allow_build_delete.build and (dists.x >= GridSize.x * 0.5 or dists.y >= GridSize.y * 0.5 or dists.z >= GridSize.z * 0.5) then
+		local is_out_range = (dists.x >= GridSize.x * 0.5 or dists.y >= GridSize.y * 0.5 or dists.z >= GridSize.z * 0.5)
+		if allow_build_delete.build and is_out_range then
 			place_item()
 			return true
-		elseif allow_build_delete.delete then
+		elseif allow_build_delete.delete and not is_out_range then
 			play_sound(SOUND_GENERAL_BOX_LANDING, gMarioStates[0].marioObj.header.gfx.cameraToObject)
 			obj_mark_for_deletion(nearest)
 			return false
