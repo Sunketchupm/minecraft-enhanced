@@ -290,3 +290,18 @@ end
 
 hook_chat_command("save", "[<slot name>|clear] | Stores the items you placed to be loaded again for later use", on_save_chat_command)
 hook_chat_command("load", "[<slot name>] | Loads the items that have been stored", on_load_chat_command)
+
+local save_slot_name = ""
+
+hook_mod_menu_inputbox("Save Slot Name", "", 20, function (_, val)
+    save_slot_name = val
+end)
+hook_mod_menu_button("Save", function (_)
+    on_save_chat_command(save_slot_name)
+end)
+hook_mod_menu_button("Load", function (_)
+    on_load_chat_command(save_slot_name)
+end)
+hook_mod_menu_button("Save Slot Clear", function (_)
+    on_save_chat_command("clear")
+end)
