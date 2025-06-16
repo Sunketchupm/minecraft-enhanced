@@ -31,14 +31,15 @@ const LevelScript level_plot_entry[] = {
     MARIO(/*model*/ MODEL_MARIO, /*bhvParam*/ 0x00000001, /*bhv*/ bhvMario),
 
     AREA(/*index*/ 1, bob_geo_000488),
-        OBJECT(/*model*/ MODEL_NONE, /*pos*/ 0,  0,  0, /*angle*/ 0, 0, 0,  /*bhvParam*/ 0x000A0000, /*bhv*/ bhvSpinAirborneWarp),
+        OBJECT(/*model*/ MODEL_NONE, /*pos*/ 0,  -29500,  0, /*angle*/ 0, 0, 0,  /*bhvParam*/ 0x000A0000, /*bhv*/ bhvSpinAirborneWarp),
+        //OBJECT(E_MODEL_BREAKABLE_BOX, 0, 0, 0, 0, 0, 0, 0, id_bhvBreakableBox),
         TERRAIN(/*terrainData*/ bob_seg7_collision_level),
         SET_BACKGROUND_MUSIC(/*settingsPreset*/ 0x0000, /*seq*/ SEQ_LEVEL_GRASS),
         TERRAIN_TYPE(/*terrainType*/ TERRAIN_GRASS),
     END_AREA(),
 
     FREE_LEVEL_POOL(),
-    MARIO_POS(/*area*/ 1, /*yaw*/ 0, /*pos*/ 0, 0, 0),
+    MARIO_POS(/*area*/ 1, /*yaw*/ 0, /*pos*/ 0, -29500, 0),
     CALL(/*arg*/ 0, /*func*/ lvl_init_or_update),
     CALL_LOOP(/*arg*/ 1, /*func*/ lvl_init_or_update),
     CLEAR_LEVEL(),

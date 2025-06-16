@@ -122,6 +122,7 @@ end
 ---@param m MarioState
 ---@param block Object
 local function mario_is_within_block(m, block)
+    -- ! Use a better checking system as this does not at all account for angles
     return m.pos.x > block.oPosX - (100 * block.oScaleX) and m.pos.x < block.oPosX + (100 * block.oScaleX) and
             m.pos.y > block.oPosY - (100 * block.oScaleY) and m.pos.y < block.oPosY + (100 * block.oScaleY) and
             m.pos.z > block.oPosZ - (100 * block.oScaleZ) and m.pos.z < block.oPosZ + (100 * block.oScaleZ)
@@ -251,17 +252,16 @@ local function custom_surface_mario_update(m)
             play_sound(SOUND_ENV_WIND2, m.marioObj.header.gfx.cameraToObject)
         elseif surface_id == MCE_BLOCK_COL_ID_HORIZONTAL_WIND and mario_is_within_block(m, block) then
             local pushAngle = block.oFaceAngleYaw
-            djui_chat_message_create(sins(pushAngle))
-            djui_chat_message_create(coss(pushAngle))
             if m.action & ACT_FLAG_AIR ~= 0 then
-                m.slideVelX = m.slideVelX + m.forwardVel * sins(pushAngle)
-                m.slideVelZ = m.slideVelZ + m.forwardVel * coss(pushAngle)
+                m.slideVelX = 32 + m.forwardVel * sins(pushAngle)
+                m.slideVelZ = 32 + m.forwardVel * coss(pushAngle)
 
                 local speed = math.sqrt(m.slideVelX * m.slideVelX + m.slideVelZ * m.slideVelZ)
+                djui_chat_message_create(speed, m.slideVelX, m.slideVelZ)
 
                 if speed > 48 then
-                    m.slideVelX = m.slideVelX * 48.0 / speed
-                    m.slideVelZ = m.slideVelZ * 48.0 / speed
+                    m.slideVelX = (m.slideVelX * 48.0) / speed
+                    m.slideVelZ = (m.slideVelZ * 48.0) / speed
                     speed = 32
                 elseif speed > 32 then
                     speed = 32

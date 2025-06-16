@@ -1,5 +1,4 @@
 -- localize functions to improve performance
-local math_floor,string_rep,tonumber,djui_chat_message_create,obj_count_objects_with_behavior_id,obj_get_first_with_behavior_id,math_abs,tostring,obj_get_next_with_same_behavior_id,mod_storage_clear,min,math_min,table_insert,mod_storage_save,mod_storage_load,table_concat,spawn_sync_object = math.floor,string.rep,tonumber,djui_chat_message_create,obj_count_objects_with_behavior_id,obj_get_first_with_behavior_id,math.abs,tostring,obj_get_next_with_same_behavior_id,mod_storage_clear,min,math.min,table.insert,mod_storage_save,mod_storage_load,table.concat,spawn_sync_object
 
 --[[
     There isn't very much space in mod storage and blocks take up a lot of space
