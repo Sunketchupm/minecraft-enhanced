@@ -799,10 +799,18 @@ local function handle_hotbar_inputs(m)
         if SelectedHotbarIndex < 1 then
             SelectedHotbarIndex = HOTBAR_SIZE
         end
+        if gCurrentItem then
+            vec3f_copy(GridSize, gCurrentItem.size)
+            vec3f_mul(GridSize, 200)
+        end
     elseif m.controller.buttonPressed & R_JPAD ~= 0 then
         SelectedHotbarIndex = SelectedHotbarIndex + 1
         if SelectedHotbarIndex > HOTBAR_SIZE then
             SelectedHotbarIndex = 1
+        end
+        if gCurrentItem then
+            vec3f_copy(GridSize, gCurrentItem.size)
+            vec3f_mul(GridSize, 200)
         end
     end
     m.controller.buttonPressed = m.controller.buttonPressed & ~(L_JPAD | R_JPAD)
@@ -868,7 +876,6 @@ local function handle_item_selection_inputs(m)
     end
 
     if csd.up or csd.left or csd.down or csd.right then
-        play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource)
         if csd.up and relative_item_index > 1 then
             local remaining = relative_item_index - (relative_item_index - item_list_column_count)
             selected_item_index = math.max(selected_item_index - remaining, selected_item_offset + 1)
@@ -881,6 +888,8 @@ local function handle_item_selection_inputs(m)
         elseif csd.right and relative_item_index < current_item_set_count then
             selected_item_index = selected_item_index + 1
         end
+
+        play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource)
     end
 end
 
