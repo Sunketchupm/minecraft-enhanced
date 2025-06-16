@@ -687,11 +687,16 @@ local block_id_lookup = {
     ["shallowsand"] = MCE_BLOCK_COL_ID_SHALLOW_QUICKSAND,
     ["s sand"] = MCE_BLOCK_COL_ID_SHALLOW_QUICKSAND,
     ["not slippery"] = MCE_BLOCK_COL_ID_NOT_SLIPPERY,
+    ["not slip"] = MCE_BLOCK_COL_ID_NOT_SLIPPERY,
+    ["n slip"] = MCE_BLOCK_COL_ID_NOT_SLIPPERY,
     ["n slippery"] = MCE_BLOCK_COL_ID_NOT_SLIPPERY,
     ["slippery"] = MCE_BLOCK_COL_ID_SLIPPERY,
+    ["slip"] = MCE_BLOCK_COL_ID_SLIPPERY,
     ["very slippery"] = MCE_BLOCK_COL_ID_VERY_SLIPPERY,
     ["v slippery"] = MCE_BLOCK_COL_ID_VERY_SLIPPERY,
+    ["v slip"] = MCE_BLOCK_COL_ID_VERY_SLIPPERY,
     ["hangable"] = MCE_BLOCK_COL_ID_HANGABLE,
+    ["hang"] = MCE_BLOCK_COL_ID_HANGABLE,
     ["vanish"] = MCE_BLOCK_COL_ID_VANISH,
     ["vertical wind"] = MCE_BLOCK_COL_ID_VERTICAL_WIND,
     ["v wind"] = MCE_BLOCK_COL_ID_VERTICAL_WIND,
@@ -715,6 +720,7 @@ local block_id_lookup = {
     ["disappear"] = MCE_BLOCK_COL_ID_DISAPPEARING,
     ["disappearing"] = MCE_BLOCK_COL_ID_DISAPPEARING,
     ["remove caps"] = MCE_BLOCK_COL_ID_REMOVE_CAPS,
+    ["capsless"] = MCE_BLOCK_COL_ID_REMOVE_CAPS,
     ["no wallkicks"] = MCE_BLOCK_COL_ID_NO_WALLKICKS,
     ["wallkickless"] = MCE_BLOCK_COL_ID_NO_WALLKICKS,
     ["dash"] = MCE_BLOCK_COL_ID_DASH_PANEL,
@@ -740,6 +746,12 @@ local function on_set_surface_chat_command(msg)
     end
     return true
 end
+
+local surface_names = ""
+for key in pairs(block_id_lookup) do
+    surface_names = surface_names .. "|" .. key
+end
+surface_names = surface_names:sub(1, -2)
 
 hook_chat_command("size", "[num] or [x y z] | Sets the size scaling of the currently selected item. Clamped between 0.01 and 25", on_set_item_size_chat_command)
 hook_chat_command("surface", "! BLOCK ONLY ! Sets the surface type of a block. Refer to the Surface Types tab for which exist and what they do", on_set_surface_chat_command)

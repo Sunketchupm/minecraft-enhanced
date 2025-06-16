@@ -578,19 +578,66 @@ end
 
 --------------------------
 
+local function print_centered_text(text, x, y)
+    local text_size = djui_hud_measure_text(text)
+    local text_x = x - (text_size * 0.5)
+    djui_hud_print_text(text, text_x, y, 1)
+end
+
 ---@param x number
 ---@param y number
 ---@param width number
 ---@param height number
-local function render_help_tab(x, y, width, height)
-    render_tab_header(x, y, width, height, "Help")
+local function render_surface_types_tab(x, y, width, height)
+    render_tab_header(x, y, width, height, "Surface Types")
+    local text_x = x + width * 0.5
+    local text_y = y + height * 0.13
+    djui_hud_set_color(0, 0, 0, 255)
+    djui_hud_set_font(FONT_NORMAL)
+    local y_increment = 35
+    item_page_max = 3
+    if current_item_page == 1 then
+        print_centered_text("Default / Normal", text_x, text_y + y_increment * 0)
+        print_centered_text("Intangible / No Collision / None", text_x, text_y + y_increment * 1)
+        print_centered_text("Lava", text_x, text_y + y_increment * 2)
+        print_centered_text("Death", text_x, text_y + y_increment * 3)
+        print_centered_text("Quicksand", text_x, text_y + y_increment * 4)
+        print_centered_text("Shallow Quicksand / Shallowsand / S Sand", text_x, text_y + y_increment * 5)
+        print_centered_text("Not Slippery / Not Slip / N Slippery / N Slip", text_x, text_y + y_increment * 6)
+        print_centered_text("Slippery / Slippery", text_x, text_y + y_increment * 7)
+        print_centered_text("Very Slippery / V Slippery / V Slip", text_x, text_y + y_increment * 8)
+        print_centered_text("Hangable / Hang", text_x, text_y + y_increment * 9)
+        print_centered_text("Vanish", text_x, text_y + y_increment * 10)
+        print_centered_text("Vertical Wind / V Wind", text_x, text_y + y_increment * 11)
+        print_centered_text("Water", text_x, text_y + y_increment * 12)
+        print_centered_text("Checkpoint", text_x, text_y + y_increment * 13)
+    elseif current_item_page == 2 then
+        print_centered_text("Bounce", text_x, text_y + y_increment * 0)
+        print_centered_text("Firsty", text_x, text_y + y_increment * 1)
+        print_centered_text("Wide Wallkick / Wide", text_x, text_y + y_increment * 2)
+        print_centered_text("Booster", text_x, text_y + y_increment * 3)
+        print_centered_text("Heal", text_x, text_y + y_increment * 4)
+        print_centered_text("Jumpless / No A", text_x, text_y + y_increment * 5)
+        print_centered_text("Any Bonk / Anykick", text_x, text_y + y_increment * 6)
+        print_centered_text("No Fall Damage / No Fall", text_x, text_y + y_increment * 7)
+        print_centered_text("Conveyor", text_x, text_y + y_increment * 8)
+        print_centered_text("Breakable / Break", text_x, text_y + y_increment * 9)
+        print_centered_text("Disappearing / Disappear", text_x, text_y + y_increment * 10)
+        print_centered_text("Remove Caps / Capless", text_x, text_y + y_increment * 11)
+        print_centered_text("No Wallkicks / Wallkickless", text_x, text_y + y_increment * 12)
+        print_centered_text("Dash Panel / Dash", text_x, text_y + y_increment * 13)
+    elseif current_item_page == 3 then
+        print_centered_text("Toxic Gas / Toxic", text_x, text_y + y_increment * 0)
+        print_centered_text("Jump Pad", text_x, text_y + y_increment * 1)
+        print_centered_text("Shrinking / Shrink", text_x, text_y + y_increment * 2)
+    end
 end
 
 local MenuTabs = {
     render_building_blocks_tab,
     render_items_tab,
     render_enemies_tab,
-    render_help_tab
+    render_surface_types_tab
 }
 
 ----------------------------------------------------
@@ -865,6 +912,7 @@ end
 
 ---@param m MarioState
 local function handle_item_selection_inputs(m)
+    if not item_pages[current_item_page] then return end
     local current_item_set_count = #item_pages[current_item_page]
     if current_item_set_count == 0 then return end
     handle_control_stick_inputs(m)
