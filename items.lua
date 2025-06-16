@@ -247,36 +247,21 @@ end
 
 ----------------------- Custom surfaces -----------------------
 
----@param m MarioState
-local function custom_surface_mario_update(m)
-    if m.playerIndex ~= 0 then return end
-    local block = (m.floor and m.floor.object) or (m.wall and m.wall.object) or (m.ceil and m.ceil.object)
-    if block then
-        local surface_id = block.oItemParams & 0xFF
+local actions_can_bonk_can_wallkick = {
+    [ACT_JUMP] = true,
+    [ACT_HOLD_JUMP] = true,
+    [ACT_DOUBLE_JUMP] = true,
+    [ACT_TRIPLE_JUMP] = true,
+    [ACT_SIDE_FLIP] = true,
+    [ACT_BACKFLIP] = true,
+    [ACT_LONG_JUMP] = true,
+    [ACT_WALL_KICK_AIR] = true,
+    [ACT_TOP_OF_POLE_JUMP] = true,
+    [ACT_FREEFALL] = true,
+}
 
-        if surface_id == MCE_BLOCK_COL_ID_CHECKPOINT and m.pos.y == m.floorHeight then
-            respawn_location = {x = block.oPosX, y = block.oPosY + block.oScaleY * 200, z = block.oPosZ}
-        end
-    end
-
-    block = obj_get_first_with_behavior_id(bhvMceBlock)
-    while block do
-        surface_id = block.oItemParams & 0xFF
-
-        if surface_id == MCE_BLOCK_COL_ID_VERTICAL_WIND and mario_is_within_block(m, block) then
-            if m.action ~= ACT_CUSTOM_VERTICAL_WIND and m.action & ACT_FLAG_ALLOW_VERTICAL_WIND_ACTION ~= 0 then
-                drop_and_set_mario_action(m, ACT_CUSTOM_VERTICAL_WIND, 0)
-            end
-            m.vel.y = m.vel.y + 15
-            if m.vel.y > 50 then
-                m.vel.y = 50
-            end
-            spawn_wind_particles(1, 0)
-            play_sound(SOUND_ENV_WIND2, m.marioObj.header.gfx.cameraToObject)
-        end
-        block = obj_get_next_with_same_behavior_id(block)
-    end
-end
+local prev_speed = 0
+local hit_firsty_wall = false
 
 ---@param m MarioState
 local function vanilla_mario_update_geometry_inputs(m)
@@ -332,6 +317,98 @@ local function vanilla_mario_update_geometry_inputs(m)
 end
 
 ---@param m MarioState
+local function custom_surface_mario_update(m)
+    if m.playerIndex ~= 0 then return end
+
+    local block_wall = m.wall and m.wall.object
+    local block_floor = m.floor and m.floor.object
+    local block_ceiling = m.ceil and m.ceil.object
+
+    if block_wall then
+        local block = block_wall
+        local surface_id = block.oItemParams & 0xFF
+
+        if surface_id == MCE_BLOCK_COL_ID_WIDE_WALLKICK then
+            local wall = m.wall
+            local wallDYaw = (atan2s(wall.normal.z, wall.normal.x) - (m.faceAngle.y))
+            local limit = convert_s16(180 - 89)
+            wallDYaw = convert_s16(wallDYaw)
+
+            --Standard air hit wall requirements
+            if m.forwardVel >= 16 and actions_can_bonk_can_wallkick[m.action] then
+                if wallDYaw >= limit or wallDYaw <= -limit then
+                    mario_bonk_reflection(m, 0)
+                    m.faceAngle.y = m.faceAngle.y + 0x8000
+                    m.wallKickTimer = 5
+                    set_mario_action(m, ACT_AIR_HIT_WALL, 0)
+                end
+            end
+        end
+    end
+    if block_floor then
+        local block = block_floor
+        local surface_id = block.oItemParams & 0xFF
+
+        if surface_id == MCE_BLOCK_COL_ID_CHECKPOINT and m.pos.y == m.floorHeight then
+            respawn_location = {x = block.oPosX, y = block.oPosY + block.oScaleY * 200, z = block.oPosZ}
+        end
+    end
+
+    local block = obj_get_first_with_behavior_id(bhvMceBlock)
+    while block do
+        surface_id = block.oItemParams & 0xFF
+
+        if surface_id == MCE_BLOCK_COL_ID_VERTICAL_WIND and mario_is_within_block(m, block) then
+            if m.action ~= ACT_CUSTOM_VERTICAL_WIND and m.action & ACT_FLAG_ALLOW_VERTICAL_WIND_ACTION ~= 0 then
+                drop_and_set_mario_action(m, ACT_CUSTOM_VERTICAL_WIND, 0)
+            end
+            m.vel.y = m.vel.y + 15
+            if m.vel.y > 50 then
+                m.vel.y = 50
+            end
+            spawn_wind_particles(1, 0)
+            play_sound(SOUND_ENV_WIND2, m.marioObj.header.gfx.cameraToObject)
+        end
+        block = obj_get_next_with_same_behavior_id(block)
+    end
+end
+
+---@param m MarioState
+local function custom_surface_set_mario_action(m)
+    if m.playerIndex ~= 0 then return end
+
+    local block_wall = m.wall and m.wall.object
+    local block_floor = m.floor and m.floor.object
+    local block_ceiling = m.ceil and m.ceil.object
+
+    if block_wall then
+        local block = block_wall
+        local surface_id = block.oItemParams & 0xFF
+
+        if surface_id == MCE_BLOCK_COL_ID_FIRSTY then
+            local wall = m.wall
+            if wall and m.action == ACT_AIR_HIT_WALL then
+                prev_speed = m.forwardVel
+                hit_firsty_wall = true
+                djui_chat_message_create("a")
+            end
+        end
+    end
+
+    if m.action & ACT_FLAG_AIR == 0 then
+        hit_firsty_wall = false
+    end
+
+    if hit_firsty_wall and m.action == ACT_WALL_KICK_AIR then
+        if prev_speed < 20 then
+            prev_speed = 20
+        end
+        m.forwardVel = prev_speed
+        hit_firsty_wall = false
+    end
+end
+
+---@param m MarioState
 local function custom_surface_override_geometry_inputs(m)
     if m.playerIndex ~= 0 then return end
 
@@ -364,6 +441,7 @@ local function custom_surface_override_geometry_inputs(m)
 end
 
 hook_event(HOOK_MARIO_UPDATE, custom_surface_mario_update)
+hook_event(HOOK_ON_SET_MARIO_ACTION, custom_surface_set_mario_action)
 hook_event(HOOK_MARIO_OVERRIDE_GEOMETRY_INPUTS, custom_surface_override_geometry_inputs)
 
 ------------------------------------------------------------------------------------------
