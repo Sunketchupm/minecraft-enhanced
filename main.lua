@@ -104,6 +104,12 @@ end
 
 ---@param obj Object
 function bhv_outline_loop(obj)
+	local current_item = gCurrentItem
+	if not current_item then
+		obj_mark_for_deletion(obj)
+		outline = nil
+		return
+	end
 	outline = obj
 
 	local m = gMarioStates[0]
@@ -117,21 +123,14 @@ function bhv_outline_loop(obj)
 	outline.oPosX = posX
 	outline.oPosY = posY
 	outline.oPosZ = posZ
-
-	local current_item = gCurrentItem
-	if current_item then
-		obj_scale_xyz(obj, current_item.size.x, current_item.size.y, current_item.size.z)
-
-		if current_item.rotation then
-			outline.oFaceAnglePitch = current_item.rotation.x
-			outline.oFaceAngleYaw = current_item.rotation.y
-			outline.oFaceAngleRoll = current_item.rotation.z
-			outline.oMoveAnglePitch = current_item.rotation.x
-			outline.oMoveAngleYaw = current_item.rotation.y
-			outline.oMoveAngleRoll = current_item.rotation.z
-		end
-	else
-		obj_scale(obj, 1)
+	obj_scale_xyz(obj, current_item.size.x, current_item.size.y, current_item.size.z)
+	if current_item.rotation then
+		outline.oFaceAnglePitch = current_item.rotation.x
+		outline.oFaceAngleYaw = current_item.rotation.y
+		outline.oFaceAngleRoll = current_item.rotation.z
+		outline.oMoveAnglePitch = current_item.rotation.x
+		outline.oMoveAngleYaw = current_item.rotation.y
+		outline.oMoveAngleRoll = current_item.rotation.z
 	end
 end
 
@@ -142,7 +141,7 @@ end
 ---@param obj Object
 function bhv_mock_item_loop(obj)
 	local current_item = gCurrentItem
-	if outline and current_item and current_item.model then
+	if outline and obj_get_first_with_behavior_id(bhvOutline) and current_item and current_item.model then
 		obj.oPosX = outline.oPosX
 		obj.oPosY = outline.oPosY - (current_item.spawnYOffset * current_item.size.y)
 		obj.oPosZ = outline.oPosZ
@@ -195,7 +194,7 @@ function bhv_mock_item_loop(obj)
 			end
 		end
 	else
-		obj_set_model_extended(obj, E_MODEL_NONE)
+		obj_mark_for_deletion(obj)
 	end
 end
 
@@ -358,12 +357,14 @@ end
 local function builder_mario_update(m)
 	if not obj_get_first_with_behavior_id(bhvOutline) then
 		outline = nil
-		spawn_non_sync_object(
-			bhvOutline,
-			E_MODEL_OUTLINE,
-			m.pos.x, m.pos.y, m.pos.z,
-			nil
-		)
+		if gCurrentItem then
+			spawn_non_sync_object(
+				bhvOutline,
+				E_MODEL_OUTLINE,
+				m.pos.x, m.pos.y, m.pos.z,
+				nil
+			)
+		end
 		return
 	end
 
