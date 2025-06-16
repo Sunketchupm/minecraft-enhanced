@@ -110,9 +110,9 @@ function bhv_outline_loop(obj)
 	local facing_x = sins(m.intendedYaw)
 	local facing_z = coss(m.intendedYaw)
 
-	local posX = to_grid_x( m.pos.x + facing_x*GridSize.x )
+	local posX = to_grid_x( m.pos.x + facing_x * math.max(GridSize.x, 200) )
 	local posY = to_grid_y( m.pos.y ) + (GridSize.y * outline_grid_y_offset)
-	local posZ = to_grid_z( m.pos.z + facing_z*GridSize.z )
+	local posZ = to_grid_z( m.pos.z + facing_z * math.max(GridSize.z, 200) )
 
 	outline.oPosX = posX
 	outline.oPosY = posY
