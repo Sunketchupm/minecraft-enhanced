@@ -224,6 +224,7 @@ local function place_item()
 			obj.oAnimState = current_item.animState
 			obj.globalPlayerIndex = network_global_index_from_local(0)
 			obj.oOwner = network_global_index_from_local(0) + 1
+			obj.oModelId = current_item.model
 		end
 	)
 

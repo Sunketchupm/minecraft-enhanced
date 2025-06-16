@@ -12,6 +12,7 @@
     ---@field oScaleX number
     ---@field oScaleY number
     ---@field oScaleZ number
+    ---@field oModelId integer
     ---@field oItemParams integer
     ---@field oOwner integer
 
@@ -19,12 +20,13 @@ define_custom_obj_fields({
     oScaleX = "f32",
     oScaleY = "f32",
     oScaleZ = "f32",
+    oModelId = "u32",
     oItemParams = "u32",
     oOwner = "s32"
 })
 
 gCurrentItem = {behavior = nil, model = E_MODEL_NONE, params = {}}
-local all_item_behaviors = {}
+all_item_behaviors = {}
 local level_item_behaviors = {}
 local enemy_item_behaviors = {}
 local vanilla_clear_immune = {}
