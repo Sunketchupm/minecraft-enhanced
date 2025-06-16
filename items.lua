@@ -197,6 +197,9 @@ function bhv_mce_block_init(obj)
             collision = standard_collision_lookup[surface_id]
         end
         obj.collisionData = collision
+        if surface_id == MCE_BLOCK_COL_ID_CONVEYOR then
+            obj.collisionData = COL_MCE_BLOCK_HANGABLE
+        end
     end
     if obj.oAnimState >= BLOCK_ANIM_STATE_TRANSPARENT_START then
         obj.oOpacity = 100

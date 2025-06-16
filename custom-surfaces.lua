@@ -156,6 +156,9 @@ local function custom_surface_mario_update(m)
                 respawn_location = {x = block.oPosX, y = block.oPosY + block.oScaleY * 200, z = block.oPosZ}
             elseif surface_id == MCE_BLOCK_COL_ID_HEAL then
                 m.healCounter = 39
+            elseif surface_id == MCE_BLOCK_COL_ID_CONVEYOR then
+                m.pos.x = m.pos.x + sins(block.oFaceAngleYaw) * 15
+                m.pos.z = m.pos.z + coss(block.oFaceAngleYaw) * 15
             end
         else
             if surface_id == MCE_BLOCK_COL_ID_NO_FALL_DAMAGE then
@@ -169,7 +172,13 @@ local function custom_surface_mario_update(m)
     end
     ------------------ CEILING -------------------
     if block_ceiling then
-        --
+        local block = block_ceiling
+        local surface_id = block.oItemParams & 0xFF
+
+        if surface_id == MCE_BLOCK_COL_ID_CONVEYOR and m.action & ACT_FLAG_HANGING ~= 0 then
+            m.pos.x = m.pos.x + sins(block.oFaceAngleYaw) * 15
+            m.pos.z = m.pos.z + coss(block.oFaceAngleYaw) * 15
+        end
     end
     ------------------ MISC -------------------
     local block = obj_get_first_with_behavior_id(bhvMceBlock)
