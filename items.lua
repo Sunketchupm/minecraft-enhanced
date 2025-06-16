@@ -544,15 +544,15 @@ local function on_set_item_size_chat_command(msg)
     if current_selected then
             current_selected.size = gVec3fOne()
         if sizes_count == 1 then
-            local new_size = math.clamp(tonumber(sizes[1]) or 1, 0.01, 20)
+            local new_size = math.clamp(tonumber(sizes[1]) or 1, 0.01, 25)
             local grid_size = new_size * 200
             vec3f_set(current_selected.size, new_size, new_size, new_size)
 		    vec3f_set(GridSize, grid_size, grid_size, grid_size)
             djui_chat_message_create("Set item size to " .. new_size)
         elseif sizes_count == 3 then
-            local new_size_x = math.clamp(tonumber(sizes[1]) or 1, 0.01, 20)
-            local new_size_y = math.clamp(tonumber(sizes[2]) or 1, 0.01, 20)
-            local new_size_z = math.clamp(tonumber(sizes[3]) or 1, 0.01, 20)
+            local new_size_x = math.clamp(tonumber(sizes[1]) or 1, 0.01, 25)
+            local new_size_y = math.clamp(tonumber(sizes[2]) or 1, 0.01, 25)
+            local new_size_z = math.clamp(tonumber(sizes[3]) or 1, 0.01, 25)
             local grid_size_x = new_size_x * 200
             local grid_size_y = new_size_y * 200
             local grid_size_z = new_size_z * 200
@@ -610,6 +610,6 @@ local function on_set_surface_chat_command(msg)
     return true
 end
 
-hook_chat_command("size", "[num] or [x y z] | Sets the size scaling of the currently selected item. Clamped between 0.01 and 20", on_set_item_size_chat_command)
+hook_chat_command("size", "[num] or [x y z] | Sets the size scaling of the currently selected item. Clamped between 0.01 and 25", on_set_item_size_chat_command)
 hook_chat_command("surface", "! BLOCK ONLY ! Sets the surface type of a block. Refer to the Surface Types tab for which exist and what they do", on_set_surface_chat_command)
 hook_chat_command("surf", "! SAME AS /surface !", on_set_surface_chat_command)
