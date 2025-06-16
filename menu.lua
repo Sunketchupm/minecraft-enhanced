@@ -631,6 +631,7 @@ local function render_surface_types_tab(x, y, width, height)
         print_centered_text("Jump Pad", text_x, text_y + y_increment * 1)
         print_centered_text("Shrinking / Shrink", text_x, text_y + y_increment * 2)
     end
+    djui_hud_set_font(FONT_SPECIAL)
 end
 
 local MenuTabs = {
