@@ -229,6 +229,9 @@ local function place_item()
 
 	if item then
 		play_sound(SOUND_GENERAL_BOX_LANDING, gMarioStates[0].marioObj.header.gfx.cameraToObject)
+		if item.oPosX < -0x8000 or item.oPosX > 0x7FFF or item.oPosY < -0x8000 or item.oPosY > 0x7FFF or item.oPosZ < -0x8000 or item.oPosZ > 0x7FFF then
+			djui_chat_message_create("Warning! Item placed in a PU! Some behaviors may not work as intended")
+		end
 	else
 		play_sound(SOUND_MENU_CAMERA_BUZZ, gMarioStates[0].marioObj.header.gfx.cameraToObject)
 		djui_chat_message_create("Item failed to place. Perhaps the object limit was reached?")

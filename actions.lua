@@ -52,8 +52,8 @@ local function act_free_move(m)
 
     if m.controller.stickMag > 0 then
         if bHeld then
-            m.vel.x = sins(m.intendedYaw) * 400
-            m.vel.z = coss(m.intendedYaw) * 400
+            m.vel.x = sins(m.intendedYaw) * 70
+            m.vel.z = coss(m.intendedYaw) * 70
             if lHeld then
                 m.vel.x = sins(m.intendedYaw) * 5
                 m.vel.z = coss(m.intendedYaw) * 5
