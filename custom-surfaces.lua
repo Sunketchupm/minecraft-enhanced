@@ -159,6 +159,8 @@ local function custom_surface_mario_update(m)
             elseif surface_id == MCE_BLOCK_COL_ID_CONVEYOR then
                 m.pos.x = m.pos.x + sins(block.oFaceAngleYaw) * 15
                 m.pos.z = m.pos.z + coss(block.oFaceAngleYaw) * 15
+            elseif surface_id == MCE_BLOCK_COL_ID_DASH_PANEL then
+                set_mario_action(m, ACT_DASH, 0)
             end
         else
             if surface_id == MCE_BLOCK_COL_ID_NO_FALL_DAMAGE then

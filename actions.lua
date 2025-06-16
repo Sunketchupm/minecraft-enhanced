@@ -192,6 +192,7 @@ end)
 -----------------------------------------------------------------------------------------------------------
 
 ACT_CUSTOM_VERTICAL_WIND = allocate_mario_action(ACT_GROUP_AIRBORNE | ACT_FLAG_AIR | ACT_FLAG_DIVING | ACT_FLAG_SWIMMING_OR_FLYING)
+ACT_DASH = allocate_mario_action(ACT_GROUP_MOVING | ACT_FLAG_MOVING)
 
 ---@param m MarioState
 local function act_custom_vertical_wind(m)
@@ -226,7 +227,57 @@ local function act_custom_vertical_wind(m)
     return false
 end
 
+---@param m MarioState
+local function act_dash(m)
+    mario_set_forward_vel(m, 90)
+    mario_drop_held_object(m)
+
+    if m.input & INPUT_A_PRESSED ~= 0 then
+        return set_jump_from_landing(m)
+    end
+
+    if check_ground_dive_or_punch(m) ~= 0 then
+        return true
+    end
+
+    m.actionState = 0
+
+    local startPos = {x = 0, y = 0, z = 0}
+    vec3f_copy(startPos, m.pos)
+    ----- update_walking_speed() ----- (Inlined)
+
+    m.faceAngle.y =
+        m.intendedYaw - approach_s32(convert_s16(m.intendedYaw - m.faceAngle.y), 0, 0x800, 0x800)
+    apply_slope_accel(m)
+
+    ----------------------------------
+
+    local step = perform_ground_step(m)
+    if step == GROUND_STEP_LEFT_GROUND then
+        set_character_animation(m, CHAR_ANIM_GENERAL_FALL)
+        return set_mario_action(m, ACT_FREEFALL, 0)
+    elseif step == GROUND_STEP_NONE then
+        anim_and_audio_for_walk(m)
+        if m.intendedMag - m.forwardVel > 16.0 then
+            m.particleFlags = m.particleFlags | PARTICLE_DUST
+        end
+    elseif step == GROUND_STEP_HIT_WALL then
+        push_or_sidle_wall(m, startPos)
+        m.actionTimer = 0
+    end
+
+    check_ledge_climb_down(m)
+    tilt_body_walking(m, m.faceAngle.y)
+
+    if not (m.floor and m.floor.object and obj_has_behavior_id(m.floor.object, bhvMceBlock) ~= 0) then
+        return set_mario_action(m, ACT_WALKING, 0)
+    end
+
+    return false
+end
+
 hook_mario_action(ACT_CUSTOM_VERTICAL_WIND, { every_frame = act_custom_vertical_wind })
+hook_mario_action(ACT_DASH, { every_frame = act_dash })
 
 -----------------------------------------------------------------------------------------------------------
 
