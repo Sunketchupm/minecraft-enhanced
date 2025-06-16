@@ -21,8 +21,46 @@ local actions_can_bonk_can_wallkick = {
     [ACT_FREEFALL] = true,
 }
 
+local bounce_landing_actions = {
+    [ACT_JUMP_LAND] = true,
+    [ACT_FREEFALL_LAND] = true,
+    [ACT_DOUBLE_JUMP_LAND] = true,
+    [ACT_SIDE_FLIP_LAND] = true,
+    [ACT_HOLD_JUMP_LAND] = true,
+    [ACT_HOLD_FREEFALL_LAND] = true,
+    [ACT_QUICKSAND_JUMP_LAND] = true,
+    [ACT_HOLD_QUICKSAND_JUMP_LAND] = true,
+    [ACT_TRIPLE_JUMP_LAND] = true,
+    [ACT_LONG_JUMP_LAND] = true,
+    [ACT_BACKFLIP_LAND] = true,
+    [ACT_DIVE_SLIDE] = true,
+    [ACT_SLIDE_KICK_SLIDE] = true,
+    [ACT_STOMACH_SLIDE] = true,
+    [ACT_BUTT_SLIDE] = true,
+    [ACT_FLYING] = true
+}
+
+local bounce_bonk_actions = {
+    [ACT_AIR_HIT_WALL] = true,
+    [ACT_SOFT_BONK] = true,
+    [ACT_BACKWARD_AIR_KB] = true,
+    [ACT_HARD_BACKWARD_AIR_KB] = true,
+    [ACT_FORWARD_AIR_KB] = true,
+    [ACT_HARD_FORWARD_AIR_KB] = true,
+    [ACT_BACKWARD_GROUND_KB] = true,
+    [ACT_HARD_BACKWARD_GROUND_KB] = true,
+    [ACT_SOFT_BACKWARD_GROUND_KB] = true,
+    [ACT_FORWARD_GROUND_KB] = true,
+    [ACT_HARD_FORWARD_GROUND_KB] = true,
+    [ACT_SOFT_FORWARD_GROUND_KB] = true,
+    [ACT_FLYING] = true
+}
+
 local prev_speed = 0
 local hit_firsty_wall = false
+
+local preserved_flight_speed = 0
+local flight_hit_bounce_wall = false
 
 ---@param m MarioState
 local function vanilla_mario_update_geometry_inputs(m)
@@ -144,6 +182,17 @@ local function custom_surface_mario_update(m)
                     set_mario_action(m, ACT_AIR_HIT_WALL, 0)
                 end
             end
+        elseif surface_id == MCE_BLOCK_COL_ID_BOUNCE then
+            local wall = m.wall
+            local wallDYaw = convert_s16(atan2s(wall.normal.z, wall.normal.x) - (m.faceAngle.y))
+            local limit = degrees_to_sm64(90)
+            local speed = m.forwardVel < 32 and 32 or m.forwardVel
+            local negative = (wallDYaw >= limit or wallDYaw <= -limit) and -1 or 1
+            if m.action == ACT_FLYING then
+                m.faceAngle.y = m.faceAngle.y + 0x8000
+            else
+                mario_set_forward_vel(m, speed * negative)
+            end
         end
     end
     ------------------ FLOOR -------------------
@@ -161,9 +210,17 @@ local function custom_surface_mario_update(m)
                 m.pos.z = m.pos.z + coss(block.oFaceAngleYaw) * 15
             elseif surface_id == MCE_BLOCK_COL_ID_DASH_PANEL then
                 set_mario_action(m, ACT_DASH, 0)
+            elseif surface_id == MCE_BLOCK_COL_ID_BOUNCE then
+                if m.action == ACT_FLYING then
+                    m.faceAngle.x = -m.faceAngle.x
+                    m.angleVel.x = -m.angleVel.x
+                elseif (m.action & ACT_FLAG_STATIONARY ~= 0 or m.action & ACT_FLAG_MOVING ~= 0) and not bounce_landing_actions[m.action] then
+                    m.vel.y = 50
+                    set_mario_action(m, m.heldObj and ACT_HOLD_JUMP or ACT_DOUBLE_JUMP, 0)
+                end
             end
         else
-            if surface_id == MCE_BLOCK_COL_ID_NO_FALL_DAMAGE then
+            if surface_id == MCE_BLOCK_COL_ID_NO_FALL_DAMAGE or surface_id == MCE_BLOCK_COL_ID_BOUNCE then
                 if m.pos.y - m.floorHeight < 76 then
                     m.peakHeight = m.pos.y
                 end
@@ -176,7 +233,17 @@ local function custom_surface_mario_update(m)
     if block_ceiling then
         local block = block_ceiling
         local surface_id = block.oItemParams & 0xFF
+        local is_rising_into_block = m.pos.y + m.marioObj.hitboxHeight + m.vel.y >= m.ceilHeight and m.vel.y > 0
 
+        if is_rising_into_block then
+            if surface_id == MCE_BLOCK_COL_ID_BOUNCE and m.vel.y > 0 then
+                m.vel.y = -30
+                if m.action == ACT_FLYING then
+                    m.faceAngle.x = -m.faceAngle.x
+                    m.angleVel.x = -m.angleVel.x
+                end
+            end
+        end
         if surface_id == MCE_BLOCK_COL_ID_CONVEYOR and m.action & ACT_FLAG_HANGING ~= 0 then
             m.pos.x = m.pos.x + sins(block.oFaceAngleYaw) * 15
             m.pos.z = m.pos.z + coss(block.oFaceAngleYaw) * 15
@@ -208,25 +275,24 @@ local function custom_surface_mario_update(m)
         end
         block = obj_get_next_with_same_behavior_id(block)
     end
+
+    if flight_hit_bounce_wall then
+        flight_hit_bounce_wall = false
+        mario_set_forward_vel(m, preserved_flight_speed)
+    elseif preserved_flight_speed > 0 then
+        preserved_flight_speed = 0
+    end
 end
 
 ---@param m MarioState
 local function custom_surface_before_mario_update(m)
     if m.playerIndex ~= 0 then return end
 
-    local block_wall = m.wall and m.wall.object
+    --local block_wall = m.wall and m.wall.object
     local block_floor = m.floor and m.floor.object
-    local block_ceiling = m.ceil and m.ceil.object
+    --local block_ceiling = m.ceil and m.ceil.object
 
     ------------------ WALL -------------------
-    if block_wall then
-        local block = block_wall
-        local surface_id = block.oItemParams & 0xFF
-
-        --if surface_id == MCE_BLOCK_COL_ID_ then
-        --    --
-        --end
-    end
     ------------------ FLOOR -------------------
     if block_floor then
         local block = block_floor
@@ -242,15 +308,16 @@ local function custom_surface_before_mario_update(m)
         end
     end
     ------------------ CEILING -------------------
-    if block_ceiling then
-        local block = block_ceiling
-        local surface_id = block.oItemParams & 0xFF
-
-        --if surface_id == MCE_BLOCK_COL_ID_ then
-        --    --
-        --end
-    end
     ------------------ MISC -------------------
+end
+
+---@param m MarioState
+local function custom_surface_before_phys_step(m)
+    if m.playerIndex ~= 0 then return end
+
+    if not flight_hit_bounce_wall then
+        preserved_flight_speed = m.forwardVel
+    end
 end
 
 ---@param m MarioState
@@ -258,7 +325,7 @@ local function custom_surface_set_mario_action(m)
     if m.playerIndex ~= 0 then return end
 
     local block_wall = m.wall and m.wall.object
-    local block_floor = m.floor and m.floor.object
+    --local block_floor = m.floor and m.floor.object
     local block_ceiling = m.ceil and m.ceil.object
 
     ------------------ WALL -------------------
@@ -281,17 +348,14 @@ local function custom_surface_set_mario_action(m)
         end
     end
     ------------------ FLOOR -------------------
-    if block_floor then
-        --
-    end
     ------------------ CEILING -------------------
     if block_ceiling then
         local block = block_ceiling
         local surface_id = block.oItemParams & 0xFF
+
         if surface_id == MCE_BLOCK_COL_ID_ANY_BONK_WALLKICK then
             local is_within_height = m.ceilHeight - m.pos.y < 200 and m.ceilHeight - m.pos.y > 0
             if is_within_height and (m.action == ACT_BACKWARD_AIR_KB or m.action == ACT_SOFT_BONK) and m.prevAction ~= ACT_LEDGE_GRAB then
-
                 m.prevAction = ACT_AIR_HIT_WALL
                 m.wallKickTimer = 5
             end
@@ -309,6 +373,43 @@ local function custom_surface_set_mario_action(m)
         m.forwardVel = prev_speed
         hit_firsty_wall = false
     end
+end
+
+---@param m MarioState
+---@param incoming integer
+---@return integer?
+local function custom_surface_before_set_mario_action(m, incoming)
+    if m.playerIndex ~= 0 then return end
+
+    local block_wall = m.wall and m.wall.object
+    local block_floor = m.floor and m.floor.object
+    --local block_ceiling = m.ceil and m.ceil.object
+
+    ------------------ WALL -------------------
+    if block_wall then
+        local block = block_wall
+        local surface_id = block.oItemParams & 0xFF
+
+        if surface_id == MCE_BLOCK_COL_ID_BOUNCE then
+            flight_hit_bounce_wall = true
+            if bounce_bonk_actions[incoming] then
+                mario_bonk_reflection(m, 1)
+            end
+            return 1
+        end
+    end
+    ------------------ FLOOR -------------------
+    if block_floor then
+        local block = block_floor
+        local surface_id = block.oItemParams & 0xFF
+
+        if surface_id == MCE_BLOCK_COL_ID_BOUNCE and m.pos.y == m.floorHeight and bounce_landing_actions[incoming] then
+            m.vel.y = 50
+            return 1
+        end
+    end
+    ------------------ CEILING -------------------
+    ------------------ MISC -------------------
 end
 
 ---@param m MarioState
@@ -346,7 +447,9 @@ end
 
 hook_event(HOOK_MARIO_UPDATE, custom_surface_mario_update)
 hook_event(HOOK_BEFORE_MARIO_UPDATE, custom_surface_before_mario_update)
+hook_event(HOOK_BEFORE_PHYS_STEP, custom_surface_before_phys_step)
 hook_event(HOOK_ON_SET_MARIO_ACTION, custom_surface_set_mario_action)
+hook_event(HOOK_BEFORE_SET_MARIO_ACTION, custom_surface_before_set_mario_action)
 hook_event(HOOK_MARIO_OVERRIDE_GEOMETRY_INPUTS, custom_surface_override_geometry_inputs)
 
 --[[

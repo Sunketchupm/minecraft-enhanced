@@ -13,11 +13,12 @@ local function act_free_move(m)
     m.health = 0x880
     m.capTimer = 1
     m.squishTimer = 0
-    if m.area.camera.cutscene == CUTSCENE_QUICKSAND_DEATH then
-        soft_reset_camera(m.area.camera)
+    local camera = m.area.camera
+    if camera.cutscene == CUTSCENE_QUICKSAND_DEATH then
+        soft_reset_camera(camera)
     end
-    if m.area.camera.mode == CAMERA_MODE_WATER_SURFACE then
-        set_camera_mode(m.area.camera, CAMERA_MODE_NONE, 0)
+    if camera.mode == CAMERA_MODE_WATER_SURFACE or camera.mode == CAMERA_MODE_BEHIND_MARIO then
+        set_camera_mode(camera, CAMERA_MODE_NONE, 0)
     end
 
     local lHeld = (m.controller.buttonDown & L_TRIG) ~= 0
