@@ -268,13 +268,100 @@ local function custom_surface_mario_update(m)
             end
             spawn_wind_particles(1, 0)
             play_sound(SOUND_ENV_WIND2, m.marioObj.header.gfx.cameraToObject)
-        elseif surface_id == MCE_BLOCK_COL_ID_WATER and mario_is_within_block(m, block) then
-            
+        else
+            --
         end
         block = obj_get_next_with_same_behavior_id(block)
     end
 end
+
+---@param m MarioState
+local function vanilla_mario_update_geometry_inputs(m)
+    resolve_and_return_wall_collisions(m.pos, 60, 50)
+    resolve_and_return_wall_collisions(m.pos, 30, 24)
+
+    m.floor = collision_find_floor(m.pos.x, m.pos.y, m.pos.z)
+    m.floorHeight = find_floor_height(m.pos.x, m.pos.y, m.pos.z)
+
+    -- If Mario is OOB, move his position to his graphical position (which was not updated)
+    -- and check for the floor there.
+    -- This can cause errant behavior when combined with astral projection,
+    -- since the graphical position was not Mario's previous location.
+    if not m.floor then
+        vec3f_copy(m.pos, m.marioObj.header.gfx.pos)
+        m.floorHeight = find_floor_height(m.pos.x, m.pos.y, m.pos.z)
+    end
+
+    m.ceil = collision_find_ceil(m.pos.x, m.floorHeight, m.pos.z)
+    m.ceilHeight = find_ceil_height(m.pos.x, m.floorHeight, m.pos.z)
+    gasLevel = find_poison_gas_level(m.pos.x, m.pos.z)
+    m.waterLevel = find_water_level(m.pos.x, m.pos.z)
+
+    if m.floor then
+        m.floorAngle = atan2s(m.floor.normal.z, m.floor.normal.x)
+        m.terrainSoundAddend = mario_get_terrain_sound_addend(m)
+
+        if m.pos.y > m.waterLevel - 40 and mario_floor_is_slippery(m) ~= 0 then
+            m.input = m.input | INPUT_ABOVE_SLIDE
+        end
+
+        if (m.floor.flags & SURFACE_FLAG_DYNAMIC ~= 0)
+            or (m.ceil and m.ceil.flags & SURFACE_FLAG_DYNAMIC ~= 0) then
+            ceilToFloorDist = m.ceilHeight - m.floorHeight
+
+            if 0.0 <= ceilToFloorDist and ceilToFloorDist <= 150.0 then
+                m.input = m.input | INPUT_SQUISHED
+            end
+        end
+
+        if m.pos.y > m.floorHeight + 100.0 then
+            m.input = m.input | INPUT_OFF_FLOOR
+        end
+
+        if m.pos.y < m.waterLevel - 10 then
+            m.input = m.input | INPUT_IN_WATER
+        end
+
+        if m.pos.y < gasLevel - 100.0 then
+            m.input = m.input | INPUT_IN_POISON_GAS
+        end
+    end
+end
+
+---@param m MarioState
+local function custom_surface_override_geometry_inputs(m)
+    if m.playerIndex ~= 0 then return end
+
+    local block = obj_get_first_with_behavior_id(bhvMceBlock)
+    local highest_water_y = gLevelValues.floorLowerLimit
+    local first_check = true
+    local in_water_block = false
+    while block do
+        local surface_id = block.oItemParams & 0xFF
+        if surface_id == MCE_BLOCK_COL_ID_WATER and mario_is_within_block(m, block) then
+            if first_check then
+                vanilla_mario_update_geometry_inputs(m)
+                first_check = false
+                highest_water_y = m.waterLevel
+            end
+            local new_water_level = block.oPosY + block.oScaleY * 100
+            if new_water_level > highest_water_y then
+                m.waterLevel = new_water_level
+                highest_water_y = new_water_level
+            else
+                m.waterLevel = highest_water_y
+            end
+            in_water_block = true
+        end
+        block = obj_get_next_with_same_behavior_id(block)
+    end
+    if in_water_block then
+        return false
+    end
+end
+
 hook_event(HOOK_MARIO_UPDATE, custom_surface_mario_update)
+hook_event(HOOK_MARIO_OVERRIDE_GEOMETRY_INPUTS, custom_surface_override_geometry_inputs)
 
 ------------------------------------------------------------------------------------------
 
@@ -683,6 +770,7 @@ local block_id_lookup = {
     ["vanish"] = MCE_BLOCK_COL_ID_VANISH,
     ["vertical wind"] = MCE_BLOCK_COL_ID_VERTICAL_WIND,
     ["v wind"] = MCE_BLOCK_COL_ID_VERTICAL_WIND,
+    ["water"] = MCE_BLOCK_COL_ID_WATER
 }
 
 ---@param msg string

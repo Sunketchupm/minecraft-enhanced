@@ -16,6 +16,9 @@ local function act_free_move(m)
     if m.area.camera.cutscene == CUTSCENE_QUICKSAND_DEATH then
         soft_reset_camera(m.area.camera)
     end
+    if m.area.camera.mode == CAMERA_MODE_WATER_SURFACE then
+        set_camera_mode(m.area.camera, CAMERA_MODE_NONE, 0)
+    end
 
     local lHeld = (m.controller.buttonDown & L_TRIG) ~= 0
     local bHeld = (m.controller.buttonDown & B_BUTTON) ~= 0
