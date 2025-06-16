@@ -183,6 +183,7 @@ local ignore_collision_lookup = {
     [MCE_BLOCK_COL_ID_NO_COLLISION] = true,
     [MCE_BLOCK_COL_ID_VERTICAL_WIND] = true,
     [MCE_BLOCK_COL_ID_WATER] = true,
+    [MCE_BLOCK_COL_ID_TOXIC_GAS] = true,
 }
 
 --- Called from bhvMceBlock.bhv
@@ -659,6 +660,7 @@ local block_id_lookup = {
     ["disappearing"] = MCE_BLOCK_COL_ID_DISAPPEARING,
     ["remove caps"] = MCE_BLOCK_COL_ID_REMOVE_CAPS,
     ["no wallkicks"] = MCE_BLOCK_COL_ID_NO_WALLKICKS,
+    ["wallkickless"] = MCE_BLOCK_COL_ID_NO_WALLKICKS,
     ["dash"] = MCE_BLOCK_COL_ID_DASH_PANEL,
     ["dash panel"] = MCE_BLOCK_COL_ID_DASH_PANEL,
     ["toxic gas"] = MCE_BLOCK_COL_ID_TOXIC_GAS,

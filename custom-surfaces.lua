@@ -77,6 +77,43 @@ local function vanilla_mario_update_geometry_inputs(m)
     end
 end
 
+--[[ Boilerplate:
+    if m.playerIndex ~= 0 then return end
+
+    local block_wall = m.wall and m.wall.object
+    local block_floor = m.floor and m.floor.object
+    local block_ceiling = m.ceil and m.ceil.object
+
+    ------------------ WALL -------------------
+    if block_wall then
+        local block = block_wall
+        local surface_id = block.oItemParams & 0xFF
+
+        if surface_id == MCE_BLOCK_COL_ID_ then
+            --
+        end
+    end
+    ------------------ FLOOR -------------------
+    if block_floor then
+        local block = block_floor
+        local surface_id = block.oItemParams & 0xFF
+
+        if surface_id == MCE_BLOCK_COL_ID_ then
+            --
+        end
+    end
+    ------------------ CEILING -------------------
+    if block_ceiling then
+        local block = block_ceiling
+        local surface_id = block.oItemParams & 0xFF
+
+        if surface_id == MCE_BLOCK_COL_ID_ then
+            --
+        end
+    end
+    ------------------ MISC -------------------
+]]
+
 ------------------------------------------------------------------------------------------------
 
 ---@param m MarioState
@@ -114,8 +151,20 @@ local function custom_surface_mario_update(m)
         local block = block_floor
         local surface_id = block.oItemParams & 0xFF
 
-        if surface_id == MCE_BLOCK_COL_ID_CHECKPOINT and m.pos.y == m.floorHeight then
-            respawn_location = {x = block.oPosX, y = block.oPosY + block.oScaleY * 200, z = block.oPosZ}
+        if m.pos.y == m.floorHeight then
+            if surface_id == MCE_BLOCK_COL_ID_CHECKPOINT then
+                respawn_location = {x = block.oPosX, y = block.oPosY + block.oScaleY * 200, z = block.oPosZ}
+            elseif surface_id == MCE_BLOCK_COL_ID_HEAL then
+                m.healCounter = 39
+            end
+        else
+            if surface_id == MCE_BLOCK_COL_ID_NO_FALL_DAMAGE then
+                if m.pos.y - m.floorHeight < 76 then
+                    m.peakHeight = m.pos.y
+                end
+            elseif surface_id == MCE_BLOCK_COL_ID_REMOVE_CAPS then
+                m.capTimer = 1
+            end
         end
     end
     ------------------ CEILING -------------------
@@ -137,9 +186,60 @@ local function custom_surface_mario_update(m)
             end
             spawn_wind_particles(1, 0)
             play_sound(SOUND_ENV_WIND2, m.marioObj.header.gfx.cameraToObject)
+        elseif surface_id == MCE_BLOCK_COL_ID_TOXIC_GAS and mario_is_within_block(m, block) then
+            if m.flags & MARIO_METAL_CAP == 0 then
+                m.health = m.health - 3
+            end
+        elseif surface_id == MCE_BLOCK_COL_ID_BOOSTER and mario_is_within_block(m, block) then
+            if m.action & ACT_FLAG_MOVING ~= 0 and m.action ~= ACT_DECELERATING then
+                mario_set_forward_vel(m, m.forwardVel + 2.35)
+            end
         end
         block = obj_get_next_with_same_behavior_id(block)
     end
+end
+
+---@param m MarioState
+local function custom_surface_before_mario_update(m)
+    if m.playerIndex ~= 0 then return end
+
+    local block_wall = m.wall and m.wall.object
+    local block_floor = m.floor and m.floor.object
+    local block_ceiling = m.ceil and m.ceil.object
+
+    ------------------ WALL -------------------
+    if block_wall then
+        local block = block_wall
+        local surface_id = block.oItemParams & 0xFF
+
+        --if surface_id == MCE_BLOCK_COL_ID_ then
+        --    --
+        --end
+    end
+    ------------------ FLOOR -------------------
+    if block_floor then
+        local block = block_floor
+        local surface_id = block.oItemParams & 0xFF
+
+        if surface_id == MCE_BLOCK_COL_ID_NO_A then
+            m.controller.buttonPressed = m.controller.buttonPressed & ~A_BUTTON
+        elseif surface_id == MCE_BLOCK_COL_ID_JUMP_PAD then
+            if m.controller.buttonPressed & A_BUTTON ~= 0 then
+                set_mario_action(m, ACT_DOUBLE_JUMP, 0)
+                m.vel.y = 100
+            end
+        end
+    end
+    ------------------ CEILING -------------------
+    if block_ceiling then
+        local block = block_ceiling
+        local surface_id = block.oItemParams & 0xFF
+
+        --if surface_id == MCE_BLOCK_COL_ID_ then
+        --    --
+        --end
+    end
+    ------------------ MISC -------------------
 end
 
 ---@param m MarioState
@@ -164,6 +264,9 @@ local function custom_surface_set_mario_action(m)
                 m.prevAction = ACT_AIR_HIT_WALL
                 m.wallKickTimer = 5
             end
+        elseif surface_id == MCE_BLOCK_COL_ID_NO_A or surface_id == MCE_BLOCK_COL_ID_NO_WALLKICKS then
+            m.wallKickTimer = 0
+            m.actionTimer = 3
         end
     end
     ------------------ FLOOR -------------------
@@ -205,6 +308,7 @@ local function custom_surface_override_geometry_inputs(m)
     local highest_water_y = gLevelValues.floorLowerLimit
     local first_check = true
     local in_water_block = false
+    -- 2 all blocks loops in a frame goes hard
     while block do
         local surface_id = block.oItemParams & 0xFF
         if surface_id == MCE_BLOCK_COL_ID_WATER and mario_is_within_block(m, block) then
@@ -230,6 +334,7 @@ local function custom_surface_override_geometry_inputs(m)
 end
 
 hook_event(HOOK_MARIO_UPDATE, custom_surface_mario_update)
+hook_event(HOOK_BEFORE_MARIO_UPDATE, custom_surface_before_mario_update)
 hook_event(HOOK_ON_SET_MARIO_ACTION, custom_surface_set_mario_action)
 hook_event(HOOK_MARIO_OVERRIDE_GEOMETRY_INPUTS, custom_surface_override_geometry_inputs)
 
