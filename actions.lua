@@ -98,24 +98,26 @@ local function allow_interact(m)
     end
 end
 
-local spawn_location = {x = 0, y = 0, z = 0}
+local default_respawn_location = gVec3fZero()
+respawn_location = gVec3fZero()
 
 ---@param m MarioState
 local function on_death(m)
     if m.action == ACT_FREE_MOVE then return false end
-    vec3f_copy(m.pos, spawn_location)
+    vec3f_copy(m.pos, respawn_location)
     mario_pop_bubble(m)
     set_mario_action(m, ACT_FREEFALL, 0)
     m.invincTimer = 1
     m.capTimer = 1
     m.squishTimer = 1
+    m.faceAngle.y = 0
     return false
 end
 
 local function on_warp()
     local m = gMarioStates[0]
-    vec3f_copy(spawn_location, m.pos)
-    spawn_location = {x = 0, y = 0, z = 0}
+    vec3f_copy(default_respawn_location, m.pos)
+    vec3f_copy(respawn_location, m.pos)
 end
 
 ---@param m MarioState
@@ -178,6 +180,14 @@ hook_event(HOOK_ON_WARP, on_warp)
 hook_event(HOOK_ALLOW_FORCE_WATER_ACTION, allow_force_water_action)
 hook_event(HOOK_ALLOW_HAZARD_SURFACE, allow_hazard_surface)
 hook_event(HOOK_MARIO_UPDATE, mario_update)
+
+hook_chat_command("restart", "[<nothing>|reset] Restarts you to your current checkpoint, or use \"reset\" to respawn at spawn", function (msg)
+    if msg:lower() == "reset" then
+        vec3f_copy(respawn_location, default_respawn_location)
+    end
+    on_death(gMarioStates[0])
+    return true
+end)
 
 -----------------------------------------------------------------------------------------------------------
 

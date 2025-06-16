@@ -154,26 +154,23 @@ local MCE_BLOCK_COL_ID_HANGABLE = 8
 local MCE_BLOCK_COL_ID_VANISH = 9
 local MCE_BLOCK_COL_ID_VERTICAL_WIND = 10
 local MCE_BLOCK_COL_ID_WATER = 11
-
---[[
-BLOCK_SURFACE_ID_CHECKPOINT = 11
-BLOCK_SURFACE_ID_BOUNCE = 12
-BLOCK_SURFACE_ID_FIRSTY = 13
-BLOCK_SURFACE_ID_WIDE_WALLKICK = 14
-BLOCK_SURFACE_ID_BOOSTER = 15
-BLOCK_SURFACE_ID_HEAL = 16
-BLOCK_SURFACE_ID_NO_A = 17
-BLOCK_SURFACE_ID_ANY_BONK_WALLKICK = 18
-BLOCK_SURFACE_ID_NO_FALL_DAMAGE = 19
-BLOCK_SURFACE_ID_CONVEYOR = 20
-BLOCK_SURFACE_ID_BREAKABLE = 21
-BLOCK_SURFACE_ID_DISAPPEARING = 22
-BLOCK_SURFACE_ID_REMOVE_CAPS = 23
-BLOCK_SURFACE_ID_NO_WALLKICKS = 24
-BLOCK_SURFACE_ID_DASH_PANEL = 25
-BLOCK_SURFACE_ID_TOXIC_GAS = 26
-BLOCK_SURFACE_ID_JUMP_PAD = 27
-]]
+local MCE_BLOCK_COL_ID_CHECKPOINT = 12
+local MCE_BLOCK_COL_ID_BOUNCE = 13
+local MCE_BLOCK_COL_ID_FIRSTY = 14
+local MCE_BLOCK_COL_ID_WIDE_WALLKICK = 15
+local MCE_BLOCK_COL_ID_BOOSTER = 16
+local MCE_BLOCK_COL_ID_HEAL = 17
+local MCE_BLOCK_COL_ID_NO_A = 18
+local MCE_BLOCK_COL_ID_ANY_BONK_WALLKICK = 19
+local MCE_BLOCK_COL_ID_NO_FALL_DAMAGE = 20
+local MCE_BLOCK_COL_ID_CONVEYOR = 21
+local MCE_BLOCK_COL_ID_BREAKABLE = 22
+local MCE_BLOCK_COL_ID_DISAPPEARING = 23
+local MCE_BLOCK_COL_ID_REMOVE_CAPS = 24
+local MCE_BLOCK_COL_ID_NO_WALLKICKS = 25
+local MCE_BLOCK_COL_ID_DASH_PANEL = 26
+local MCE_BLOCK_COL_ID_TOXIC_GAS = 27
+local MCE_BLOCK_COL_ID_JUMP_PAD = 28
 
 BLOCK_ANIM_STATE_TRANSPARENT_START = 110
 BLOCK_BARRIER_ANIM = (BLOCK_ANIM_STATE_TRANSPARENT_START * 2) + 1
@@ -254,10 +251,18 @@ end
 local function custom_surface_mario_update(m)
     if m.playerIndex ~= 0 then return end
     local block = (m.floor and m.floor.object) or (m.wall and m.wall.object) or (m.ceil and m.ceil.object)
+    if block then
+        local surface_id = block.oItemParams & 0xFF
+
+        if surface_id == MCE_BLOCK_COL_ID_CHECKPOINT and m.pos.y == m.floorHeight then
+            respawn_location = {x = block.oPosX, y = block.oPosY + block.oScaleY * 200, z = block.oPosZ}
+        end
+    end
 
     block = obj_get_first_with_behavior_id(bhvMceBlock)
     while block do
-        local surface_id = block.oItemParams & 0xFF
+        surface_id = block.oItemParams & 0xFF
+
         if surface_id == MCE_BLOCK_COL_ID_VERTICAL_WIND and mario_is_within_block(m, block) then
             if m.action ~= ACT_CUSTOM_VERTICAL_WIND and m.action & ACT_FLAG_ALLOW_VERTICAL_WIND_ACTION ~= 0 then
                 drop_and_set_mario_action(m, ACT_CUSTOM_VERTICAL_WIND, 0)
@@ -268,8 +273,6 @@ local function custom_surface_mario_update(m)
             end
             spawn_wind_particles(1, 0)
             play_sound(SOUND_ENV_WIND2, m.marioObj.header.gfx.cameraToObject)
-        else
-            --
         end
         block = obj_get_next_with_same_behavior_id(block)
     end
@@ -770,7 +773,30 @@ local block_id_lookup = {
     ["vanish"] = MCE_BLOCK_COL_ID_VANISH,
     ["vertical wind"] = MCE_BLOCK_COL_ID_VERTICAL_WIND,
     ["v wind"] = MCE_BLOCK_COL_ID_VERTICAL_WIND,
-    ["water"] = MCE_BLOCK_COL_ID_WATER
+    ["water"] = MCE_BLOCK_COL_ID_WATER,
+    ["checkpoint"] = MCE_BLOCK_COL_ID_CHECKPOINT,
+    ["bounce"] = MCE_BLOCK_COL_ID_BOUNCE,
+    ["firsty"] = MCE_BLOCK_COL_ID_FIRSTY,
+    ["wide"] = MCE_BLOCK_COL_ID_WIDE_WALLKICK,
+    ["wide wallkick"] = MCE_BLOCK_COL_ID_WIDE_WALLKICK,
+    ["booster"] = MCE_BLOCK_COL_ID_BOOSTER,
+    ["heal"] = MCE_BLOCK_COL_ID_HEAL,
+    ["no a"] = MCE_BLOCK_COL_ID_NO_A,
+    ["jumpless"] = MCE_BLOCK_COL_ID_NO_A,
+    ["any bonk"] = MCE_BLOCK_COL_ID_ANY_BONK_WALLKICK,
+    ["anykick"] = MCE_BLOCK_COL_ID_ANY_BONK_WALLKICK,
+    ["no fall damage"] = MCE_BLOCK_COL_ID_NO_FALL_DAMAGE,
+    ["no fall"] = MCE_BLOCK_COL_ID_NO_FALL_DAMAGE,
+    ["conveyor"] = MCE_BLOCK_COL_ID_CONVEYOR,
+    ["breakable"] = MCE_BLOCK_COL_ID_BREAKABLE,
+    ["disappearing"] = MCE_BLOCK_COL_ID_DISAPPEARING,
+    ["remove caps"] = MCE_BLOCK_COL_ID_REMOVE_CAPS,
+    ["no wallkicks"] = MCE_BLOCK_COL_ID_NO_WALLKICKS,
+    ["dash"] = MCE_BLOCK_COL_ID_DASH_PANEL,
+    ["dash panel"] = MCE_BLOCK_COL_ID_DASH_PANEL,
+    ["toxic gas"] = MCE_BLOCK_COL_ID_TOXIC_GAS,
+    ["toxic"] = MCE_BLOCK_COL_ID_TOXIC_GAS,
+    ["jump pad"] = MCE_BLOCK_COL_ID_JUMP_PAD,
 }
 
 ---@param msg string
