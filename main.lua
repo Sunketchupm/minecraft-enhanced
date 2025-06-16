@@ -12,6 +12,7 @@ CanBuild = true
 
 E_MODEL_MCE_BLOCK = smlua_model_util_get_id("mce_block_geo")
 E_MODEL_OUTLINE = smlua_model_util_get_id("mce_outline")
+E_MODEL_ARROW = smlua_model_util_get_id("arrow_geo")
 
 -------------------------------------------------------------------------------
 
@@ -100,6 +101,7 @@ function bhv_outline_init(obj)
 	obj.oFaceAngleYaw = 0
 	obj.oFaceAngleRoll = 0
 	spawn_non_sync_object(bhvMockItem, E_MODEL_NONE, obj.oPosX, obj.oPosY, obj.oPosZ, nil)
+	spawn_non_sync_object(bhvArrow, E_MODEL_ARROW, obj.oPosX, obj.oPosY, obj.oPosZ, nil)
 end
 
 ---@param obj Object
@@ -195,6 +197,30 @@ function bhv_mock_item_loop(obj)
 		end
 	else
 		obj_mark_for_deletion(obj)
+	end
+end
+
+--------------------------------------
+
+--- Called from bhvArrow.bhv
+
+---@param obj Object
+function bhv_arrow_loop(obj)
+	local current_item = gCurrentItem
+	if outline and obj_get_first_with_behavior_id(bhvOutline) and current_item and current_item.model then
+		outline_scale = outline.header.gfx.scale
+		obj.oPosX = outline.oPosX + sins(outline.oFaceAngleYaw) * 200 * outline_scale.x
+		obj.oPosY = outline.oPosY - (current_item.spawnYOffset * current_item.size.y)
+		obj.oPosZ = outline.oPosZ + coss(outline.oFaceAngleYaw) * 200 * outline_scale.z
+		obj.oFaceAngleYaw = outline.oFaceAngleYaw - 16384
+	else
+		obj_mark_for_deletion(obj)
+	end
+
+	if gMarioStates[0].controller.buttonDown & L_TRIG ~= 0 then
+		cur_obj_enable_rendering()
+	else
+		cur_obj_disable_rendering()
 	end
 end
 

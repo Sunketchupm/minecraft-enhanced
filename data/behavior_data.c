@@ -9,11 +9,20 @@ const BehaviorScript bhvOutline[] = {
 };
 
 const BehaviorScript bhvMockItem[] = {
-    BEGIN(OBJ_LIST_DEFAULT),
+    BEGIN(OBJ_LIST_UNIMPORTANT),
     ID(id_bhvNewId),
     OR_INT(oFlags, OBJ_FLAG_UPDATE_GFX_POS_AND_ANGLE),
     BEGIN_LOOP(),
         CALL_NATIVE(bhv_mock_item_loop),
+    END_LOOP(),
+};
+
+const BehaviorScript bhvArrow[] = {
+    BEGIN(OBJ_LIST_UNIMPORTANT),
+    ID(id_bhvNewId),
+    OR_INT(oFlags, OBJ_FLAG_UPDATE_GFX_POS_AND_ANGLE),
+    BEGIN_LOOP(),
+        CALL_NATIVE(bhv_arrow_loop),
     END_LOOP(),
 };
 

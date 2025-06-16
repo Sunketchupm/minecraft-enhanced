@@ -5,6 +5,7 @@
         "bhvMockItem",
         "bhvMceStar",
         "bhvMceCoin",
-        "bhvMceExclamationBox"
+        "bhvMceExclamationBox",
+        "bhvArrow"
     ]
 }
