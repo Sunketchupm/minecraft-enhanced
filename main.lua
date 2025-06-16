@@ -314,7 +314,7 @@ local function set_outline_offset(m)
 	end
 end
 
-local rotation_increment = 0xAAA
+local rotation_increment = degrees_to_sm64(15)
 ---@param m MarioState
 local function set_item_rotation(m)
 	if not outline or m.controller.buttonDown & L_TRIG == 0 then return end
@@ -344,6 +344,11 @@ local function set_item_rotation(m)
 
 	m.controller.buttonPressed = m.controller.buttonPressed & ~(U_CBUTTONS | L_CBUTTONS | D_CBUTTONS | R_CBUTTONS | X_BUTTON)
 end
+
+hook_mod_menu_inputbox("Angle Increment", "15", 4, function (index, value)
+	rotation_increment = degrees_to_sm64(tonumber(value) or 15)
+	update_mod_menu_element_inputbox(index, tostring(math.round(sm64_to_degrees(rotation_increment))))
+end)
 
 local function delete_outline()
 	if outline then
