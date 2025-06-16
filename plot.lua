@@ -3,14 +3,14 @@ gLevelValues.floorLowerLimitMisc = -32768
 gLevelValues.floorLowerLimitShadow = -32768
 gLevelValues.cellHeightLimit = 32767
 
-local LEVEL_EMPTY = level_register("level_empty_entry", COURSE_NONE, "Plot", "plot", 20000, 0x28, 0x28, 0x28)
+local LEVEL_PLOT = level_register("level_plot_entry", COURSE_NONE, "Plot", "plot", 20000, 0x28, 0x28, 0x28)
 
 local function on_chat_command(msg)
     local act = 1
     if tonumber(msg) then
         act = tonumber(msg)
     end
-    warp_to_warpnode(LEVEL_EMPTY, 1, act, 0xA)
+    warp_to_warpnode(LEVEL_PLOT, 1, act, 0xA)
     return true
 end
 
