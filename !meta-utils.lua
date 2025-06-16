@@ -71,7 +71,7 @@ hook_event(HOOK_UPDATE, on_first_update)
 -- Converts string into a table using a delimiter
 ---@param s string
 ---@param delimiter string
----@return table
+---@return string[]
 function split_string(s, delimiter)
     local result = {}
     for match in (s):gmatch(("[^%s]+"):format(delimiter)) do

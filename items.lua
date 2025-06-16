@@ -24,7 +24,10 @@ define_custom_obj_fields({
 })
 
 gCurrentItem = {behavior = nil, model = E_MODEL_NONE, params = {}}
-local item_behaviors = {}
+local all_item_behaviors = {}
+local level_item_behaviors = {}
+local enemy_item_behaviors = {}
+local vanilla_clear_immune = {}
 add_first_update(function ()
     ---@type Item
     gCurrentItem = {
@@ -38,11 +41,29 @@ add_first_update(function ()
         mock = {}
     }
     ---@type BehaviorId[]
-    item_behaviors = {
+    all_item_behaviors = {
         bhvMceBlock,
         bhvMceStar,
         bhvMceCoin,
         bhvMceExclamationBox
+    }
+    ---@type BehaviorId[]
+    level_item_behaviors = {
+        bhvMceStar,
+        bhvMceCoin,
+        bhvMceExclamationBox
+    }
+    ---@type BehaviorId[]
+    enemy_item_behaviors = {
+        --
+    }
+    ---@type BehaviorId[]
+    vanilla_clear_immune = {
+        [id_bhvSpinAirborneWarp] = true,
+        [bhvMceBlock] = true,
+        [bhvMceStar] = true,
+        [bhvMceCoin] = true,
+        [bhvMceExclamationBox] = true,
     }
 end)
 
@@ -83,7 +104,7 @@ end
 function obj_get_any_nearest_item(obj)
     local nearest_item = nil
     local nearest_dist = 0xFFFF
-    for _, item_behavior in ipairs(item_behaviors) do
+    for _, item_behavior in ipairs(all_item_behaviors) do
         local item = obj_get_nearest_object_with_behavior_id(obj, item_behavior)
         if item then
             local dist = dist_between_objects(item, obj)
@@ -497,18 +518,103 @@ local function on_object_count_chat_commmand()
     return true
 end
 
----@param obj Object
-local function bhv_barrier_init(obj)
-    obj.oFlags = OBJ_FLAG_UPDATE_GFX_POS_AND_ANGLE
-    obj.oFaceAnglePitch = 0
-    obj.oFaceAngleYaw = 0
-    obj.oFaceAngleRoll = 0
+local function network_is_privileged()
+    return network_is_server() or network_is_moderator()
 end
 
-id_bhvBarrier = hook_behavior(nil, OBJ_LIST_UNIMPORTANT, false, bhv_barrier_init, function (obj) obj_mark_for_deletion(obj) end)
+---@param obj Object
+---@param mod_command string?
+---@return boolean
+local function object_removal_criteria(obj, mod_command)
+    local remove_all = false
+    local remove_orphaned = false
+    if network_is_privileged() and mod_command then
+        if mod_command == "ALL" then
+            remove_all = true
+        elseif mod_command:lower() == "orphaned" then
+            remove_orphaned = true
+        end
+    end
+    local owner_index = network_global_index_from_local(0) + 1
+    local index = network_local_index_from_global(obj.oOwner - 1)
+    --djui_chat_message_create(remove_orphaned, index, is_player_in_local_area(gMarioStates[index]))
+    if remove_orphaned then
+        return index == -1 or is_player_in_local_area(gMarioStates[index]) == 0
+    end
+    return obj.oOwner == owner_index or remove_all
+end
+
+---@param msg string
+local function on_clear_chat_command(msg)
+    local args = split_string(msg, " ")
+    local command = args[1] and args[1]:lower() or ""
+    if command == "all" or command == "" then
+        for _, behavior in ipairs(all_item_behaviors) do
+            local obj = obj_get_first_with_behavior_id(behavior)
+            while obj do
+                if object_removal_criteria(obj, args[2]) then
+                    obj_mark_for_deletion(obj)
+                end
+                obj = obj_get_next_with_same_behavior_id(obj)
+            end
+        end
+        djui_chat_message_create("Removed all placed items")
+    elseif command == "vanilla" and network_is_privileged() then
+        for i = OBJ_LIST_PLAYER + 1, NUM_OBJ_LISTS - 1, 1 do
+            local obj = obj_get_first(i)
+            while obj do
+                local behavior_id = get_id_from_behavior(obj.behavior)
+                if not vanilla_clear_immune[behavior_id] then
+                    obj_mark_for_deletion(obj)
+                end
+                obj_mark_for_deletion(obj)
+                obj = obj_get_next(obj)
+            end
+        end
+        djui_chat_message_create("Removed all non-mce objects")
+    elseif command == "blocks" then
+        local obj = obj_get_first_with_behavior_id(bhvMceBlock)
+        while obj  do
+            if object_removal_criteria(obj, args[2]) then
+                obj_mark_for_deletion(obj)
+            end
+            obj = obj_get_next_with_same_behavior_id(obj)
+        end
+        djui_chat_message_create("Removed all placed blocks")
+    elseif command == "items" then
+        for _, behavior in ipairs(level_item_behaviors) do
+            local obj = obj_get_first_with_behavior_id(behavior)
+            while obj do
+                if object_removal_criteria(obj, args[2]) then
+                    obj_mark_for_deletion(obj)
+                end
+                obj = obj_get_next_with_same_behavior_id(obj)
+            end
+        end
+        djui_chat_message_create("Removed all placed level items")
+    elseif command == "enemies" then
+        for _, behavior in ipairs(enemy_item_behaviors) do
+            local obj = obj_get_first_with_behavior_id(behavior)
+            while obj  do
+                if object_removal_criteria(obj, args[2]) then
+                    obj_mark_for_deletion(obj)
+                end
+                obj = obj_get_next_with_same_behavior_id(obj)
+            end
+        end
+        djui_chat_message_create("Removed all placed enemies")
+    else
+        if network_is_privileged() then
+            djui_chat_message_create("USAGE: [all|vanilla|blocks|items|enemies] [ALL|orphaned]")
+        else
+            djui_chat_message_create("USAGE: [all|blocks|items|enemies]")
+        end
+    end
+    return true
+end
 
 local function unrendered_items_update()
-    for _, behavior in ipairs(item_behaviors) do
+    for _, behavior in ipairs(all_item_behaviors) do
         if behavior ~= bhvMceBlock then
             local obj = obj_get_first_with_behavior_id(behavior)
             while obj do
@@ -526,6 +632,13 @@ local function unrendered_items_update()
 end
 
 hook_chat_command("objects", "Counts the amount of objects in the current area", on_object_count_chat_commmand)
+hook_chat_command("clear", "[all|blocks|items|enemies] | Removes all objects placed by you that fit the specified criteria", on_clear_chat_command)
+if network_is_privileged() then
+    update_chat_command_description("clear", "[all|blocks|items|enemies] | Removes all objects placed by you that fit the specified criteria \
+    MODERATORS: [all|vanilla|blocks|items|enemies] [ALL|orphaned] \
+    Use 'ALL' to remove EVERY object of that criteria \
+    Use 'orphaned' to remove all objects of that criteria with no owner")
+end
 hook_event(HOOK_UPDATE, unrendered_items_update)
 
 ------------------------------------------------------------------------------------------
