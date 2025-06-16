@@ -153,8 +153,27 @@ local MCE_BLOCK_COL_ID_VERY_SLIPPERY = 7
 local MCE_BLOCK_COL_ID_HANGABLE = 8
 local MCE_BLOCK_COL_ID_VANISH = 9
 local MCE_BLOCK_COL_ID_VERTICAL_WIND = 10
-local MCE_BLOCK_COL_ID_HORIZONTAL_WIND = 11
-local MCE_BLOCK_COL_ID_WATER = 12
+local MCE_BLOCK_COL_ID_WATER = 11
+
+--[[
+BLOCK_SURFACE_ID_CHECKPOINT = 11
+BLOCK_SURFACE_ID_BOUNCE = 12
+BLOCK_SURFACE_ID_FIRSTY = 13
+BLOCK_SURFACE_ID_WIDE_WALLKICK = 14
+BLOCK_SURFACE_ID_BOOSTER = 15
+BLOCK_SURFACE_ID_HEAL = 16
+BLOCK_SURFACE_ID_NO_A = 17
+BLOCK_SURFACE_ID_ANY_BONK_WALLKICK = 18
+BLOCK_SURFACE_ID_NO_FALL_DAMAGE = 19
+BLOCK_SURFACE_ID_CONVEYOR = 20
+BLOCK_SURFACE_ID_BREAKABLE = 21
+BLOCK_SURFACE_ID_DISAPPEARING = 22
+BLOCK_SURFACE_ID_REMOVE_CAPS = 23
+BLOCK_SURFACE_ID_NO_WALLKICKS = 24
+BLOCK_SURFACE_ID_DASH_PANEL = 25
+BLOCK_SURFACE_ID_TOXIC_GAS = 26
+BLOCK_SURFACE_ID_JUMP_PAD = 27
+]]
 
 BLOCK_ANIM_STATE_TRANSPARENT_START = 110
 BLOCK_BARRIER_ANIM = (BLOCK_ANIM_STATE_TRANSPARENT_START * 2) + 1
@@ -175,7 +194,6 @@ local standard_collision_lookup = {
 local ignore_collision_lookup = {
     [MCE_BLOCK_COL_ID_NO_COLLISION] = true,
     [MCE_BLOCK_COL_ID_VERTICAL_WIND] = true,
-    [MCE_BLOCK_COL_ID_HORIZONTAL_WIND] = true,
     [MCE_BLOCK_COL_ID_WATER] = true,
 }
 
@@ -250,48 +268,8 @@ local function custom_surface_mario_update(m)
             end
             spawn_wind_particles(1, 0)
             play_sound(SOUND_ENV_WIND2, m.marioObj.header.gfx.cameraToObject)
-        elseif surface_id == MCE_BLOCK_COL_ID_HORIZONTAL_WIND and mario_is_within_block(m, block) then
-            local pushAngle = block.oFaceAngleYaw
-            if m.action & ACT_FLAG_AIR ~= 0 then
-                m.slideVelX = 32 + m.forwardVel * sins(pushAngle)
-                m.slideVelZ = 32 + m.forwardVel * coss(pushAngle)
-
-                local speed = math.sqrt(m.slideVelX * m.slideVelX + m.slideVelZ * m.slideVelZ)
-                djui_chat_message_create(speed, m.slideVelX, m.slideVelZ)
-
-                if speed > 48 then
-                    m.slideVelX = (m.slideVelX * 48.0) / speed
-                    m.slideVelZ = (m.slideVelZ * 48.0) / speed
-                    speed = 32
-                elseif speed > 32 then
-                    speed = 32
-                end
-
-                m.vel.x = m.slideVelX
-                m.vel.z = m.slideVelZ
-                m.slideYaw = atan2s(m.slideVelZ, m.slideVelX)
-                m.forwardVel = speed * coss(convert_s16(m.faceAngle.y - m.slideYaw))
-            elseif m.action & (ACT_FLAG_STATIONARY | ACT_FLAG_MOVING) ~= 0 then
-                local pushSpeed = 0
-                if m.action & ACT_FLAG_MOVING ~= 0 then
-                    local pushDYaw = convert_s16(m.faceAngle.y - pushAngle)
-
-                    pushSpeed = (m.forwardVel > 0.0) and -m.forwardVel * 0.5 or -8.0
-
-                    if pushDYaw > -0x4000 and pushDYaw < 0x4000 then
-                        pushSpeed = pushSpeed * -1.0
-                    end
-
-                    pushSpeed = pushSpeed * coss(pushDYaw)
-                else
-                    pushSpeed = 3.2
-                end
-
-                m.vel.x = m.vel.x + pushSpeed * sins(pushAngle)
-                m.vel.z = m.vel.z + pushSpeed * coss(pushAngle)
-            end
-            spawn_wind_particles(0, pushAngle);
-            play_sound(SOUND_ENV_WIND2, m.marioObj.header.gfx.cameraToObject)
+        elseif surface_id == MCE_BLOCK_COL_ID_WATER and mario_is_within_block(m, block) then
+            
         end
         block = obj_get_next_with_same_behavior_id(block)
     end
@@ -705,9 +683,6 @@ local block_id_lookup = {
     ["vanish"] = MCE_BLOCK_COL_ID_VANISH,
     ["vertical wind"] = MCE_BLOCK_COL_ID_VERTICAL_WIND,
     ["v wind"] = MCE_BLOCK_COL_ID_VERTICAL_WIND,
-    --["horizontal wind"] = MCE_BLOCK_COL_ID_HORIZONTAL_WIND,
-    --["h wind"] = MCE_BLOCK_COL_ID_HORIZONTAL_WIND,
-    --["wind"] = MCE_BLOCK_COL_ID_HORIZONTAL_WIND
 }
 
 ---@param msg string
