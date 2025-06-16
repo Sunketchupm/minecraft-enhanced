@@ -62,6 +62,9 @@ local function act_free_move(m)
             m.vel.x = sins(m.intendedYaw) * 20
             m.vel.z = coss(m.intendedYaw) * 20
         end
+        m.forwardVel = 20
+    else
+        m.forwardVel = 0
     end
 
     set_character_animation(m, CHAR_ANIM_IDLE_HEAD_CENTER)
@@ -156,7 +159,6 @@ local function mario_update(m)
                 end
             end
             drop_and_set_mario_action(m, next_action, 0)
-            mario_set_forward_vel(m, 0)
         else
             start_timer = true
         end
