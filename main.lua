@@ -89,7 +89,7 @@ hook_chat_command("grid", "[num] or [x|y|z] or [on|off] | Change the shape of th
 
 ---@type Object?
 local outline = nil
-local outline_grid_y_offset = 0
+outline_grid_y_offset = 0
 
 --- Called from bhvOutline.bhv
 
@@ -202,6 +202,8 @@ end
 
 --------------------------------------
 
+local show_arrow = true
+
 --- Called from bhvArrow.bhv
 
 ---@param obj Object
@@ -212,17 +214,22 @@ function bhv_arrow_loop(obj)
 		obj.oPosX = outline.oPosX + sins(outline.oFaceAngleYaw) * 200 * outline_scale.x
 		obj.oPosY = outline.oPosY - (current_item.spawnYOffset * current_item.size.y)
 		obj.oPosZ = outline.oPosZ + coss(outline.oFaceAngleYaw) * 200 * outline_scale.z
+		obj_scale_xyz(obj, outline_scale.x, outline_scale.y, outline_scale.z)
 		obj.oFaceAngleYaw = outline.oFaceAngleYaw - 16384
 	else
 		obj_mark_for_deletion(obj)
 	end
 
-	if gMarioStates[0].controller.buttonDown & L_TRIG ~= 0 then
+	if gMarioStates[0].controller.buttonDown & L_TRIG ~= 0 and show_arrow then
 		cur_obj_enable_rendering()
 	else
 		cur_obj_disable_rendering()
 	end
 end
+
+hook_mod_menu_checkbox("Show Angle Arrow", true, function (_, value)
+	show_arrow = value
+end)
 
 -------------------------------------------------------------------------------
 

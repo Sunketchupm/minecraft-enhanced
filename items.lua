@@ -747,12 +747,6 @@ local function on_set_surface_chat_command(msg)
     return true
 end
 
-local surface_names = ""
-for key in pairs(block_id_lookup) do
-    surface_names = surface_names .. "|" .. key
-end
-surface_names = surface_names:sub(1, -2)
-
 hook_chat_command("size", "[num] or [x y z] | Sets the size scaling of the currently selected item. Clamped between 0.01 and 25", on_set_item_size_chat_command)
 hook_chat_command("surface", "! BLOCK ONLY ! Sets the surface type of a block. Refer to the Surface Types tab for which exist and what they do", on_set_surface_chat_command)
 hook_chat_command("surf", "! SAME AS /surface !", on_set_surface_chat_command)
