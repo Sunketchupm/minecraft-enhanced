@@ -870,6 +870,12 @@ end
 
 ------------------------------------------------------------------------------------------------
 
+local function on_set_hotbar_item()
+    vec3f_copy(GridSize, HotbarItemList[SelectedHotbarIndex].item.size)
+    vec3f_mul(GridSize, 200)
+    outline_grid_y_offset = 0
+end
+
 ---@param m MarioState
 local function handle_hotbar_inputs(m)
     if m.controller.buttonDown & L_TRIG ~= 0 then return end
@@ -880,8 +886,7 @@ local function handle_hotbar_inputs(m)
             SelectedHotbarIndex = HOTBAR_SIZE
         end
         if HotbarItemList[SelectedHotbarIndex] and HotbarItemList[SelectedHotbarIndex].item then
-            vec3f_copy(GridSize, HotbarItemList[SelectedHotbarIndex].item.size)
-            vec3f_mul(GridSize, 200)
+            on_set_hotbar_item()
         end
     elseif m.controller.buttonPressed & R_JPAD ~= 0 then
         SelectedHotbarIndex = SelectedHotbarIndex + 1
@@ -889,8 +894,7 @@ local function handle_hotbar_inputs(m)
             SelectedHotbarIndex = 1
         end
         if HotbarItemList[SelectedHotbarIndex] and HotbarItemList[SelectedHotbarIndex].item then
-            vec3f_copy(GridSize, HotbarItemList[SelectedHotbarIndex].item.size)
-            vec3f_mul(GridSize, 200)
+            on_set_hotbar_item()
         end
     end
     m.controller.buttonPressed = m.controller.buttonPressed & ~(L_JPAD | R_JPAD)
