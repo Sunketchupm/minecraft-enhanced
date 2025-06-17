@@ -1064,11 +1064,11 @@ end
 
 ---@param pressed integer
 local function handle_paging_inputs(pressed)
-    if (pressed & L_CBUTTONS ~= 0 or (moved_mouse and mouse_has_scrolled > 0)) and current_item_page > 1 then
+    if (pressed & L_CBUTTONS ~= 0 or (moved_mouse and mouse_has_scrolled < 0)) and current_item_page > 1 then
         current_item_page = current_item_page - 1
         selected_item_index = 0
         play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
-    elseif (pressed & R_CBUTTONS ~= 0 or (moved_mouse and mouse_has_scrolled < 0)) and current_item_page < item_page_max then
+    elseif (pressed & R_CBUTTONS ~= 0 or (moved_mouse and mouse_has_scrolled > 0)) and current_item_page < item_page_max then
         current_item_page = current_item_page + 1
         selected_item_index = 0
         play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
