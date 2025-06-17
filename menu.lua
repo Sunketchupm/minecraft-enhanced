@@ -42,8 +42,11 @@ local Z_TRIG_TEX =  get_texture_info("Ztrig")
 local CONTROL_STICK_TEX = get_texture_info("Ctrlstick")
 local PAGE_UP_TEX = get_texture_info("page_up")
 local PAGE_DOWN_TEX = get_texture_info("page_down")
---------------------------------------
+local MOUSE_TEX = get_texture_info("mousecursor")
+------------------- HELP PAGE IMAGES -------------------
 local DEFAULT_TEX = get_texture_info("nonehelp")
+local NOCOL_TEX = get_texture_info("nocolhelp")
+local NOFALL_TEX = get_texture_info("placeholder")
 local NSLIP_TEX = get_texture_info("nsliphelp")
 local SLIP_TEX = get_texture_info("sliphelp")
 local VSLIP_TEX = get_texture_info("vsliphelp")
@@ -51,10 +54,31 @@ local HANGABLE_TEX = get_texture_info("hangablehelp")
 local VWIND_TEX = get_texture_info("vwindhelp")
 local WATER_TEX = get_texture_info("waterhelp")
 local VANISH_TEX = get_texture_info("vanishhelp")
+local TOXIC_TEX = get_texture_info("toxichelp")
 local SHALLOWSAND_TEX = get_texture_info("shallowsandhelp")
 local QUICKSAND_TEX = get_texture_info("quicksandhelp")
 local LAVA_TEX =get_texture_info("lavahelp")
 local DEATH_TEX = get_texture_info("deathhelp")
+local CHECKPOINT_TEX = get_texture_info("placeholder")
+local HEAL_TEX = get_texture_info("healhelp")
+local BOUNCE_TEX = get_texture_info("placeholder")
+local CONVEYOR_TEX = get_texture_info("conveyorhelp")
+local FIRSTY_TEX = get_texture_info("placeholder")
+local WIDEKICK_TEX = get_texture_info("placeholder")
+local ANYKICK_TEX = get_texture_info("placeholder")
+local WKLESS_TEX = get_texture_info("wklesshelp")
+local DASH_TEX = get_texture_info("placeholder")
+local BOOST_TEX = get_texture_info("placeholder")
+local ABC_TEX = get_texture_info("placeholder")
+local JUMP_TEX = get_texture_info("placeholder")
+local CAPLESS_TEX = get_texture_info("placeholder")
+local BREAK_TEX = get_texture_info("breakhelp")
+local DISAPPEAR_TEX = get_texture_info("placeholder")
+local SHRINK_TEX = get_texture_info("placeholder")
+------------------- CUSTOM BLOCK TEXTURES -------------------
+local DPLAT_BLOCK_TEX = get_texture_info("dashpanel")
+local SPLAT_BLOCK_TEX = get_texture_info("shrinkingplatform")
+local CPLAT_BLOCK_TEX = get_texture_info("checkpoint")
 --------------------------------------
 
 ---@class MenuItemLink
@@ -307,7 +331,7 @@ local function render_mouse()
         prev_mouse_y = mouse_y
         mouse_x = djui_hud_get_mouse_x()
         mouse_y = djui_hud_get_mouse_y()
-        djui_hud_render_texture_interpolated(gTextures.camera, prev_mouse_x, prev_mouse_y, 1, 1, mouse_x, mouse_y, 1, 1)
+        djui_hud_render_texture_interpolated(MOUSE_TEX, prev_mouse_x, prev_mouse_y, 1, 1, mouse_x, mouse_y, 1, 1)
         --djui_hud_render_texture(gTextures.camera, mouse_x, mouse_y, 1, 1)
     end
 end
@@ -510,7 +534,7 @@ local function render_enemies_tab(x, y, width, height)
     render_standard_tab(x, y, width, height, "Enemies")
 end
 
---------------------------
+---------------------------
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -522,25 +546,77 @@ end
     ---@field image TextureInfo
 
 -- This is for the stuff in the box on the right side of the menu
+-- {title = "", lines = {"Aliases: ", "", "", "", ""}, image = }
 ---@type Description[]
 local surface_descriptions = {
-    {title = "Default", lines = {"Aliases: Normal", "The default SM64 surface.", "", ""}, image = DEFAULT_TEX},
-    {title = "Slippery", lines = {"Aliases: Slip", "A surface that is easier", "to slide on.", ""}, image = SLIP_TEX},
-    {title = "Lava", lines = {"Aliases:", "LaLaLaLava", "ChicChicChicChicken", ""}, image = LAVA_TEX},
-    {title = "Quicksand", lines = {"Aliases:", "A surface that instantly", "kills upon landing.", ""}, image = QUICKSAND_TEX},
+    {title = "Default", lines = {"Aliases: normal", "The default SM64 surface.", "Can't go wrong with it.", "", ""}, image = DEFAULT_TEX},
+    {title = "No Collision", lines = {"Aliases: intangible / none", "Removes all surface collision.", "Best used with ", "transparent blocks.", ""}, image = NOCOL_TEX},
+    {title = "No Fall Damage", lines = {"Aliases: nofall", "Prevents players from taking", "any fall damage when landing", "on this block.", ""}, image = NOFALL_TEX},
+    {title = "Slippery", lines = {"Aliases: slip", "A slippery surface players", "can slide off.", "", ""}, image = SLIP_TEX},
+    {title = "Not Slippery", lines = {"Aliases: not slip / nslip", "A surface players can always", "walk on.", "", ""}, image = NSLIP_TEX},
+    {title = "Very Slippery", lines = {"Aliases: very slip / vslip", "Players will always slide", "off this surface. Unable", "to framewalk or silly kick.", ""}, image = VSLIP_TEX},
+    {title = "Shallowsand", lines = {"Aliases: ssand", "Restricts movement and jump", "height. Doesn't sink", "the player.", ""}, image = SHALLOWSAND_TEX},
+    {title = "Quicksand", lines = {"Aliases: qsand", "Hazardous surface that ", "instantly sinks any player  ", "upon contact.", ""}, image = QUICKSAND_TEX},
+    {title = "Lava", lines = {"Aliases: N/A", "Hazardous surface that", "launches the player upwards", "and deals damage.", ""}, image = LAVA_TEX},
+    {title = "Toxic Gas", lines = {"Aliases: toxic / gas", "Hazardous gas that slowly", "depletes the player's HP. Has", "no collision.", ""}, image = TOXIC_TEX},
+    {title = "Death", lines = {"Aliases: N/A", "Hazardous surface that kills", "the player if they're 10.25", "blocks above its surface.", ""}, image = DEATH_TEX}, 
+    {title = "Vanish", lines = {"Aliases: N/A", "Acts like a normal surface, but", "can be phased through with the", "Vanish Cap.", ""}, image = VANISH_TEX},
+    {title = "Hangable", lines = {"Aliases: hang", "Holding A while touching this", "surface's ceiling will make the", "player hang on until they let", "go."}, image = HANGABLE_TEX},
+    {title = "Water", lines = {"Aliases: swim", "A block of water. Overlap", "multiple blocks to swim", "between them.", ""}, image = WATER_TEX},
+    {title = "Vertical Wind", lines = {"Aliases: vwind", "A gust of wind that carries", "the player upwards. Best used", "with barrier blocks.", ""}, image = VWIND_TEX},
+    {title = "Checkpoint", lines = {"Aliases: respawn", "A surface block with standard", "properties, standing on it", "creates a respawn point.", ""}, image = CHECKPOINT_TEX},
+    {title = "Heal", lines = {"Aliases: N/A", "Heals the player when standing", "on top of the block.", "", ""}, image = HEAL_TEX},
+    {title = "Bounce", lines = {"Aliases: N/A", "Bounces the player back when", "touching any surface face. Works", "best with the Wing Cap.", ""}, image = BOUNCE_TEX},
+    {title = "Conveyor", lines = {"Aliases: N/A", "Pushes the player in the", "direction of the arrow.", "Possible to hang on its", "ceiling."}, image = CONVEYOR_TEX},
+    {title = "Firsty", lines = {"Aliases: firstie", "When performing a wallkick on", "this surface, speed will always" , "be maintained.", ""}, image = FIRSTY_TEX},
+    {title = "Widekick", lines = {"Aliases: wide / wide wallkick", "Wallkicks can be performed", "from any angle facing this", "surface's wall.", ""}, image = WIDEKICK_TEX},
+    {title = "Anykick", lines = {"Aliases: any bonk", "Wallkicks can be performed", "after any bonking action such", "as dives, ground pounds, ", "ceilings, and 'out of bounds'."}, image = ANYKICK_TEX},
+    {title = "Wallkickless", lines = {"Aliases: no wallkick / wkless", "Attempting to wallkick on this", "surface will always fail.", "", ""}, image = WKLESS_TEX},
+    {title = "Dash Panel", lines = {"Aliases: dash", "Forces the player to dash at", "great speeds when walking on", "this surface's floor.", ""}, image = DASH_TEX},
+    {title = "Booster", lines = {"Aliases: boost", "Dractically increases the", "player's speed when within this", "surface block. Has no collision.", ""}, image = BOOST_TEX},
+    {title = "Jumpless", lines = {"Aliases: no a / abc", "Attempting to jump or wallkick", "on this surface will always", "fail.", ""}, image = ABC_TEX},
+    {title = "Jump Pad", lines = {"Aliases: jpad", "Pressing A while standing on", "this surface will launch the", "player up to 7 blocks in the ", "air."}, image = JUMP_TEX},
+    {title = "Capless", lines = {"Aliases: remove caps", "If any players are wearing a ", "special cap when above this", "block, they will revert to", "wearing a normal cap."}, image = CAPLESS_TEX},
+    {title = "Breakable", lines = {"Aliases: break", "Attacking this surface will", "break the block completely.", "", ""}, image = BREAK_TEX},
+    {title = "Disappearing", lines = {"Aliases: disappear", "Touching this surface will", "quickly make this surface", "disappear entirely.", ""}, image = DISAPPEAR_TEX},
+    {title = "Shrinking", lines = {"Aliases: shrink", "Standing on this surface will", " slowly shrink the block until", "it disappears entirely.", ""}, image = SHRINK_TEX}
 }
 
 -- This is for the names of the buttons on the left side of the menu
 ---@type string[]
 local surface_buttons = {
     "Default",
+    "No Collision",
+    "No Fall Damage",
     "Slippery",
-    "Lava",
+    "Not Slippery",
+    "Very Slippery",
+    "Shallowsand",
     "Quicksand",
+    "Lava",
+    "Toxic Gas",
+    "Death",
+    "Vanish",
+    "Hangable",
+    "Water",
+    "Vertical Wind",
+    "Checkpoint",
+    "Heal",
+    "Bounce",
+    "Conveyor",
+    "Firsty", 
+    "Widekick",
+    "Anykick",
+    "Wallkickless",
+    "Dash Panel",
+    "Booster",
+    "Jumpless",
+    "Jump Pad",
+    "Capless",
+    "Breakable",
+    "Disappearing",
+    "Shrinking"
 }
-
--- Make sure that the index of the elements of each table corresponds with each other
--- For example, "Lava" is the 3rd index in both surface_buttons and surface_descriptions
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -556,24 +632,28 @@ local surface_buttons_rendered = 0
 ---@param description Description
 local function render_description_box(x, y, width, height, description)
     local rect_x = x + width * 0.47
-    local rect_y = y + height * 0.15
+    local rect_y = y + height * 0.16
     local rect_width = width * 0.5
     local rect_height = height * 0.8
     local rect_colors = {{r = 0, g = 16, b = 69, a = 255}, {r = 255, g = 255, b = 255, a = 255}, {r = 255, g = 255, b = 255, a = 255}}
     render_bordered_rectangle(rect_x, rect_y, rect_width, rect_height, rect_colors, 0.006, 0.01, true)
 
-    local desc_x = rect_x + width * 0.05
-    local desc_y = rect_y + height * 0.05
-    local text_scale = 0.9
+    local desc_x = rect_x + width * 0.03
+    local desc_y = rect_y + height * 0.03
+    local screen_width = djui_hud_get_screen_width()
+    local screen_height = djui_hud_get_screen_height()
+    local text_scale = (screen_width/screen_height) * 0.5
     local lines = description.lines
-    render_shadowed_text(description.title, desc_x, desc_y, text_scale * 1.4)
-    render_shadowed_text(lines[1], desc_x, desc_y + 45, text_scale)
-    render_shadowed_text(lines[2], desc_x, desc_y + 75, text_scale)
-    render_shadowed_text(lines[3], desc_x, desc_y + 105, text_scale)
-    render_shadowed_text(lines[4], desc_x, desc_y + 135, text_scale)
+    render_shadowed_text(description.title, desc_x, desc_y, text_scale * 2)
+    djui_hud_set_color(128, 128, 128, 255)
+    djui_hud_print_text(lines[1], desc_x, desc_y + 55, text_scale * 0.9) -- now specifically for aliases
+    render_shadowed_text(lines[2], desc_x, desc_y + 100, text_scale)
+    render_shadowed_text(lines[3], desc_x, desc_y + 130, text_scale)
+    render_shadowed_text(lines[4], desc_x, desc_y + 160, text_scale)
+    render_shadowed_text(lines[5], desc_x, desc_y + 190, text_scale)
 
     local image = description.image
-    local image_scale = 1.9
+    local image_scale = 1.7
     local image_x = rect_x + rect_width * 0.5 - (image.width * image_scale) * 0.5
     local image_y = rect_y + rect_height - (image.height * image_scale) - 5
     djui_hud_set_color(255, 255, 255, 255)
@@ -613,11 +693,12 @@ local function render_surfaces_tab(x, y, width, height)
         local button_colors = {{r = 125, g = 125, b = 125, a = 255}, {r = 175, g = 175, b = 175, a = 255}, {r = 75, g = 75, b = 75, a = 255}}
         if current_surface_tip_index == absolute_index then
             button_colors = {{r = 65, g = 65, b = 65, a = 255}, {r = 175, g = 175, b = 175, a = 255}, {r = 75, g = 75, b = 75, a = 255}}
+            -- add chosen surface to selected block
         end
         render_bordered_rectangle(button_x, button_y + y_increm * (i - 1), button_width, button_height, button_colors, 0.01, 0.06)
 
         if surface_buttons[absolute_index] then
-            render_shadowed_text(surface_buttons[absolute_index], button_x + 8, button_y + 4.5 + y_increm * (i - 1), 0.9)
+            render_shadowed_text(surface_buttons[absolute_index], button_x + 12, button_y + 4.5 + y_increm * (i - 1), 0.8)
         end
     end
 
@@ -983,11 +1064,11 @@ end
 
 ---@param pressed integer
 local function handle_paging_inputs(pressed)
-    if (pressed & L_CBUTTONS ~= 0 or (moved_mouse and mouse_has_scrolled < 0)) and current_item_page > 1 then
+    if (pressed & L_CBUTTONS ~= 0 or (moved_mouse and mouse_has_scrolled > 0)) and current_item_page > 1 then
         current_item_page = current_item_page - 1
         selected_item_index = 0
         play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
-    elseif (pressed & R_CBUTTONS ~= 0 or (moved_mouse and mouse_has_scrolled > 0)) and current_item_page < item_page_max then
+    elseif (pressed & R_CBUTTONS ~= 0 or (moved_mouse and mouse_has_scrolled < 0)) and current_item_page < item_page_max then
         current_item_page = current_item_page + 1
         selected_item_index = 0
         play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
