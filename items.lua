@@ -166,7 +166,7 @@ MCE_BLOCK_COL_ID_TOXIC_GAS = 27
 MCE_BLOCK_COL_ID_JUMP_PAD = 28
 MCE_BLOCK_COL_ID_SHRINKING = 29
 
-BLOCK_ANIM_STATE_TRANSPARENT_START = 110
+BLOCK_ANIM_STATE_TRANSPARENT_START = 580
 BLOCK_BARRIER_ANIM = (BLOCK_ANIM_STATE_TRANSPARENT_START * 2) + 1
 BLOCK_ACT_RESET = 10
 
@@ -210,7 +210,7 @@ end
 ---@param obj Object
 function bhv_mce_block_init(obj)
     block_collision_lookup(obj)
-    if obj.oAnimState >= BLOCK_ANIM_STATE_TRANSPARENT_START then
+    if obj.oAnimState > BLOCK_ANIM_STATE_TRANSPARENT_START then
         obj.oOpacity = 100
     end
     obj.oCollisionDistance = 500 * vec3f_length({x = obj.oScaleX, y = obj.oScaleY, z = obj.oScaleZ})
@@ -239,7 +239,7 @@ end
 function bhv_mce_block_loop(obj)
     if obj.oAction == BLOCK_ACT_RESET then
         block_collision_lookup(obj)
-        if obj.oAnimState >= BLOCK_ANIM_STATE_TRANSPARENT_START then
+        if obj.oAnimState > BLOCK_ANIM_STATE_TRANSPARENT_START then
             obj.oOpacity = 100
         else
             obj.oOpacity = 255
@@ -747,6 +747,26 @@ local function on_set_surface_chat_command(msg)
     return true
 end
 
+local function on_transparent_chat_command()
+    local item = HotbarItemList[SelectedHotbarIndex].item
+    if item and item.model == E_MODEL_MCE_BLOCK then
+        if item.animState > BLOCK_ANIM_STATE_TRANSPARENT_START then
+            item.animState = item.animState - BLOCK_ANIM_STATE_TRANSPARENT_START
+            djui_chat_message_create("The current block is no longer transparent")
+        else
+            item.animState = item.animState + BLOCK_ANIM_STATE_TRANSPARENT_START
+            if item.animState > BLOCK_BARRIER_ANIM then
+                item.animState = BLOCK_BARRIER_ANIM
+            end
+            djui_chat_message_create("The current block is now transparent")
+        end
+    else
+        djui_chat_message_create("A block must be selected in the hotbar")
+    end
+    return true
+end
+
 hook_chat_command("size", "[num] or [x y z] | Sets the size scaling of the currently selected item. Clamped between 0.01 and 25", on_set_item_size_chat_command)
 hook_chat_command("surface", "! BLOCK ONLY ! Sets the surface type of a block. Refer to the Surface Types tab for which exist and what they do", on_set_surface_chat_command)
 hook_chat_command("surf", "! SAME AS /surface !", on_set_surface_chat_command)
+hook_chat_command("transparent", "Makes the current selected block transparent", on_transparent_chat_command)

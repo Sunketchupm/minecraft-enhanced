@@ -59,7 +59,7 @@ local DEATH_TEX = get_texture_info("deathhelp")
 
 ---@class MenuItemLink
     ---@field item Item
-    ---@field icon TextureInfo
+    ---@field icon TextureInfo | DjuiColor
     ---@field self MenuItemLink?
 
 ---@type table<integer, MenuItemLink[]>
@@ -85,7 +85,7 @@ end
 ---@param mock_settings table
 ---@param anim_state integer
 ---@param behavior_param integer
----@param icon TextureInfo
+---@param icon TextureInfo | DjuiColor
 local function add_item(tab, behavior, model, offset, anim_state, mock_settings, behavior_param, icon)
     ---@type MenuItemLink
     local item = { item = {
@@ -106,6 +106,7 @@ end
 add_first_update(function ()
     local total_block_icons = #MenuBlockIcons
     for i = 1, total_block_icons, 1 do
+        ---@type TextureInfo | DjuiColor
         local texture = MenuBlockIcons[i] or gTextures.no_camera
         ---@type MenuItemLink
         local menu_item = {
@@ -250,6 +251,40 @@ local function render_bordered_rectangle(x, y, width, height, colors, margin_wid
     render_colored_rectangle(x, y, width, height, colors[1], margin_width, margin_height)
 end
 
+---@param x number
+---@param y number
+---@param width number
+---@param height number
+---@param icon TextureInfo | DjuiColor
+local function render_icon(x, y, width, height, icon)
+    if icon.texture ~= nil then
+        ---@cast icon TextureInfo
+        local item_scale_x = 1.5
+        local item_scale_y = 1.5
+        local texture_width = icon.width
+        local texture_height = icon.height
+        if texture_width == 64 then
+            item_scale_x = 0.75
+        end
+        if texture_height == 64 then
+            item_scale_y = 0.75
+        end
+        local item_x = (x + width * 0.5) - (icon.width * 0.5 * item_scale_x)
+        local item_y = (y + height * 0.5) - (icon.height * 0.5 * item_scale_y)
+        djui_hud_set_color(255, 255, 255, 255)
+
+        djui_hud_render_texture(icon, item_x, item_y, item_scale_x, item_scale_y)
+    else
+        ---@cast icon DjuiColor
+        djui_hud_set_color_with_table(icon)
+        local rect_width = 48
+        local rect_height = 48
+        local rect_x = (x + width * 0.5) - 24
+        local rect_y = (y + height * 0.5) - 24
+        djui_hud_render_rect(rect_x, rect_y, rect_width, rect_height)
+    end
+end
+
 ----------------------------------------------------
 
 local moved_mouse = false
@@ -378,22 +413,9 @@ local function render_item_list(x, y, width, height, items)
             djui_hud_set_color(255, 255, 255, 150)
             djui_hud_render_rect(slot_x, slot_y, slot_width, slot_height)
         end
+
         if item.icon then
-            local icon = item.icon
-            local item_scale_x = 1.5
-            local item_scale_y = 1.5
-            local texture_width = icon.width
-            local texture_height = icon.height
-            if texture_width == 64 then
-                item_scale_x = 0.75
-            end
-            if texture_height == 64 then
-                item_scale_y = 0.75
-            end
-            local item_x = (slot_x + slot_width * 0.5) - (icon.width * 0.5 * item_scale_x)
-            local item_y = (slot_y + slot_height * 0.5) - (icon.height * 0.5 * item_scale_y)
-            djui_hud_set_color(255, 255, 255, 255)
-            djui_hud_render_texture(icon, item_x, item_y, item_scale_x, item_scale_y)
+            render_icon(slot_x, slot_y, slot_width, slot_height, item.icon)
         end
     end
 
@@ -676,22 +698,9 @@ local function render_hotbar(screen_width, screen_height)
             djui_hud_set_color(255, 255, 255, 150)
             djui_hud_render_rect(slot_x, slot_y, slot_width, slot_height)
         end
+
         if item.icon then
-            local icon = item.icon
-            local item_scale_x = 1.5
-            local item_scale_y = 1.5
-            local texture_width = icon.width
-            local texture_height = icon.height
-            if texture_width == 64 then
-                item_scale_x = 0.75
-            end
-            if texture_height == 64 then
-                item_scale_y = 0.75
-            end
-            local item_x = (slot_x + slot_width * 0.5) - (icon.width * 0.5 * item_scale_x)
-            local item_y = (slot_y + slot_height * 0.5) - (icon.height * 0.5 * item_scale_y)
-            djui_hud_set_color(255, 255, 255, 255)
-            djui_hud_render_texture(icon, item_x, item_y, item_scale_x, item_scale_y)
+            render_icon(slot_x, slot_y, slot_width, slot_height, item.icon)
         end
         djui_hud_set_color(128, 128, 128, 255)
         djui_hud_render_rect(slot_x, y, 3, slot_height)
@@ -1122,24 +1131,3 @@ local function on_show_controls_mod_menu(_, show)
 end
 
 hook_mod_menu_checkbox("Show Controls", true, on_show_controls_mod_menu)
-
-local function on_transparent_chat_command()
-    local item = HotbarItemList[SelectedHotbarIndex].item
-    if item and item.model == E_MODEL_MCE_BLOCK then
-        if item.animState >= BLOCK_ANIM_STATE_TRANSPARENT_START then
-            item.animState = item.animState - BLOCK_ANIM_STATE_TRANSPARENT_START
-            djui_chat_message_create("The current block is no longer transparent")
-        else
-            item.animState = item.animState + BLOCK_ANIM_STATE_TRANSPARENT_START
-            if item.animState > BLOCK_BARRIER_ANIM then
-                item.animState = BLOCK_BARRIER_ANIM
-            end
-            djui_chat_message_create("The current block is now transparent")
-        end
-    else
-        djui_chat_message_create("A block must be selected in the hotbar")
-    end
-    return true
-end
-
-hook_chat_command("transparent", "Makes the current selected block transparent", on_transparent_chat_command)
