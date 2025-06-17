@@ -17,6 +17,7 @@ local item_list_row_count = 10
 local item_list_column_count = 10
 
 local show_controls = true
+local clear_hotbar = 0
 
 -------------- TEXTURES --------------
 local A_BUTTON_TEX = get_texture_info("Abutton")
@@ -37,6 +38,21 @@ local L_TRIG_TEX = get_texture_info("Ltrig")
 local R_TRIG_TEX =  get_texture_info("Rtrig")
 local Z_TRIG_TEX =  get_texture_info("Ztrig")
 local CONTROL_STICK_TEX = get_texture_info("Ctrlstick")
+local PAGE_UP_TEX = get_texture_info("page_up")
+local PAGE_DOWN_TEX = get_texture_info("page_down")
+--------------------------------------
+local NONE_TEX = get_texture_info("nonehelp")
+local NSLIP_TEX = get_texture_info("nsliphelp")
+local SLIP_TEX = get_texture_info("sliphelp")
+local VSLIP_TEX = get_texture_info("vsliphelp")
+local HANGABLE_TEX = get_texture_info("hangablehelp")
+local VWIND_TEX = get_texture_info("vwindhelp")
+local WATER_TEX = get_texture_info("waterhelp")
+local VANISH_TEX = get_texture_info("vanishhelp")
+local SHALLOWSAND_TEX = get_texture_info("shallowsandhelp")
+local QUICKSAND_TEX = get_texture_info("quicksandhelp")
+local LAVA_TEX =get_texture_info("lavahelp")
+local DEATH_TEX = get_texture_info("deathhelp")
 --------------------------------------
 
 ---@class MenuItemLink
@@ -201,6 +217,14 @@ local block_icons = {
     get_texture_info("barrier")
 }
 
+local item_icons = {
+    get_texture_info("coin_seg3_texture_03005780")
+}
+
+local enemies_icons = {
+    --get_texture_info("")
+}
+
 add_first_update(function ()
     for i = 1, 110, 1 do
         local texture = block_icons[i] or gTextures.no_camera
@@ -284,7 +308,7 @@ end
 ---@param height number
 ---@param color DjuiColor?
 ---@param pixel_size number?
-local function render_pixel_border(x, y, width, height, color, pixel_size)
+local function render_pixel_border(x, y, width, height, color, pixel_size) ---------------------needs to be re-adjusted due to margin overlap
     local border_color = {r = 0, g = 0, b = 0, a = 255}
     local size = 2
     if color then
@@ -510,7 +534,7 @@ end
 ---@param height number
 ---@param text string
 local function render_tab_header(x, y, width, height, text)
-    djui_hud_set_color(0, 0, 0, 255)
+    djui_hud_set_color(63, 63, 63, 255)
     local scale = 1.5
     local size = djui_hud_measure_text(text) * scale
     local text_x = x + width * 0.5 - size * 0.5
@@ -538,6 +562,17 @@ end
 local function render_standard_tab(x, y, width, height, name)
     render_tab_header(x, y, width, height, name)
     render_interior_rectangle(x, y, width, height)
+    local text_scale = 1.25
+    local text = "Clear Hotbar (".. clear_hotbar .."/5)"
+    local text_size = djui_hud_measure_text(text) * text_scale
+    local text_x = (x + width * 0.55) - (text_size * 0.5)
+    local text_y = (y + height) - 55 * text_scale
+    local texture_scale = 2.5
+    local texture_x = (x + width * 0.48) - (text_size * 0.5)
+    local texture_y = (y + height) - 27 * texture_scale
+    djui_hud_set_color(255, 255, 255, 255)
+    djui_hud_render_texture(Y_BUTTON_TEX, texture_x, texture_y, texture_scale, texture_scale)
+    render_shadowed_text(text, text_x, text_y, text_scale)
 end
 
 ---@param x number
@@ -546,18 +581,6 @@ end
 ---@param height number
 local function render_building_blocks_tab(x, y, width, height)
     render_standard_tab(x, y, width, height, "Building Blocks")
-    local text_scale = 1.25
-    local text = "Clear Hotbar"
-    local text_size = djui_hud_measure_text(text) * text_scale
-    local text_x = (x + width * 0.55) - (text_size * 0.5)
-    local text_y = (y + height) - 50 * text_scale
-    local texture_scale = 2.5
-    local texture_x = (x + width * 0.46) - (text_size * 0.5)
-    local texture_y = (y + height) - 24 * texture_scale
-    djui_hud_set_color(255, 255, 255, 255)
-    djui_hud_render_texture(Y_BUTTON_TEX, texture_x, texture_y, texture_scale, texture_scale)
-    djui_hud_set_color(255, 255, 255, 255)
-    djui_hud_print_text(text, text_x, text_y, text_scale)
 end
 
 ---@param x number
@@ -578,67 +601,74 @@ end
 
 --------------------------
 
-local function print_centered_text(text, x, y)
-    local text_size = djui_hud_measure_text(text)
-    local text_x = x - (text_size * 0.5)
-    djui_hud_print_text(text, text_x, y, 1)
-end
-
 ---@param x number
 ---@param y number
 ---@param width number
 ---@param height number
-local function render_surface_types_tab(x, y, width, height)
+local function render_surfaces_tab(x, y, width, height) ----------------- clickable buttons for surface description and surface changes, images provided
     render_tab_header(x, y, width, height, "Surface Types")
-    local text_x = x + width * 0.5
-    local text_y = y + height * 0.13
-    djui_hud_set_color(0, 0, 0, 255)
-    djui_hud_set_font(FONT_NORMAL)
-    local y_increment = 35
-    item_page_max = 3
-    if current_item_page == 1 then
-        print_centered_text("Default / Normal", text_x, text_y + y_increment * 0)
-        print_centered_text("Intangible / No Collision / None", text_x, text_y + y_increment * 1)
-        print_centered_text("Lava", text_x, text_y + y_increment * 2)
-        print_centered_text("Death", text_x, text_y + y_increment * 3)
-        print_centered_text("Quicksand", text_x, text_y + y_increment * 4)
-        print_centered_text("Shallow Quicksand / Shallowsand / S Sand", text_x, text_y + y_increment * 5)
-        print_centered_text("Not Slippery / Not Slip / N Slippery / N Slip", text_x, text_y + y_increment * 6)
-        print_centered_text("Slippery / Slippery", text_x, text_y + y_increment * 7)
-        print_centered_text("Very Slippery / V Slippery / V Slip", text_x, text_y + y_increment * 8)
-        print_centered_text("Hangable / Hang", text_x, text_y + y_increment * 9)
-        print_centered_text("Vanish", text_x, text_y + y_increment * 10)
-        print_centered_text("Vertical Wind / V Wind", text_x, text_y + y_increment * 11)
-        print_centered_text("Water", text_x, text_y + y_increment * 12)
-        print_centered_text("Checkpoint", text_x, text_y + y_increment * 13)
-    elseif current_item_page == 2 then
-        print_centered_text("Bounce", text_x, text_y + y_increment * 0)
-        print_centered_text("Firsty", text_x, text_y + y_increment * 1)
-        print_centered_text("Wide Wallkick / Wide", text_x, text_y + y_increment * 2)
-        print_centered_text("Booster", text_x, text_y + y_increment * 3)
-        print_centered_text("Heal", text_x, text_y + y_increment * 4)
-        print_centered_text("Jumpless / No A", text_x, text_y + y_increment * 5)
-        print_centered_text("Any Bonk / Anykick", text_x, text_y + y_increment * 6)
-        print_centered_text("No Fall Damage / No Fall", text_x, text_y + y_increment * 7)
-        print_centered_text("Conveyor", text_x, text_y + y_increment * 8)
-        print_centered_text("Breakable / Break", text_x, text_y + y_increment * 9)
-        print_centered_text("Disappearing / Disappear", text_x, text_y + y_increment * 10)
-        print_centered_text("Remove Caps / Capless", text_x, text_y + y_increment * 11)
-        print_centered_text("No Wallkicks / Wallkickless", text_x, text_y + y_increment * 12)
-        print_centered_text("Dash Panel / Dash", text_x, text_y + y_increment * 13)
-    elseif current_item_page == 3 then
-        print_centered_text("Toxic Gas / Toxic", text_x, text_y + y_increment * 0)
-        print_centered_text("Jump Pad", text_x, text_y + y_increment * 1)
-        print_centered_text("Shrinking / Shrink", text_x, text_y + y_increment * 2)
-    end
-    djui_hud_set_font(FONT_SPECIAL)
+------------------------ Clickable Buttons ----------------------------
+    local button_x = x + width * 0.04
+    local button_y = y + height * 0.19
+    local button_width = width * 0.4
+    local button_height = height * 0.07
+    local button_colors = {{r = 125, g = 125, b = 125, a = 255}, {r = 175, g = 175, b = 175, a = 255}, {r = 75, g = 75, b = 75, a = 255}}
+    render_bordered_rectangle(button_x, button_y, button_width, button_height, button_colors, 0.01, 0.06)
+    render_bordered_rectangle(button_x, button_y * 1.17, button_width, button_height, button_colors, 0.01, 0.06)
+    render_bordered_rectangle(button_x, button_y * 1.34, button_width, button_height, button_colors, 0.01, 0.06)
+    render_bordered_rectangle(button_x, button_y * 1.51, button_width, button_height, button_colors, 0.01, 0.06)
+    render_bordered_rectangle(button_x, button_y * 1.68, button_width, button_height, button_colors, 0.01, 0.06)
+    render_bordered_rectangle(button_x, button_y * 1.85, button_width, button_height, button_colors, 0.01, 0.06)
+    render_bordered_rectangle(button_x, button_y * 2.02, button_width, button_height, button_colors, 0.01, 0.06)
+    render_bordered_rectangle(button_x, button_y * 2.19, button_width, button_height, button_colors, 0.01, 0.06)
+
+    local text_x = x + width * 0.06
+    local text_y = y + height * 0.2
+    local scale = 0.9
+    djui_hud_set_color(255, 255, 255, 255)
+    render_shadowed_text("None", text_x, text_y, scale)
+    render_shadowed_text("Lava", text_x, text_y * 1.17, scale)
+    render_shadowed_text("Quicksand", text_x, text_y * 1.34, scale)
+    render_shadowed_text("Shallowsand", text_x, text_y * 1.51, scale)
+    render_shadowed_text("Not Slippery", text_x, text_y * 1.67, scale)
+    render_shadowed_text("Slippery", text_x, text_y * 1.835, scale)
+    render_shadowed_text("Very Slippery", text_x, text_y * 2, scale)
+    render_shadowed_text("Water", text_x, text_y * 2.17, scale)
+
+    -- mouse stuff
+------------------------ Description + Image ----------------------------
+    local rect_x = x + width * 0.47
+    local rect_y = y + height * 0.15
+    local rect_width = width * 0.5
+    local rect_height = height * 0.8
+    local rect_colors = {{r = 0, g = 16, b = 69, a = 255}, {r = 255, g = 255, b = 255, a = 255}, {r = 255, g = 255, b = 255, a = 255}}
+    render_bordered_rectangle(rect_x, rect_y, rect_width, rect_height, rect_colors, 0.006, 0.01, true)
+
+    local desc_x = x + width * 0.49
+    local desc_y = y + height * 0.175
+    render_shadowed_text("description title", desc_x, desc_y, scale * 1.4)
+    render_shadowed_text("description line1", desc_x, desc_y * 1.165, scale)
+    render_shadowed_text("description line2", desc_x, desc_y * 1.29, scale)
+    render_shadowed_text("description line3", desc_x, desc_y * 1.415, scale)
+    render_shadowed_text("description line4", desc_x, desc_y * 1.54, scale)
+
+    local image_x = x + width * 0.58
+    local image_y = y + height * 0.52
+    djui_hud_set_color(255, 255, 255, 255)
+    djui_hud_render_texture(NONE_TEX, image_x, image_y, 1.9, 1.9)
+
+    local page_arrow_x = x + width * 0.21
+    local page_arrow_y = y + height * 0.13
+    local arrow_scale = 2
+    djui_hud_render_texture(PAGE_UP_TEX, page_arrow_x, page_arrow_y, arrow_scale, arrow_scale)
+    djui_hud_render_texture(PAGE_DOWN_TEX, page_arrow_x, page_arrow_y * 2.65, arrow_scale, arrow_scale)
 end
 
 local MenuTabs = {
     render_building_blocks_tab,
     render_items_tab,
     render_enemies_tab,
-    render_surface_types_tab
+    render_surfaces_tab
 }
 
 ----------------------------------------------------
@@ -913,7 +943,6 @@ end
 
 ---@param m MarioState
 local function handle_item_selection_inputs(m)
-    if not item_pages[current_item_page] then return end
     local current_item_set_count = #item_pages[current_item_page]
     if current_item_set_count == 0 then return end
     handle_control_stick_inputs(m)
@@ -970,11 +999,11 @@ end
 
 ---@param pressed integer
 local function handle_paging_inputs(pressed)
-    if (pressed & L_CBUTTONS ~= 0 or (moved_mouse and mouse_has_scrolled < 0)) and current_item_page > 1 then
+    if (pressed & L_CBUTTONS ~= 0 or (moved_mouse and mouse_has_scrolled > 0)) and current_item_page > 1 then
         current_item_page = current_item_page - 1
         selected_item_index = 0
         play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
-    elseif (pressed & R_CBUTTONS ~= 0 or (moved_mouse and mouse_has_scrolled > 0)) and current_item_page < item_page_max then
+    elseif (pressed & R_CBUTTONS ~= 0 or (moved_mouse and mouse_has_scrolled < 0)) and current_item_page < item_page_max then
         current_item_page = current_item_page + 1
         selected_item_index = 0
         play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
@@ -984,10 +1013,15 @@ end
 ---@param pressed integer
 local function handle_extra_inputs(pressed)
     if pressed & Y_BUTTON ~= 0 then
-        for i = 1, HOTBAR_SIZE, 1 do
-            HotbarItemList[i] = { item = nil, icon = nil } ---@diagnostic disable-line: assign-type-mismatch
+        clear_hotbar = clear_hotbar + 1
+        play_sound(SOUND_MENU_CLICK_FILE_SELECT, gGlobalSoundSource)
+         if clear_hotbar >= 5 then
+             for i = 1, HOTBAR_SIZE, 1 do
+                HotbarItemList[i] = { item = nil, icon = nil } ---@diagnostic disable-line: assign-type-mismatch
+            end
+            play_sound(SOUND_MENU_LET_GO_MARIO_FACE, gGlobalSoundSource)
+            clear_hotbar = 0
         end
-        play_sound(SOUND_MENU_LET_GO_MARIO_FACE, gGlobalSoundSource)
     end
 end
 
@@ -999,6 +1033,7 @@ local function handle_standard_inputs(m)
     end
     if (pressed & START_BUTTON ~= 0) or (not moved_mouse and pressed & X_BUTTON ~= 0) or (moved_mouse and mouse_has_right_clicked) then
         MenuOpen = false
+        clear_hotbar = 0
         return
     end
 
