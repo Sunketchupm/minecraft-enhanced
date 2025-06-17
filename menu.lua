@@ -329,8 +329,8 @@ local function render_mouse()
     if moved_mouse then
         prev_mouse_x = mouse_x
         prev_mouse_y = mouse_y
-        mouse_x = djui_hud_get_mouse_x()
-        mouse_y = djui_hud_get_mouse_y()
+        mouse_x = djui_hud_get_mouse_x() - MOUSE_TEX.width * 0.5
+        mouse_y = djui_hud_get_mouse_y() - MOUSE_TEX.height * 0.5
         djui_hud_render_texture_interpolated(MOUSE_TEX, prev_mouse_x, prev_mouse_y, 1, 1, mouse_x, mouse_y, 1, 1)
         --djui_hud_render_texture(gTextures.camera, mouse_x, mouse_y, 1, 1)
     end
