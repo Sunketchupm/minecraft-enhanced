@@ -103,133 +103,10 @@ local function add_item(tab, behavior, model, offset, anim_state, mock_settings,
     table.insert(TabItemList[tab], item)
 end
 
--- If TextureInfo, use the texture
--- If a table of coordinates, use the coordinates
-local block_icons = {
-    get_texture_info("outside_09000000"),
-    get_texture_info("outside_0900B400"),
-    get_texture_info("outside_09004000"),
-    get_texture_info("outside_09008000"),
-    get_texture_info("outside_09009800"),
-    get_texture_info("outside_09009000"),
-    get_texture_info("outside_09000800"),
-    get_texture_info("outside_09007800"),
-    get_texture_info("outside_09003000"),
-    get_texture_info("outside_09005800"),
-    get_texture_info("cave_09006800"),
-    get_texture_info("cave_09009800"),
-    get_texture_info("cave_09001000"),
-    get_texture_info("fire_0900A000"),
-    get_texture_info("fire_0900A800"),
-    get_texture_info("fire_0900B000"),
-    get_texture_info("fire_0900B800"),
-    get_texture_info("fire_09000800"),
-    get_texture_info("fire_09001000"),
-    get_texture_info("fire_09001800"),
-    get_texture_info("fire_09002000"),
-    get_texture_info("fire_09002800"),
-    get_texture_info("fire_09003000"),
-    get_texture_info("fire_09003800"),
-    get_texture_info("fire_09004000"),
-    get_texture_info("fire_09004800"),
-    get_texture_info("fire_09005000"),
-    get_texture_info("fire_09005800"),
-    get_texture_info("fire_09006000"),
-    get_texture_info("fire_09007000"),
-    get_texture_info("fire_09008000"),
-    get_texture_info("fire_09009000"),
-    get_texture_info("generic_0900A000"),
-    get_texture_info("generic_0900A800"),
-    get_texture_info("generic_09000800"),
-    get_texture_info("generic_09001000"),
-    get_texture_info("generic_09001800"),
-    get_texture_info("generic_09002000"),
-    get_texture_info("generic_09002800"),
-    get_texture_info("generic_09003000"),
-    get_texture_info("generic_09003800"),
-    get_texture_info("generic_09004800"),
-    get_texture_info("generic_09005000"),
-    get_texture_info("generic_09007800"),
-    get_texture_info("generic_09008000"),
-    get_texture_info("generic_09008800"),
-    get_texture_info("generic_09009000"),
-    get_texture_info("grass_09000000"),
-    get_texture_info("grass_0900A800"),
-    get_texture_info("grass_09000800"),
-    get_texture_info("grass_09001000"),
-    get_texture_info("grass_09002000"),
-    get_texture_info("grass_09003000"),
-    get_texture_info("grass_09003800"),
-    get_texture_info("grass_09004000"),
-    get_texture_info("grass_09004800"),
-    get_texture_info("grass_09006800"),
-    get_texture_info("grass_09007000"),
-    get_texture_info("grass_09008000"),
-    get_texture_info("grass_09008800"),
-    get_texture_info("grass_09009000"),
-    get_texture_info("grass_09009800"),
-    get_texture_info("inside_09003000"),
-    get_texture_info("inside_09003800"),
-    get_texture_info("inside_09004000"),
-    get_texture_info("inside_09005000"),
-    get_texture_info("machine_09000000"),
-    get_texture_info("machine_09001000"),
-    get_texture_info("machine_09002000"),
-    get_texture_info("machine_09002800"),
-    get_texture_info("machine_09003800"),
-    get_texture_info("machine_09005000"),
-    get_texture_info("machine_09007000"),
-    get_texture_info("machine_09008400"),
-    get_texture_info("mountain_09000000"),
-    get_texture_info("mountain_0900A800"),
-    get_texture_info("mountain_0900B800"),
-    get_texture_info("mountain_0900C000"),
-    get_texture_info("mountain_09003800"),
-    get_texture_info("mountain_09004000"),
-    get_texture_info("mountain_09004800"),
-    get_texture_info("mountain_09005000"),
-    get_texture_info("mountain_09006800"),
-    get_texture_info("mountain_09007000"),
-    get_texture_info("sky_09000800"),
-    get_texture_info("sky_09001000"),
-    get_texture_info("sky_09001800"),
-    get_texture_info("sky_09003000"),
-    get_texture_info("sky_09004800"),
-    get_texture_info("sky_09007000"),
-    get_texture_info("sky_09007800"),
-    get_texture_info("snow_09000800"),
-    get_texture_info("snow_09002000"),
-    get_texture_info("snow_09002800"),
-    get_texture_info("snow_09003000"),
-    get_texture_info("snow_09003800"),
-    get_texture_info("snow_09004000"),
-    get_texture_info("snow_09004800"),
-    get_texture_info("snow_09005000"),
-    get_texture_info("snow_09006000"),
-    get_texture_info("snow_09008000"),
-    get_texture_info("snow_09008800"),
-    get_texture_info("spooky_09000000"),
-    get_texture_info("spooky_0900A000"),
-    get_texture_info("spooky_09004800"),
-    get_texture_info("spooky_09006000"),
-    get_texture_info("spooky_09006800"),
-    get_texture_info("water_09000000"),
-    get_texture_info("water_0900A000"),
-    get_texture_info("water_09005800"),
-    get_texture_info("barrier")
-}
-
-local item_icons = {
-    get_texture_info("coin_seg3_texture_03005780")
-}
-
-local enemies_icons = {
-    --get_texture_info("")
-}
-
 add_first_update(function ()
-    for i = 1, 110, 1 do
-        local texture = block_icons[i] or gTextures.no_camera
+    local total_block_icons = #MenuBlockIcons
+    for i = 1, total_block_icons, 1 do
+        local texture = MenuBlockIcons[i] or gTextures.no_camera
         ---@type MenuItemLink
         local menu_item = {
             item = {
@@ -502,11 +379,21 @@ local function render_item_list(x, y, width, height, items)
             djui_hud_render_rect(slot_x, slot_y, slot_width, slot_height)
         end
         if item.icon then
-            local item_scale = 1.5
-            local item_x = (slot_x + slot_width * 0.5) - (item.icon.width * 0.5 * item_scale)
-            local item_y = (slot_y + slot_height * 0.5) - (item.icon.height * 0.5 * item_scale)
+            local icon = item.icon
+            local item_scale_x = 1.5
+            local item_scale_y = 1.5
+            local texture_width = icon.width
+            local texture_height = icon.height
+            if texture_width == 64 then
+                item_scale_x = 0.75
+            end
+            if texture_height == 64 then
+                item_scale_y = 0.75
+            end
+            local item_x = (slot_x + slot_width * 0.5) - (icon.width * 0.5 * item_scale_x)
+            local item_y = (slot_y + slot_height * 0.5) - (icon.height * 0.5 * item_scale_y)
             djui_hud_set_color(255, 255, 255, 255)
-            djui_hud_render_texture(item.icon, item_x, item_y, item_scale, item_scale)
+            djui_hud_render_texture(icon, item_x, item_y, item_scale_x, item_scale_y)
         end
     end
 
@@ -790,11 +677,21 @@ local function render_hotbar(screen_width, screen_height)
             djui_hud_render_rect(slot_x, slot_y, slot_width, slot_height)
         end
         if item.icon then
-            local item_scale = 1.5
-            local item_x = (slot_x + slot_width * 0.5) - (item.icon.width * 0.5 * item_scale)
-            local item_y = (slot_y + slot_height * 0.5) - (item.icon.height * 0.5 * item_scale)
+            local icon = item.icon
+            local item_scale_x = 1.5
+            local item_scale_y = 1.5
+            local texture_width = icon.width
+            local texture_height = icon.height
+            if texture_width == 64 then
+                item_scale_x = 0.75
+            end
+            if texture_height == 64 then
+                item_scale_y = 0.75
+            end
+            local item_x = (slot_x + slot_width * 0.5) - (icon.width * 0.5 * item_scale_x)
+            local item_y = (slot_y + slot_height * 0.5) - (icon.height * 0.5 * item_scale_y)
             djui_hud_set_color(255, 255, 255, 255)
-            djui_hud_render_texture(item.icon, item_x, item_y, item_scale, item_scale)
+            djui_hud_render_texture(icon, item_x, item_y, item_scale_x, item_scale_y)
         end
         djui_hud_set_color(128, 128, 128, 255)
         djui_hud_render_rect(slot_x, y, 3, slot_height)
