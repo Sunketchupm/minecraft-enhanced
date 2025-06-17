@@ -10,7 +10,7 @@ local item_pages = {}
 local TAB_BUILDING_BLOCKS = 1
 local TAB_ITEMS = 2
 local TAB_ENEMIES = 3
-local TAB_HELP = 4
+local TAB_SURFACE_TYPES = 4
 local TAB_MAIN_END = 4
 
 local item_list_row_count = 10
@@ -18,6 +18,8 @@ local item_list_column_count = 10
 
 local show_controls = true
 local clear_hotbar = 0
+
+local current_surface_tip_index = 1
 
 -------------- TEXTURES --------------
 local A_BUTTON_TEX = get_texture_info("Abutton")
@@ -41,7 +43,7 @@ local CONTROL_STICK_TEX = get_texture_info("Ctrlstick")
 local PAGE_UP_TEX = get_texture_info("page_up")
 local PAGE_DOWN_TEX = get_texture_info("page_down")
 --------------------------------------
-local NONE_TEX = get_texture_info("nonehelp")
+local DEFAULT_TEX = get_texture_info("nonehelp")
 local NSLIP_TEX = get_texture_info("nsliphelp")
 local SLIP_TEX = get_texture_info("sliphelp")
 local VSLIP_TEX = get_texture_info("vsliphelp")
@@ -65,7 +67,7 @@ local TabItemList = {
     [TAB_BUILDING_BLOCKS] = {},
     [TAB_ITEMS] = {},
     [TAB_ENEMIES] = {},
-    [TAB_HELP] = {}
+    [TAB_SURFACE_TYPES] = {}
 }
 
 ---@type MenuItemLink[]
@@ -601,42 +603,49 @@ end
 
 --------------------------
 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+---@class Description
+    ---@field title string
+    ---@field lines {[1]: string, [2]: string, [3]: string, [4]: string}
+    ---@field image TextureInfo
+
+-- This is for the stuff in the box on the right side of the menu
+---@type Description[]
+local surface_descriptions = {
+    {title = "Default", lines = {"Aliases: Normal", "The default SM64 surface.", "", ""}, image = DEFAULT_TEX},
+    {title = "Slippery", lines = {"Aliases: Slip", "A surface that is easier", "to slide on.", ""}, image = SLIP_TEX},
+    {title = "Lava", lines = {"Aliases:", "LaLaLaLava", "ChicChicChicChicken", ""}, image = LAVA_TEX},
+    {title = "Quicksand", lines = {"Aliases:", "A surface that instantly", "kills upon landing.", ""}, image = QUICKSAND_TEX},
+}
+
+-- This is for the names of the buttons on the left side of the menu
+---@type string[]
+local surface_buttons = {
+    "Default",
+    "Slippery",
+    "Lava",
+    "Quicksand",
+}
+
+-- Make sure that the index of the elements of each table corresponds with each other
+-- For example, "Lava" is the 3rd index in both surface_buttons and surface_descriptions
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+local surface_buttons_index_offset = 0
+local surface_buttons_rendered = 0
+
 ---@param x number
 ---@param y number
 ---@param width number
 ---@param height number
-local function render_surfaces_tab(x, y, width, height) ----------------- clickable buttons for surface description and surface changes, images provided
-    render_tab_header(x, y, width, height, "Surface Types")
------------------------- Clickable Buttons ----------------------------
-    local button_x = x + width * 0.04
-    local button_y = y + height * 0.19
-    local button_width = width * 0.4
-    local button_height = height * 0.07
-    local button_colors = {{r = 125, g = 125, b = 125, a = 255}, {r = 175, g = 175, b = 175, a = 255}, {r = 75, g = 75, b = 75, a = 255}}
-    render_bordered_rectangle(button_x, button_y, button_width, button_height, button_colors, 0.01, 0.06)
-    render_bordered_rectangle(button_x, button_y * 1.17, button_width, button_height, button_colors, 0.01, 0.06)
-    render_bordered_rectangle(button_x, button_y * 1.34, button_width, button_height, button_colors, 0.01, 0.06)
-    render_bordered_rectangle(button_x, button_y * 1.51, button_width, button_height, button_colors, 0.01, 0.06)
-    render_bordered_rectangle(button_x, button_y * 1.68, button_width, button_height, button_colors, 0.01, 0.06)
-    render_bordered_rectangle(button_x, button_y * 1.85, button_width, button_height, button_colors, 0.01, 0.06)
-    render_bordered_rectangle(button_x, button_y * 2.02, button_width, button_height, button_colors, 0.01, 0.06)
-    render_bordered_rectangle(button_x, button_y * 2.19, button_width, button_height, button_colors, 0.01, 0.06)
-
-    local text_x = x + width * 0.06
-    local text_y = y + height * 0.2
-    local scale = 0.9
-    djui_hud_set_color(255, 255, 255, 255)
-    render_shadowed_text("None", text_x, text_y, scale)
-    render_shadowed_text("Lava", text_x, text_y * 1.17, scale)
-    render_shadowed_text("Quicksand", text_x, text_y * 1.34, scale)
-    render_shadowed_text("Shallowsand", text_x, text_y * 1.51, scale)
-    render_shadowed_text("Not Slippery", text_x, text_y * 1.67, scale)
-    render_shadowed_text("Slippery", text_x, text_y * 1.835, scale)
-    render_shadowed_text("Very Slippery", text_x, text_y * 2, scale)
-    render_shadowed_text("Water", text_x, text_y * 2.17, scale)
-
-    -- mouse stuff
------------------------- Description + Image ----------------------------
+---@param description Description
+local function render_description_box(x, y, width, height, description)
     local rect_x = x + width * 0.47
     local rect_y = y + height * 0.15
     local rect_width = width * 0.5
@@ -644,24 +653,68 @@ local function render_surfaces_tab(x, y, width, height) ----------------- clicka
     local rect_colors = {{r = 0, g = 16, b = 69, a = 255}, {r = 255, g = 255, b = 255, a = 255}, {r = 255, g = 255, b = 255, a = 255}}
     render_bordered_rectangle(rect_x, rect_y, rect_width, rect_height, rect_colors, 0.006, 0.01, true)
 
-    local desc_x = x + width * 0.49
-    local desc_y = y + height * 0.175
-    render_shadowed_text("description title", desc_x, desc_y, scale * 1.4)
-    render_shadowed_text("description line1", desc_x, desc_y * 1.165, scale)
-    render_shadowed_text("description line2", desc_x, desc_y * 1.29, scale)
-    render_shadowed_text("description line3", desc_x, desc_y * 1.415, scale)
-    render_shadowed_text("description line4", desc_x, desc_y * 1.54, scale)
+    local desc_x = rect_x + width * 0.05
+    local desc_y = rect_y + height * 0.05
+    local text_scale = 0.9
+    local lines = description.lines
+    render_shadowed_text(description.title, desc_x, desc_y, text_scale * 1.4)
+    render_shadowed_text(lines[1], desc_x, desc_y + 45, text_scale)
+    render_shadowed_text(lines[2], desc_x, desc_y + 75, text_scale)
+    render_shadowed_text(lines[3], desc_x, desc_y + 105, text_scale)
+    render_shadowed_text(lines[4], desc_x, desc_y + 135, text_scale)
 
-    local image_x = x + width * 0.58
-    local image_y = y + height * 0.52
+    local image = description.image
+    local image_scale = 1.9
+    local image_x = rect_x + rect_width * 0.5 - (image.width * image_scale) * 0.5
+    local image_y = rect_y + rect_height - (image.height * image_scale) - 5
     djui_hud_set_color(255, 255, 255, 255)
-    djui_hud_render_texture(NONE_TEX, image_x, image_y, 1.9, 1.9)
+    djui_hud_render_texture(image, image_x, image_y, image_scale, image_scale)
+end
+
+---@param x number
+---@param y number
+---@param width number
+---@param height number
+local function render_surfaces_tab(x, y, width, height)
+    render_tab_header(x, y, width, height, "Surface Types")
 
     local page_arrow_x = x + width * 0.21
-    local page_arrow_y = y + height * 0.13
     local arrow_scale = 2
-    djui_hud_render_texture(PAGE_UP_TEX, page_arrow_x, page_arrow_y, arrow_scale, arrow_scale)
-    djui_hud_render_texture(PAGE_DOWN_TEX, page_arrow_x, page_arrow_y * 2.65, arrow_scale, arrow_scale)
+    local page_up_arrow_y = y + 25 * arrow_scale
+    local page_down_arrow_y = y + height - 25 * arrow_scale
+    djui_hud_set_color(255, 255, 255, 255)
+    djui_hud_render_texture(PAGE_UP_TEX, page_arrow_x, page_up_arrow_y, arrow_scale, arrow_scale)
+    djui_hud_render_texture(PAGE_DOWN_TEX, page_arrow_x, page_down_arrow_y, arrow_scale, arrow_scale)
+
+    local button_x = x + width * 0.04
+    local button_y = page_up_arrow_y + 35
+    local button_width = width * 0.4
+    local button_height = 35
+    local y_increm = button_height + 5
+    local button_space = ((page_down_arrow_y - 35) - page_up_arrow_y)
+    local button_count_div = button_space / y_increm
+    surface_buttons_rendered = math.floor(button_count_div)
+    y_increm = button_space / surface_buttons_rendered
+    for i = 1, surface_buttons_rendered, 1 do
+        local absolute_index = i + surface_buttons_index_offset
+        if moved_mouse and mouse_is_within(button_x, button_y + y_increm * (i - 1), button_x + button_width, (button_y + y_increm * (i - 1)) + button_height) then
+            current_surface_tip_index = absolute_index
+        end
+
+        local button_colors = {{r = 125, g = 125, b = 125, a = 255}, {r = 175, g = 175, b = 175, a = 255}, {r = 75, g = 75, b = 75, a = 255}}
+        if current_surface_tip_index == absolute_index then
+            button_colors = {{r = 65, g = 65, b = 65, a = 255}, {r = 175, g = 175, b = 175, a = 255}, {r = 75, g = 75, b = 75, a = 255}}
+        end
+        render_bordered_rectangle(button_x, button_y + y_increm * (i - 1), button_width, button_height, button_colors, 0.01, 0.06)
+
+        if surface_buttons[absolute_index] then
+            render_shadowed_text(surface_buttons[absolute_index], button_x + 8, button_y + 4.5 + y_increm * (i - 1), 0.9)
+        end
+    end
+
+    if surface_descriptions[current_surface_tip_index] then
+        render_description_box(x, y, width, height, surface_descriptions[current_surface_tip_index])
+    end
 end
 
 local MenuTabs = {
@@ -906,9 +959,12 @@ local function on_change_tab_input()
     mouse_tab_was_clicked_on = 0
     selected_item_index = 0
     current_item_page = 1
+    current_surface_tip_index = 1
+    mouse_prev_item_index = 0
     play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
 end
 
+---@param pressed integer
 local function handle_change_tab_inputs(pressed)
     if pressed & L_TRIG ~= 0 then
         active_tab = active_tab - 1
@@ -931,18 +987,36 @@ end
 -- Control stick direction
 local csd = {up = false, left = false, down = false, right = false}
 local used_csd = {up = false, left = false, down = false, right = false}
+local hold_timer = 0
+local hold_movement_timer = 0
+local hold_movement = false
 
+---@param m MarioState
 local function handle_control_stick_inputs(m)
     local controller = m.controller
-
+    if not (controller.stickY <= 30 and controller.stickY >= -30 and controller.stickX >= -30 and controller.stickX <= 30) then
+        hold_timer = hold_timer + 1
+    else
+        hold_timer = 0
+        hold_movement = false
+    end
+    if hold_timer >= 10 then
+        if hold_movement_timer < 2 then
+            hold_movement_timer = hold_movement_timer + 1
+            hold_movement = false
+        else
+            hold_movement_timer = 0
+            hold_movement = true
+        end
+    end
     if not csd.up and controller.stickY <= 30 then used_csd.up = false end
     if not csd.down and controller.stickY >= -30 then used_csd.down = false end
     if not csd.left and controller.stickX >= -30 then used_csd.left = false end
     if not csd.right and controller.stickX <= 30 then used_csd.right = false end
-    if not used_csd.up and controller.stickY > 30 then csd.up = true used_csd.up = true moved_mouse = false else csd.up = false end
-    if not used_csd.down and controller.stickY < -30 then csd.down = true used_csd.down = true moved_mouse = false else csd.down = false end
-    if not used_csd.left and controller.stickX < -30 then csd.left = true used_csd.left = true moved_mouse = false else csd.left = false end
-    if not used_csd.right and controller.stickX > 30 then csd.right = true used_csd.right = true moved_mouse = false else csd.right = false end
+    if (hold_movement or not used_csd.up) and controller.stickY > 30 then csd.up = true used_csd.up = true moved_mouse = false else csd.up = false end
+    if (hold_movement or not used_csd.down) and controller.stickY < -30 then csd.down = true used_csd.down = true moved_mouse = false else csd.down = false end
+    if (hold_movement or not used_csd.left) and controller.stickX < -30 then csd.left = true used_csd.left = true moved_mouse = false else csd.left = false end
+    if (hold_movement or not used_csd.right) and controller.stickX > 30 then csd.right = true used_csd.right = true moved_mouse = false else csd.right = false end
 end
 
 ---@param m MarioState
@@ -1003,11 +1077,11 @@ end
 
 ---@param pressed integer
 local function handle_paging_inputs(pressed)
-    if (pressed & L_CBUTTONS ~= 0 or (moved_mouse and mouse_has_scrolled > 0)) and current_item_page > 1 then
+    if (pressed & L_CBUTTONS ~= 0 or (moved_mouse and mouse_has_scrolled < 0)) and current_item_page > 1 then
         current_item_page = current_item_page - 1
         selected_item_index = 0
         play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
-    elseif (pressed & R_CBUTTONS ~= 0 or (moved_mouse and mouse_has_scrolled < 0)) and current_item_page < item_page_max then
+    elseif (pressed & R_CBUTTONS ~= 0 or (moved_mouse and mouse_has_scrolled > 0)) and current_item_page < item_page_max then
         current_item_page = current_item_page + 1
         selected_item_index = 0
         play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
@@ -1029,9 +1103,7 @@ local function handle_extra_inputs(pressed)
     end
 end
 
----@param m MarioState
-local function handle_standard_inputs(m)
-    local pressed = m.controller.buttonPressed
+local function handle_close_menu_inputs(pressed)
     if moved_mouse and pressed ~= 0 and not mouse_has_clicked and not mouse_has_right_clicked then
         moved_mouse = false
     end
@@ -1040,8 +1112,14 @@ local function handle_standard_inputs(m)
         clear_hotbar = 0
         return
     end
+end
 
-    handle_change_tab_inputs(pressed)
+----------------------------------------------------
+
+---@param m MarioState
+local function handle_standard_inputs(m)
+    local pressed = m.controller.buttonPressed
+
     handle_item_selection_inputs(m)
     handle_paging_inputs(pressed)
     handle_extra_inputs(pressed)
@@ -1050,12 +1128,56 @@ local function handle_standard_inputs(m)
     end
 end
 
+---@param m MarioState
+local function handle_surface_inputs(m)
+    handle_control_stick_inputs(m)
+
+    if moved_mouse then
+        if mouse_prev_item_index ~= current_surface_tip_index then
+            play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource)
+        end
+        mouse_prev_item_index = current_surface_tip_index
+
+        if mouse_has_scrolled > 0 and surface_buttons_index_offset > 0 then
+            surface_buttons_index_offset = surface_buttons_index_offset - 1
+        elseif mouse_has_scrolled < 0 and #surface_buttons - surface_buttons_index_offset > surface_buttons_rendered then
+            surface_buttons_index_offset = surface_buttons_index_offset + 1
+        end
+    else
+        local relative_button_index = current_surface_tip_index - surface_buttons_index_offset
+        if csd.up and current_surface_tip_index > 1 then
+            current_surface_tip_index = current_surface_tip_index - 1
+            if relative_button_index < 4 and surface_buttons_index_offset > 0 then
+                surface_buttons_index_offset = surface_buttons_index_offset - 1
+            end
+            play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource)
+        elseif csd.down and current_surface_tip_index < #surface_buttons then
+            current_surface_tip_index = current_surface_tip_index + 1
+            if relative_button_index > surface_buttons_rendered - 3 and current_surface_tip_index + 1 < #surface_buttons then
+                surface_buttons_index_offset = surface_buttons_index_offset + 1
+            end
+            play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource)
+        end
+    end
+end
+
+local tabs_with_special_inputs = {
+    [TAB_SURFACE_TYPES] = handle_surface_inputs
+}
+
 ----------------------------------------------------
 
 ---@param m MarioState
 local function handle_menu_inputs(m)
     if active_tab <= TAB_MAIN_END then
-        handle_standard_inputs(m)
+        local pressed = m.controller.buttonPressed
+        handle_close_menu_inputs(pressed)
+        handle_change_tab_inputs(pressed)
+        if not tabs_with_special_inputs[active_tab] then
+            handle_standard_inputs(m)
+        else
+            tabs_with_special_inputs[active_tab](m)
+        end
         m.controller.buttonPressed = 0
     end
 end
