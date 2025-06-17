@@ -19,38 +19,120 @@ ignore_files = (
     "ssl_skybox.c",
     "water_skybox.c",
     "wdw_skybox.c",
+	# Ignore this so that it can be specially handled
+	"segment2.c"
 )
 
-ignore_texure_names = (
-    "texture_font_char_jp_long_vowel",
-    "texture_font_char_eu_colon",
-    "texture_font_char_EU_slash",
-    "texture_font_char_us_A",
-    "texture_font_char_us_B",
-    "texture_font_char_us_C",
-    "texture_font_char_us_D",
-    "texture_font_char_us_E",
-    "texture_font_char_us_F",
-    "texture_font_char_us_G",
-    "texture_font_char_us_H",
-    "texture_font_char_us_I",
-    "texture_font_char_us_J",
-    "texture_font_char_us_K",
-    "texture_font_char_us_L",
-    "texture_font_char_us_M",
-    "texture_font_char_us_N",
-    "texture_font_char_us_O",
-    "texture_font_char_us_P",
-    "texture_font_char_us_Q",
-    "texture_font_char_us_R",
-    "texture_font_char_us_S",
-    "texture_font_char_us_T",
-    "texture_font_char_us_U",
-    "texture_font_char_us_V",
-    "texture_font_char_us_W",
-    "texture_font_char_us_X",
-    "texture_font_char_us_Y",
-    "texture_font_char_us_Z",
+ignore_texure_names = ()
+
+segment_2_textures = (
+	"texture_hud_char_0",
+    "texture_hud_char_1",
+    "texture_hud_char_2",
+    "texture_hud_char_3",
+    "texture_hud_char_4",
+    "texture_hud_char_5",
+    "texture_hud_char_6",
+    "texture_hud_char_7",
+    "texture_hud_char_8",
+    "texture_hud_char_9",
+    "texture_hud_char_A",
+    "texture_hud_char_B",
+    "texture_hud_char_C",
+    "texture_hud_char_D",
+    "texture_hud_char_E",
+    "texture_hud_char_F",
+    "texture_hud_char_G",
+    "texture_hud_char_H",
+    "texture_hud_char_I",
+    "texture_hud_char_J",
+    "texture_hud_char_K",
+    "texture_hud_char_L",
+    "texture_hud_char_M",
+    "texture_hud_char_N",
+    "texture_hud_char_O",
+    "texture_hud_char_P",
+    "texture_hud_char_Q",
+    "texture_hud_char_R",
+    "texture_hud_char_S",
+    "texture_hud_char_T",
+    "texture_hud_char_U",
+    "texture_hud_char_V",
+    "texture_hud_char_W",
+    "texture_hud_char_X",
+    "texture_hud_char_Y",
+    "texture_hud_char_Z",
+    "texture_hud_char_apostrophe",
+    "texture_hud_char_double_quote",
+    "texture_hud_char_exclamation",
+    "texture_hud_char_hashtag",
+    "texture_hud_char_question",
+    "texture_hud_char_ampersand",
+    "texture_hud_char_percent",
+    "texture_hud_char_slash",
+    "texture_hud_char_multiply",
+    "texture_hud_char_coin",
+    "texture_hud_char_mario_head",
+    "texture_hud_char_luigi_head",
+    "texture_hud_char_toad_head",
+    "texture_hud_char_waluigi_head",
+    "texture_hud_char_wario_head",
+    "texture_hud_char_star",
+    "texture_hud_char_period",
+    "texture_hud_char_key",
+    "texture_hud_char_comma",
+    "texture_hud_char_dash",
+    "texture_hud_char_divide",
+    "texture_hud_char_period",
+    "texture_hud_char_plus",
+    "texture_credits_char_3",
+    "texture_credits_char_4",
+    "texture_credits_char_6",
+    "texture_credits_char_A",
+    "texture_credits_char_B",
+    "texture_credits_char_C",
+    "texture_credits_char_D",
+    "texture_credits_char_E",
+    "texture_credits_char_F",
+    "texture_credits_char_G",
+    "texture_credits_char_H",
+    "texture_credits_char_I",
+    "texture_credits_char_J",
+    "texture_credits_char_K",
+    "texture_credits_char_L",
+    "texture_credits_char_M",
+    "texture_credits_char_N",
+    "texture_credits_char_O",
+    "texture_credits_char_P",
+    "texture_credits_char_Q",
+    "texture_credits_char_R",
+    "texture_credits_char_S",
+    "texture_credits_char_T",
+    "texture_credits_char_U",
+    "texture_credits_char_V",
+    "texture_credits_char_W",
+    "texture_credits_char_X",
+    "texture_credits_char_Y",
+    "texture_credits_char_Z",
+    "texture_credits_char_period",
+    "texture_hud_char_camera",
+    "texture_hud_char_lakitu",
+    "texture_hud_char_no_camera",
+    "texture_hud_char_arrow_up",
+    "texture_hud_char_arrow_down",
+    "texture_shadow_quarter_circle",
+    "texture_shadow_quarter_square",
+    "texture_shadow_spike_ext",
+    "texture_transition_star_half",
+    "texture_transition_circle_half",
+    "texture_transition_mario",
+    "texture_transition_bowser_half",
+    "texture_waterbox_water",
+    "texture_waterbox_jrb_water",
+    "texture_waterbox_unknown_water",
+    "texture_waterbox_mist",
+    "texture_waterbox_lava",
+    "texture_ia8_up_arrow",
 )
 
 if os.path.exists(BIN_DIR):
@@ -89,6 +171,8 @@ with open(os.path.join(INITIAL_DIR, "colors.txt"), "r") as file:
 with open(os.path.join(INITIAL_DIR, "!TEXTURES.txt"), "w") as file:
     for name in texture_names:
         file.write(f"    g(\"{name}\"),\n")
+    for name in segment_2_textures:
+        file.write(f"    g(\"{name}\"),\n")
     for colors in color_set:
         file.write("    {" + f"r = {colors[0]}, g = {colors[1]}, b = {colors[2]}, a = 255" + "},\n")
 
@@ -103,7 +187,7 @@ const GeoLayout mce_block_geo[] = {\n\
 		GEO_ANIMATED_PART(LAYER_ALPHA, 0, 0, 0, NULL),\n\
 		GEO_OPEN_NODE(),\n\
 			GEO_ASM(30, geo_update_layer_transparency),\n\
-			GEO_SWITCH_CASE(' + str((len(texture_names) + len(color_set)) * 2 + 2) + ', geo_switch_anim_state),\n\
+			GEO_SWITCH_CASE(' + str((len(texture_names) + len(color_set) + len(segment_2_textures)) * 2 + 2) + ', geo_switch_anim_state),\n\
 			GEO_OPEN_NODE(),\n\
 				GEO_NODE_START(),\n\
 				GEO_OPEN_NODE(),\n\
@@ -112,10 +196,14 @@ const GeoLayout mce_block_geo[] = {\n\
 )
     for name in texture_names:
         file.write(f"				GEO_DISPLAY_LIST(LAYER_ALPHA, {name}_mat),\n")
+    for name in segment_2_textures:
+        file.write(f"				GEO_DISPLAY_LIST(LAYER_ALPHA, {name}_mat),\n")
     for colors in color_set:
         file.write(f"				GEO_DISPLAY_LIST(LAYER_ALPHA, color_{colors[0]}{colors[1]}{colors[2]}_mat),\n")
-    file.write(f"                           // Transparent start: {str(len(texture_names) + len(color_set))}\n")
+    file.write(f"                           // Transparent start: {str(len(texture_names) + len(color_set) + len(segment_2_textures))}\n")
     for name in texture_names:
+        file.write(f"				GEO_DISPLAY_LIST(LAYER_TRANSPARENT, {name}_mat),\n")
+    for name in segment_2_textures:
         file.write(f"				GEO_DISPLAY_LIST(LAYER_TRANSPARENT, {name}_mat),\n")
     for colors in color_set:
         file.write(f"				GEO_DISPLAY_LIST(LAYER_TRANSPARENT, color_{colors[0]}{colors[1]}{colors[2]}_mat),\n")
@@ -181,6 +269,33 @@ Gfx mce_block_tris[] = {\n\
 }; \n'
 )
     for name in texture_names:
+        file.write(
+'\n\
+Gfx ' + name +'_mat[] = {\n\
+    gsSPSetLights1(mce_block_f3dlite_material_lights),\n\
+    gsDPPipeSync(),\n\
+    gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, TEXEL0, 0, ENVIRONMENT, 0, TEXEL0, 0, SHADE, 0, TEXEL0, 0, ENVIRONMENT, 0),\n\
+    gsDPSetAlphaDither(G_AD_NOISE),\n\
+    gsSPTexture(65535, 65535, 0, 0, 1),\n\
+    gsDPSetTextureImage(G_IM_FMT_RGBA, G_IM_SIZ_16b_LOAD_BLOCK, 1, ' + name +'),\n\
+    gsDPSetTile(G_IM_FMT_RGBA, G_IM_SIZ_16b_LOAD_BLOCK, 0, 0, 7, 0, G_TX_WRAP | G_TX_NOMIRROR, 0, 0, G_TX_WRAP | G_TX_NOMIRROR, 0, 0),\n\
+    gsDPLoadBlock(7, 0, 0, 1023, 256),\n\
+    gsDPSetTile(G_IM_FMT_RGBA, G_IM_SIZ_16b, 8, 0, 0, 0, G_TX_WRAP | G_TX_NOMIRROR, 5, 0, G_TX_WRAP | G_TX_NOMIRROR, 5, 0),\n\
+    gsDPSetTileSize(0, 0, 0, 124, 124),\n\
+    gsSPDisplayList(mce_block_tris),\n\
+    gsDPPipeSync(),\n\
+    gsDPSetAlphaDither(G_AD_DISABLE),\n\
+    gsDPPipeSync(),\n\
+    gsSPSetGeometryMode(G_LIGHTING),\n\
+    gsSPClearGeometryMode(G_TEXTURE_GEN),\n\
+    gsDPSetCombineLERP(0, 0, 0, SHADE, 0, 0, 0, ENVIRONMENT, 0, 0, 0, SHADE, 0, 0, 0, ENVIRONMENT),\n\
+    gsSPTexture(65535, 65535, 0, 0, 0),\n\
+    gsDPSetEnvColor(255, 255, 255, 255),\n\
+    gsDPSetAlphaCompare(G_AC_NONE),\n\
+    gsSPEndDisplayList(),\n\
+};\n')
+		
+    for name in segment_2_textures:
         file.write(
 '\n\
 Gfx ' + name +'_mat[] = {\n\
