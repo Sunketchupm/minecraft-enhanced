@@ -216,7 +216,7 @@ function bhv_mce_block_init(obj)
     obj.oCollisionDistance = 500 * vec3f_length({x = obj.oScaleX, y = obj.oScaleY, z = obj.oScaleZ})
     obj.header.gfx.skipInViewCheck = true
     obj.oPrevAnimState = obj.oAnimState
-    network_init_object(obj, false, {
+    network_init_object(obj, true, {
         "activeFlags",
         "oOpacity",
         "oAnimState",
@@ -307,7 +307,7 @@ local star_hitbox = {
 ---@param obj Object
 function bhv_mce_star_init(obj)
     obj_set_hitbox(obj, star_hitbox)
-    network_init_object(obj, false, {
+    network_init_object(obj, true, {
         "activeFlags",
         "oOwner",
         "oScaleX",
@@ -404,7 +404,7 @@ local contents = {
 
 ---@param obj Object
 function bhv_mce_exclamation_box_init(obj)
-    network_init_object(obj, false, {
+    network_init_object(obj, true, {
         "activeFlags",
         "oOwner",
         "oScaleX",
