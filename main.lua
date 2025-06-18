@@ -185,7 +185,6 @@ function bhv_mock_item_loop(obj)
 		obj.oFaceAngleRoll = outline.oFaceAngleRoll
 
 		if current_item.model == E_MODEL_MCE_BLOCK then
-			obj.oFaceAngleRoll = outline.oFaceAngleRoll - 0x4000
 			if obj.oAnimState >= BLOCK_ANIM_STATE_TRANSPARENT_START then
 				obj.oOpacity = 100
 			else
@@ -259,10 +258,6 @@ local function place_item()
 			obj.globalPlayerIndex = network_global_index_from_local(0)
 			obj.oOwner = network_global_index_from_local(0) + 1
 			obj.oModelId = current_item.model
-			if current_item.model == E_MODEL_MCE_BLOCK then
-				obj.oFaceAngleRoll = outline.oFaceAngleRoll - 0x4000
-				obj.oMoveAngleRoll = outline.oMoveAngleRoll - 0x4000
-			end
 		end
 	)
 
