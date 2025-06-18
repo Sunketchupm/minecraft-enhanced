@@ -947,6 +947,7 @@ local function on_change_tab_input()
     selected_item_index = 0
     current_item_page = 1
     current_surface_tip_index = 1
+    surface_buttons_index_offset = 0
     mouse_prev_item_index = 0
     play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
 end
@@ -1097,6 +1098,9 @@ local function handle_close_menu_inputs(pressed)
     if (pressed & START_BUTTON ~= 0) or (not moved_mouse and pressed & X_BUTTON ~= 0) or (moved_mouse and mouse_has_right_clicked) then
         MenuOpen = false
         clear_hotbar = 0
+        current_surface_tip_index = 1
+        surface_buttons_index_offset = 0
+        mouse_prev_item_index = 0
         return
     end
 end
