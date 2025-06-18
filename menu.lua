@@ -554,7 +554,7 @@ local surface_descriptions = {
     {title = "No Fall Damage", lines = {"Aliases: nofall", "Prevents players from taking", "any fall damage when landing", "on this block.", ""}, image = NOFALL_TEX},
     {title = "Slippery", lines = {"Aliases: slip", "A slippery surface players", "can slide off.", "", ""}, image = SLIP_TEX},
     {title = "Not Slippery", lines = {"Aliases: not slip / nslip", "A surface players can always", "walk on.", "", ""}, image = NSLIP_TEX},
-    {title = "Very Slippery", lines = {"Aliases: very slip / vslip", "Players will always slide", "off this surface. Unable", "to framewalk or silly kick.", ""}, image = VSLIP_TEX},
+    {title = "Very Slippery", lines = {"Aliases: very slip / vslip", "Players will always slide", "off this surface. Can sillykick", "if the slope isn't too steep.", "Cannot framewalk."}, image = VSLIP_TEX},
     {title = "Shallowsand", lines = {"Aliases: ssand", "Restricts movement and jump", "height. Doesn't sink", "the player.", ""}, image = SHALLOWSAND_TEX},
     {title = "Quicksand", lines = {"Aliases: qsand", "Hazardous surface that ", "instantly sinks any player  ", "upon contact.", ""}, image = QUICKSAND_TEX},
     {title = "Lava", lines = {"Aliases: N/A", "Hazardous surface that", "launches the player upwards", "and deals damage.", ""}, image = LAVA_TEX},
