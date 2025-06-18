@@ -1,29 +1,30 @@
 import os
+import math
 
 INITIAL_DIR = "."
-BIN_DIR = os.path.join(INITIAL_DIR, "bin")
-LEVELS_DIR = os.path.join(INITIAL_DIR, "levels")
+BUILTIN_TEXTURES_FILE = os.path.join(INITIAL_DIR, "data", "dynos_mgr_builtin_tex.cpp")
 
 texture_names: list[str] = []
-ignore_files = (
-    "title_screen_bg.c",
-    "debug_level_select.c",
-    "bbh_skybox.c",
-    "bitdw_skybox.c",
-    "bitfs_skybox.c",
-    "bits_skybox.c",
-    "ccm_skybox.c",
-    "cloud_floor_skybox.c",
-    "clouds_skybox.c",
-    "effect.c",
-    "ssl_skybox.c",
-    "water_skybox.c",
-    "wdw_skybox.c",
-	# Ignore this so that it can be specially handled
-	"segment2.c"
+
+include_folders = (
+    "textures",
+    "levels",
 )
 
-ignore_texure_names = ()
+exclude_subfolders = (
+    "textures/effect",
+    "textures/segment2", # Segment2 gets special handling
+    "textures/custom_font",
+    "textures/skybox_tiles"
+)
+
+override_include_texture_names = (
+
+)
+
+override_exclude_texture_names = (
+
+)
 
 segment_2_textures = (
 	"texture_hud_char_0",
@@ -135,38 +136,48 @@ segment_2_textures = (
     "texture_ia8_up_arrow",
 )
 
-if os.path.exists(BIN_DIR):
-	files = os.scandir(BIN_DIR)
-	for file in files:
-		if file.is_file() and file.name not in ignore_files:
-			with open(file.path, "r") as lines:
-				for line in lines:
-					if line.strip().startswith("ROM_ASSET_LOAD_TEXTURE"):
-						name = line.split(",")[0].split("(")[1]
-						if not any(name in n for n in ignore_texure_names):
-							texture_names.append(name)
-	print("Got textures in bin")
-else:
-	print("Bin does not exist")
+if not os.path.exists(BUILTIN_TEXTURES_FILE):
+    print("data/dynos_mgr_builtin_tex.cpp could not be found")
+    exit()
 
-if os.path.exists(LEVELS_DIR):
-	for root, dirs, files in os.walk(LEVELS_DIR):
-		for file in files:
-			if file == "texture.inc.c":
-				with open(os.path.join(root, file), "r") as lines:
-					for line in lines:
-						if line.strip().startswith("ROM_ASSET_LOAD_TEXTURE"):
-							name = line.split(",")[0].split("(")[1]
-							if not any(name in n for n in ignore_texure_names):
-								texture_names.append(name)
-	print("Got textures in levels")
-else:
-	print("Levels does not exist")
+ignore_segments = False
+with open(BUILTIN_TEXTURES_FILE, "r") as file:
+    for line in file:
+        stripped_line = line.strip()
+        if stripped_line.startswith("#ifndef VERSION_JP") or stripped_line.startswith("#ifndef VERSION_EU"):
+            ignore_segments = False
+        elif not ignore_segments and line.strip().startswith("#else"):
+            ignore_segments = True
+        elif ignore_segments and line.strip().startswith("#endif"):
+            ignore_segments = False
+
+        if stripped_line.startswith("#if defined(VERSION_JP)") or stripped_line.startswith("#elif defined(VERSION_EU)") or stripped_line.startswith("#if defined(VERSION_JP)") or stripped_line.startswith("#ifdef VERSION_EU"):
+            ignore_segments = True
+        elif ignore_segments and line.strip().startswith("#else"):
+            ignore_segments = False
+
+        if not ignore_segments and stripped_line.startswith("define_builtin_tex") and not stripped_line.startswith("define_builtin_tex_"):
+            # name, path, width, height, bitsize
+            params = line[line.find("("):-2].replace("(", "").replace(")", "").replace(" ", "").split(",")
+            is_power_of_2 = math.log2(int(params[2])).is_integer() and math.log2(int(params[3])).is_integer() and math.log2(int(params[4])).is_integer()
+            containing_folder = params[1].split("/")[0][1:]
+            is_in_containing_folder = any(containing_folder in folder for folder in include_folders)
+            is_excluded_subfolder = False
+            for folder in exclude_subfolders:
+                is_excluded_subfolder = line.find(folder) != -1
+                if is_excluded_subfolder:
+                    break
+            is_override_in = True#any(params[0] in name for name in override_include_texture_names)
+            is_override_out = any(params[0] in name for name in override_exclude_texture_names)
+            if is_power_of_2 and ((is_in_containing_folder and not is_excluded_subfolder and not is_override_out) or is_override_in):
+                texture_names.append(params[0])
+    print("Got texture names")
 
 color_set: list[list[str]] = []
 with open(os.path.join(INITIAL_DIR, "colors.txt"), "r") as file:
 	for line in file:
-		color_set.append(line.replace(" ", "").replace("\n", "").split(","))
+		if line.strip().startswith("("):
+			color_set.append(line.replace("(", "").replace(")", "").replace(" ", "").replace("\n", "").split(","))
 
 with open(os.path.join(INITIAL_DIR, "!TEXTURES.txt"), "w") as file:
     for name in texture_names:
