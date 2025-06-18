@@ -13,6 +13,16 @@ CanBuild = true
 E_MODEL_MCE_BLOCK = smlua_model_util_get_id("mce_block_geo")
 E_MODEL_OUTLINE = smlua_model_util_get_id("mce_outline")
 E_MODEL_ARROW = smlua_model_util_get_id("arrow_geo")
+E_MODEL_MCE_BLOCK_CUSTOM = smlua_model_util_get_id("custom_mce_block_geo")
+
+---------------------------- MODEL TEST ----------------------------
+
+--[[ local function model_test(m)
+	if not CanBuild and m.controller.buttonPressed & X_BUTTON ~= 0 then
+		spawn_sync_object(bhvMceBlock, E_MODEL_MCE_BLOCK_CUSTOM, m.pos.x, m.pos.y,m.pos.z, nil)
+	end
+end
+hook_event(HOOK_MARIO_UPDATE, model_test) ]]
 
 -------------------------------------------------------------------------------
 
