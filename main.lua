@@ -1,4 +1,4 @@
--- name: Minecraft Enhanced
+-- name: Minecraft Enhanced \\[WIP]\\
 -- description: An improved version of the Minecraft mod, originally by zKevin
 
 gLevelValues.fixCollisionBugs = true
