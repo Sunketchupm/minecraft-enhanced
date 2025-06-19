@@ -4,6 +4,7 @@ local mario_set_forward_vel,perform_air_step,set_character_animation,queue_rumbl
 ACT_FREE_MOVE = allocate_mario_action(ACT_GROUP_AUTOMATIC | ACT_FLAG_INTANGIBLE | ACT_FLAG_INVULNERABLE)
 
 local savedMarioYaw = 0
+local marioYaw_timer = 0
 local prev_romhack_cam_state = camera_get_romhack_override()
 ---@param m MarioState
 local function act_free_move(m)
@@ -50,7 +51,12 @@ local function act_free_move(m)
     end
 
     if m.controller.buttonPressed & L_TRIG ~= 0 then
-        savedMarioYaw = m.faceAngle.y
+        marioYaw_timer = marioYaw_timer + 1
+        if marioYaw_timer == 1 then
+            savedMarioYaw = m.faceAngle.y
+        end
+    else
+        marioYaw_timer = 0
     end
     m.faceAngle.y = lHeld and savedMarioYaw or m.intendedYaw
 
