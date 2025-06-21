@@ -1067,15 +1067,28 @@ end
 
 ---@param pressed integer
 local function handle_paging_inputs(pressed)
-    if (pressed & L_CBUTTONS ~= 0 or (moved_mouse and mouse_has_scrolled < 0)) and current_item_page > 1 then
-        current_item_page = current_item_page - 1
-        selected_item_index = 0
-        play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
-    elseif (pressed & R_CBUTTONS ~= 0 or (moved_mouse and mouse_has_scrolled > 0)) and current_item_page < item_page_max then
-        current_item_page = current_item_page + 1
-        selected_item_index = 0
-        play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
+    if not invert_scroll then
+        if (pressed & L_CBUTTONS ~= 0 or (moved_mouse and mouse_has_scrolled > 0)) and current_item_page > 1 then
+            current_item_page = current_item_page - 1
+            selected_item_index = 0
+            play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
+        elseif (pressed & R_CBUTTONS ~= 0 or (moved_mouse and mouse_has_scrolled < 0)) and current_item_page < item_page_max then
+            current_item_page = current_item_page + 1
+            selected_item_index = 0
+            play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
+        end
+    else
+        if (pressed & L_CBUTTONS ~= 0 or (moved_mouse and mouse_has_scrolled < 0)) and current_item_page > 1 then
+            current_item_page = current_item_page - 1
+            selected_item_index = 0
+            play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
+        elseif (pressed & R_CBUTTONS ~= 0 or (moved_mouse and mouse_has_scrolled > 0)) and current_item_page < item_page_max then
+            current_item_page = current_item_page + 1
+            selected_item_index = 0
+            play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
+        end
     end
+
 end
 
 ---@param pressed integer
@@ -1130,11 +1143,18 @@ local function handle_surface_inputs(m)
             play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource)
         end
         mouse_prev_item_index = current_surface_tip_index
-
-        if mouse_has_scrolled > 0 and surface_buttons_index_offset > 0 then
-            surface_buttons_index_offset = surface_buttons_index_offset - 1
-        elseif mouse_has_scrolled < 0 and #surface_buttons - surface_buttons_index_offset > surface_buttons_rendered then
-            surface_buttons_index_offset = surface_buttons_index_offset + 1
+        if not invert_scroll then
+            if mouse_has_scrolled > 0 and surface_buttons_index_offset > 0 then
+                surface_buttons_index_offset = surface_buttons_index_offset - 1 
+            elseif mouse_has_scrolled < 0 and #surface_buttons - surface_buttons_index_offset > surface_buttons_rendered then
+                surface_buttons_index_offset = surface_buttons_index_offset + 1
+            end
+        else
+            if mouse_has_scrolled < 0 and surface_buttons_index_offset > 0 then
+                surface_buttons_index_offset = surface_buttons_index_offset - 1
+            elseif mouse_has_scrolled > 0 and #surface_buttons - surface_buttons_index_offset > surface_buttons_rendered then
+                surface_buttons_index_offset = surface_buttons_index_offset + 1
+            end
         end
     else
         local relative_button_index = current_surface_tip_index - surface_buttons_index_offset
@@ -1218,3 +1238,13 @@ local function on_show_controls_mod_menu(_, show)
 end
 
 hook_mod_menu_checkbox("Show Controls", true, on_show_controls_mod_menu)
+
+local function invert_scrolling_mod_menu()
+    if invert_scroll then 
+        invert_scroll = false
+    else
+        invert_scroll = true
+    end
+end
+
+hook_mod_menu_checkbox("Invert Menu Mouse Scroll", false, invert_scrolling_mod_menu)
