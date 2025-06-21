@@ -216,7 +216,7 @@ function bhv_mce_block_init(obj)
     obj.oCollisionDistance = 500 * vec3f_length({x = obj.oScaleX, y = obj.oScaleY, z = obj.oScaleZ})
     obj.header.gfx.skipInViewCheck = true
     obj.oPrevAnimState = obj.oAnimState
-    network_init_object(obj, true, {
+    network_init_object(obj, false, {
         "activeFlags",
         "oOpacity",
         "oAnimState",
@@ -231,7 +231,10 @@ function bhv_mce_block_init(obj)
         "oScaleY",
         "oScaleZ",
         "oItemParams",
-        "oCollisionDistance"
+        "oCollisionDistance",
+        "oPosX",
+        "oPosY",
+        "oPosZ",
     })
 end
 
@@ -307,12 +310,15 @@ local star_hitbox = {
 ---@param obj Object
 function bhv_mce_star_init(obj)
     obj_set_hitbox(obj, star_hitbox)
-    network_init_object(obj, true, {
+    network_init_object(obj, false, {
         "activeFlags",
         "oOwner",
         "oScaleX",
         "oScaleY",
         "oScaleZ",
+        "oPosX",
+        "oPosY",
+        "oPosZ",
     })
 end
 
@@ -363,6 +369,9 @@ function bhv_mce_coin_init(obj)
         "oScaleX",
         "oScaleY",
         "oScaleZ",
+        "oPosX",
+        "oPosY",
+        "oPosZ",
     })
 end
 
@@ -404,12 +413,15 @@ local contents = {
 
 ---@param obj Object
 function bhv_mce_exclamation_box_init(obj)
-    network_init_object(obj, true, {
+    network_init_object(obj, false, {
         "activeFlags",
         "oOwner",
         "oScaleX",
         "oScaleY",
         "oScaleZ",
+        "oPosX",
+        "oPosY",
+        "oPosZ",
     })
 end
 
