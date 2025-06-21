@@ -1067,28 +1067,16 @@ end
 
 ---@param pressed integer
 local function handle_paging_inputs(pressed)
-    if not invert_scroll then
-        if (pressed & L_CBUTTONS ~= 0 or (moved_mouse and mouse_has_scrolled > 0)) and current_item_page > 1 then
-            current_item_page = current_item_page - 1
-            selected_item_index = 0
-            play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
-        elseif (pressed & R_CBUTTONS ~= 0 or (moved_mouse and mouse_has_scrolled < 0)) and current_item_page < item_page_max then
-            current_item_page = current_item_page + 1
-            selected_item_index = 0
-            play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
-        end
-    else
-        if (pressed & L_CBUTTONS ~= 0 or (moved_mouse and mouse_has_scrolled < 0)) and current_item_page > 1 then
-            current_item_page = current_item_page - 1
-            selected_item_index = 0
-            play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
-        elseif (pressed & R_CBUTTONS ~= 0 or (moved_mouse and mouse_has_scrolled > 0)) and current_item_page < item_page_max then
-            current_item_page = current_item_page + 1
-            selected_item_index = 0
-            play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
-        end
+    local invert_multiplier = invert_scroll and -1 or 1
+    if (pressed & L_CBUTTONS ~= 0 or (moved_mouse and (mouse_has_scrolled * invert_multiplier) > 0)) and current_item_page > 1 then
+        current_item_page = current_item_page - 1
+        selected_item_index = 0
+        play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
+    elseif (pressed & R_CBUTTONS ~= 0 or (moved_mouse and (mouse_has_scrolled * invert_multiplier) < 0)) and current_item_page < item_page_max then
+        current_item_page = current_item_page + 1
+        selected_item_index = 0
+        play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
     end
-
 end
 
 ---@param pressed integer
@@ -1143,18 +1131,12 @@ local function handle_surface_inputs(m)
             play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource)
         end
         mouse_prev_item_index = current_surface_tip_index
-        if not invert_scroll then
-            if mouse_has_scrolled > 0 and surface_buttons_index_offset > 0 then
-                surface_buttons_index_offset = surface_buttons_index_offset - 1 
-            elseif mouse_has_scrolled < 0 and #surface_buttons - surface_buttons_index_offset > surface_buttons_rendered then
-                surface_buttons_index_offset = surface_buttons_index_offset + 1
-            end
-        else
-            if mouse_has_scrolled < 0 and surface_buttons_index_offset > 0 then
-                surface_buttons_index_offset = surface_buttons_index_offset - 1
-            elseif mouse_has_scrolled > 0 and #surface_buttons - surface_buttons_index_offset > surface_buttons_rendered then
-                surface_buttons_index_offset = surface_buttons_index_offset + 1
-            end
+
+        local invert_multiplier = invert_scroll and -1 or 1
+        if (mouse_has_scrolled * invert_multiplier) > 0 and surface_buttons_index_offset > 0 then
+            surface_buttons_index_offset = surface_buttons_index_offset - 1
+        elseif (mouse_has_scrolled * invert_multiplier) < 0 and #surface_buttons - surface_buttons_index_offset > surface_buttons_rendered then
+            surface_buttons_index_offset = surface_buttons_index_offset + 1
         end
     else
         local relative_button_index = current_surface_tip_index - surface_buttons_index_offset
@@ -1239,12 +1221,8 @@ end
 
 hook_mod_menu_checkbox("Show Controls", true, on_show_controls_mod_menu)
 
-local function invert_scrolling_mod_menu()
-    if invert_scroll then 
-        invert_scroll = false
-    else
-        invert_scroll = true
-    end
+local function invert_scrolling_mod_menu(_, value)
+    invert_scroll = value
 end
 
 hook_mod_menu_checkbox("Invert Menu Mouse Scroll", false, invert_scrolling_mod_menu)
