@@ -283,18 +283,25 @@ end
 local function render_icon(x, y, width, height, icon)
     if icon.texture ~= nil then
         ---@cast icon TextureInfo
-        local item_scale_x = 1.5
-        local item_scale_y = 1.5
         local texture_width = icon.width
         local texture_height = icon.height
-        if texture_width == 64 then
-            item_scale_x = 0.75
+        local item_scale_x = 1.5
+        local item_scale_y = 1.5
+        -- Normalize to 32x32
+        if texture_width > 32 then
+            local exponent = 2^(math.log(texture_width, 2) - 5)
+            if exponent ~= 0 then
+                item_scale_x = item_scale_x * (1/exponent)
+            end
         end
-        if texture_height == 64 then
-            item_scale_y = 0.75
+        if texture_height > 32 then
+            local exponent = 2^(math.log(texture_height, 2) - 5)
+            if exponent ~= 0 then
+                item_scale_y = item_scale_y * (1/exponent)
+            end
         end
-        local item_x = (x + width * 0.5) - (icon.width * 0.5 * item_scale_x)
-        local item_y = (y + height * 0.5) - (icon.height * 0.5 * item_scale_y)
+        local item_x = (x + width * 0.5) - (texture_width * 0.5 * item_scale_x)
+        local item_y = (y + height * 0.5) - (texture_height * 0.5 * item_scale_y)
         djui_hud_set_color(255, 255, 255, 255)
 
         djui_hud_render_texture(icon, item_x, item_y, item_scale_x, item_scale_y)
