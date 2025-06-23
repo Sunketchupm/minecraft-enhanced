@@ -8,10 +8,11 @@ local item_page_max = 1
 local item_pages = {}
 
 local TAB_BUILDING_BLOCKS = 1
-local TAB_ITEMS = 2
-local TAB_ENEMIES = 3
-local TAB_SURFACE_TYPES = 4
-local TAB_MAIN_END = 4
+local TAB_BUILDING_BLOCKS_COLORS = 2
+local TAB_ITEMS = 3
+local TAB_ENEMIES = 4
+local TAB_SURFACE_TYPES = 5
+local TAB_MAIN_END = 5
 
 local item_list_row_count = 10
 local item_list_column_count = 10
@@ -89,6 +90,7 @@ local CPLAT_BLOCK_TEX = get_texture_info("checkpoint")
 ---@type table<integer, MenuItemLink[]>
 local TabItemList = {
     [TAB_BUILDING_BLOCKS] = {},
+    [TAB_BUILDING_BLOCKS_COLORS] = {},
     [TAB_ITEMS] = {},
     [TAB_ENEMIES] = {},
     [TAB_SURFACE_TYPES] = {}
@@ -128,10 +130,9 @@ local function add_item(tab, behavior, model, offset, anim_state, mock_settings,
 end
 
 add_first_update(function ()
-    local total_block_icons = #MenuBlockIcons
-    for i = 1, total_block_icons, 1 do
+    for i = 1, #MenuBlockTextureIcons, 1 do
         ---@type TextureInfo | DjuiColor
-        local texture = MenuBlockIcons[i] or gTextures.no_camera
+        local texture = MenuBlockTextureIcons[i] or gTextures.no_camera
         ---@type MenuItemLink
         local menu_item = {
             item = {
@@ -157,11 +158,32 @@ add_first_update(function ()
             params = 0,
             size = gVec3fOne(),
             rotation = gVec3sZero(),
-            animState = BLOCK_BARRIER_ANIM,
+            animState = MCE_BLOCK_BARRIER_ANIM,
             mock = {}
         },
         icon = get_texture_info("barrier")
     })
+
+    for i = 1, #MenuBlockColorIcons, 1 do
+        ---@type TextureInfo | DjuiColor
+        local texture = MenuBlockColorIcons[i] or gTextures.no_camera
+        ---@type MenuItemLink
+        local menu_item = {
+            item = {
+                behavior = bhvMceBlock,
+                model = E_MODEL_MCE_COLOR_BLOCK,
+                spawnYOffset = 0,
+                params = 0,
+                size = gVec3fOne(),
+                rotation = gVec3sZero(),
+                animState = i,
+                mock = {}
+            },
+            icon = texture
+        }
+        menu_item.self = menu_item
+        TabItemList[TAB_BUILDING_BLOCKS_COLORS][i] = menu_item
+    end
 
     local star_offset = 6
     add_item(TAB_ITEMS, bhvMceStar, E_MODEL_STAR, star_offset, 0, { animateFaceAngleYaw = 0x800 }, 0, gTextures.star)
@@ -531,6 +553,14 @@ end
 ---@param y number
 ---@param width number
 ---@param height number
+local function render_building_blocks_colors_tab(x, y, width, height)
+    render_standard_tab(x, y, width, height, "Building Blocks")
+end
+
+---@param x number
+---@param y number
+---@param width number
+---@param height number
 local function render_items_tab(x, y, width, height)
     render_standard_tab(x, y, width, height, "Items")
 end
@@ -718,6 +748,7 @@ end
 
 local MenuTabs = {
     render_building_blocks_tab,
+    render_building_blocks_colors_tab,
     render_items_tab,
     render_enemies_tab,
     render_surfaces_tab
@@ -1025,12 +1056,12 @@ local function handle_item_selection_inputs(m)
     local selected_item_offset = items_per_page * (current_item_page - 1)
     local relative_item_index = selected_item_index - selected_item_offset
 
-    if selected_item_index == 0 then
-        selected_item_index = selected_item_offset
-        relative_item_index = 1
-    end
-
     if csd.up or csd.left or csd.down or csd.right then
+        if selected_item_index == 0 then
+            selected_item_index = selected_item_offset
+            relative_item_index = 1
+        end
+
         if csd.up and relative_item_index > 1 then
             local remaining = relative_item_index - (relative_item_index - item_list_column_count)
             selected_item_index = math.max(selected_item_index - remaining, selected_item_offset + 1)

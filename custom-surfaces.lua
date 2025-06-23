@@ -491,8 +491,8 @@ local function custom_surface_override_geometry_inputs(m)
 end
 
 local function reset_block(m, block)
-    if m.action == ACT_FREE_MOVE and block.oAction ~= BLOCK_ACT_RESET then
-        block.oAction = BLOCK_ACT_RESET
+    if m.action == ACT_FREE_MOVE and block.oAction ~= MCE_BLOCK_ACT_RESET then
+        block.oAction = MCE_BLOCK_ACT_RESET
     end
 end
 
@@ -517,8 +517,8 @@ local function custom_surface_block_update()
             table.insert(special_surface_types.water, block)
         elseif surface_id == MCE_BLOCK_COL_ID_DISAPPEARING then
             if block.oAction == 1 then
-                if block.oAnimState < BLOCK_ANIM_STATE_TRANSPARENT_START then
-                    block.oAnimState = block.oAnimState + BLOCK_ANIM_STATE_TRANSPARENT_START
+                if block.oAnimState < block.oBlockTransparentStart then
+                    block.oAnimState = block.oAnimState + block.oBlockTransparentStart
                 end
                 block.oOpacity = math.max(block.oOpacity - 30, 0)
                 if block.oOpacity == 0 then

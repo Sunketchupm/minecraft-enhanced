@@ -11,6 +11,7 @@ gLevelValues.fixInvalidShellRides = false
 CanBuild = true
 
 E_MODEL_MCE_BLOCK = smlua_model_util_get_id("mce_block_geo")
+E_MODEL_MCE_COLOR_BLOCK = smlua_model_util_get_id("mce_color_block_geo")
 E_MODEL_OUTLINE = smlua_model_util_get_id("mce_outline")
 E_MODEL_ARROW = smlua_model_util_get_id("arrow_geo")
 E_MODEL_MCE_BLOCK_CUSTOM = smlua_model_util_get_id("custom_mce_block_geo")
@@ -194,15 +195,16 @@ function bhv_mock_item_loop(obj)
 		obj.oFaceAnglePitch = outline.oFaceAnglePitch
 		obj.oFaceAngleRoll = outline.oFaceAngleRoll
 
-		if current_item.model == E_MODEL_MCE_BLOCK then
-			if obj.oAnimState >= BLOCK_ANIM_STATE_TRANSPARENT_START then
+		if current_item.behavior == bhvMceBlock then
+			local transparent_start = (current_item.model == E_MODEL_MCE_BLOCK) and MCE_BLOCK_TRANSPARENT_START or MCE_COLOR_BLOCK_TRANSPARENT_START
+			if obj.oAnimState >= transparent_start then
 				obj.oOpacity = 100
 			else
-				obj.oAnimState = current_item.animState + BLOCK_ANIM_STATE_TRANSPARENT_START
+				obj.oAnimState = current_item.animState + transparent_start
 				obj.oOpacity = 200
 			end
-			if obj.oAnimState > BLOCK_BARRIER_ANIM then
-				obj.oAnimState = BLOCK_BARRIER_ANIM
+			if obj.oAnimState > MCE_BLOCK_BARRIER_ANIM then
+				obj.oAnimState = MCE_BLOCK_BARRIER_ANIM
 			end
 		end
 	else
@@ -268,6 +270,13 @@ local function place_item()
 			obj.globalPlayerIndex = network_global_index_from_local(0)
 			obj.oOwner = network_global_index_from_local(0) + 1
 			obj.oModelId = current_item.model
+			if current_item.model == E_MODEL_MCE_BLOCK then
+				obj.oBlockTransparentStart = MCE_BLOCK_TRANSPARENT_START
+			elseif current_item.model == E_MODEL_MCE_COLOR_BLOCK then
+				obj.oBlockTransparentStart = MCE_COLOR_BLOCK_TRANSPARENT_START
+			else
+				obj.oBlockTransparentStart = 0
+			end
 		end
 	)
 

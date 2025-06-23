@@ -173,19 +173,11 @@ with open(BUILTIN_TEXTURES_FILE, "r") as file:
                 texture_names.append(params[0])
     print("Got texture names")
 
-color_set: list[list[str]] = []
-with open(os.path.join(INITIAL_DIR, "colors.txt"), "r") as file:
-	for line in file:
-		if line.strip().startswith("("):
-			color_set.append(line.replace("(", "").replace(")", "").replace(" ", "").replace("\n", "").split(","))
-
 with open(os.path.join(INITIAL_DIR, "!TEXTURES.txt"), "w") as file:
     for name in texture_names:
         file.write(f"    g(\"{name}\"),\n")
     for name in segment_2_textures:
         file.write(f"    g(\"{name}\"),\n")
-    for colors in color_set:
-        file.write("    {" + f"r = {colors[0]}, g = {colors[1]}, b = {colors[2]}, a = 255" + "},\n")
 
 with open(os.path.join(INITIAL_DIR, "!GEO.txt"), "w") as file:
     file.write(
@@ -198,26 +190,22 @@ const GeoLayout mce_block_geo[] = {\n\
 		GEO_ANIMATED_PART(LAYER_ALPHA, 0, 0, 0, NULL),\n\
 		GEO_OPEN_NODE(),\n\
 			GEO_ASM(30, geo_update_layer_transparency),\n\
-			GEO_SWITCH_CASE(' + str((len(texture_names) + len(color_set) + len(segment_2_textures)) * 2 + 2) + ', geo_switch_anim_state),\n\
+			GEO_SWITCH_CASE(' + str((len(texture_names) + len(segment_2_textures)) * 2 + 2) + ', geo_switch_anim_state),\n\
 			GEO_OPEN_NODE(),\n\
 				GEO_NODE_START(),\n\
 				GEO_OPEN_NODE(),\n\
 					GEO_ANIMATED_PART(LAYER_ALPHA, 0, 276, 0, ' + str(texture_names[0]) + '_mat),\n\
 				GEO_CLOSE_NODE(),\n'
 )
+    file.write(f"            // Transparent start: {str(len(texture_names) + len(segment_2_textures))}\n")
     for name in texture_names:
         file.write(f"				GEO_DISPLAY_LIST(LAYER_ALPHA, {name}_mat),\n")
     for name in segment_2_textures:
         file.write(f"				GEO_DISPLAY_LIST(LAYER_ALPHA, {name}_mat),\n")
-    for colors in color_set:
-        file.write(f"				GEO_DISPLAY_LIST(LAYER_ALPHA, color_{colors[0]}{colors[1]}{colors[2]}_mat),\n")
-    file.write(f"                           // Transparent start: {str(len(texture_names) + len(color_set) + len(segment_2_textures))}\n")
     for name in texture_names:
         file.write(f"				GEO_DISPLAY_LIST(LAYER_TRANSPARENT, {name}_mat),\n")
     for name in segment_2_textures:
         file.write(f"				GEO_DISPLAY_LIST(LAYER_TRANSPARENT, {name}_mat),\n")
-    for colors in color_set:
-        file.write(f"				GEO_DISPLAY_LIST(LAYER_TRANSPARENT, color_{colors[0]}{colors[1]}{colors[2]}_mat),\n")
 
     file.write(
 '                GEO_DISPLAY_LIST(LAYER_ALPHA, barrier_Cube_mesh_layer_4),\n\
@@ -333,32 +321,6 @@ Gfx ' + name +'_mat[] = {\n\
     gsSPEndDisplayList(),\n\
 };\n')
 
-    for colors in color_set:
-        file.write(
-'\n\
-Gfx color_' + colors[0] + colors[1] + colors[2] + '_mat[] = {\n\
-	gsSPSetGeometryMode(G_TEXTURE_GEN),\n\
-	gsSPClearGeometryMode(G_SHADE | G_LIGHTING),\n\
-	gsDPPipeSync(),\n\
-	gsDPSetCombineLERP(0, 0, 0, PRIMITIVE, 0, 0, 0, ENVIRONMENT, 0, 0, 0, PRIMITIVE, 0, 0, 0, ENVIRONMENT),\n\
-	gsDPSetAlphaDither(G_AD_NOISE),\n\
-	gsSPTexture(65535, 65535, 0, 0, 1),\n\
-	gsDPSetPrimColor(0, 0, ' + colors[0] + ',' + colors[1] + ',' + colors[2] + ', 255),\n\
-	gsSPDisplayList(mce_block_tris),\n\
-	gsSPClearGeometryMode(G_TEXTURE_GEN),\n\
-	gsSPSetGeometryMode(G_SHADE | G_LIGHTING),\n\
-	gsDPPipeSync(),\n\
-	gsDPSetAlphaDither(G_AD_DISABLE),\n\
-	gsDPPipeSync(),\n\
-	gsSPSetGeometryMode(G_LIGHTING),\n\
-	gsSPClearGeometryMode(G_TEXTURE_GEN),\n\
-	gsDPSetCombineLERP(0, 0, 0, SHADE, 0, 0, 0, ENVIRONMENT, 0, 0, 0, SHADE, 0, 0, 0, ENVIRONMENT),\n\
-	gsSPTexture(65535, 65535, 0, 0, 0),\n\
-	gsDPSetEnvColor(255, 255, 255, 255),\n\
-	gsDPSetAlphaCompare(G_AC_NONE),\n\
-	gsSPEndDisplayList(),\n\
-};\n\
-')
     file.write(
 '\n\
 Gfx barrier_barrier_ci4_aligner[] = {gsSPEndDisplayList()};\n\
