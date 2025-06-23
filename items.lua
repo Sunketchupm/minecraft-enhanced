@@ -765,7 +765,7 @@ local block_id_lookup = {
 }
 
 ---@param msg string
-local function on_set_surface_chat_command(msg)
+function on_set_surface_chat_command(msg)
     if block_id_lookup[msg:lower()] then
         if HotbarItemList[SelectedHotbarIndex].item and HotbarItemList[SelectedHotbarIndex].item.behavior == bhvMceBlock then
             HotbarItemList[SelectedHotbarIndex].item.params = block_id_lookup[msg:lower()]

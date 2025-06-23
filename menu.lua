@@ -1192,6 +1192,11 @@ local function handle_surface_inputs(m)
             play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource)
         end
     end
+
+    if (moved_mouse and mouse_has_clicked) or (not moved_mouse and m.controller.buttonPressed & A_BUTTON ~= 0) then
+        on_set_surface_chat_command(surface_buttons[current_surface_tip_index])
+        play_sound(SOUND_MENU_CLICK_FILE_SELECT, gGlobalSoundSource)
+    end
 end
 
 local tabs_with_special_inputs = {
