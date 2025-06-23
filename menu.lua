@@ -76,6 +76,7 @@ local CAPLESS_TEX = get_texture_info("placeholder")
 local BREAK_TEX = get_texture_info("breakhelp")
 local DISAPPEAR_TEX = get_texture_info("placeholder")
 local SHRINK_TEX = get_texture_info("placeholder")
+local SPRINGBOARD_TEX = get_texture_info("placeholder")
 ------------------- CUSTOM BLOCK TEXTURES -------------------
 local DPLAT_BLOCK_TEX = get_texture_info("dashpanel")
 local SPLAT_BLOCK_TEX = get_texture_info("shrinkingplatform")
@@ -354,6 +355,8 @@ local mouse_prev_item_index = 1
 local mouse_tab_was_clicked_on = 0
 local mouse_has_scrolled = 0
 
+local mouse_hovering_over_surface_tip = false
+
 local function render_mouse()
     if moved_mouse then
         prev_mouse_x = mouse_x
@@ -575,10 +578,6 @@ end
 
 ---------------------------
 
------------------------------------------------------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 ---@class Description
     ---@field title string
     ---@field lines {[1]: string, [2]: string, [3]: string, [4]: string}
@@ -618,7 +617,8 @@ local surface_descriptions = {
     {title = "Capless", lines = {"Aliases: remove caps", "If any players are wearing a ", "special cap when above this", "block, they will revert to", "wearing a normal cap."}, image = CAPLESS_TEX},
     {title = "Breakable", lines = {"Aliases: break", "Attacking this surface will", "break the block completely.", "", ""}, image = BREAK_TEX},
     {title = "Disappearing", lines = {"Aliases: disappear", "Touching this surface will", "quickly make this surface", "disappear entirely.", ""}, image = DISAPPEAR_TEX},
-    {title = "Shrinking", lines = {"Aliases: shrink", "Standing on this surface will", " slowly shrink the block until", "it disappears entirely.", ""}, image = SHRINK_TEX}
+    {title = "Shrinking", lines = {"Aliases: shrink", "Standing on this surface will", " slowly shrink the block until", "it disappears entirely.", ""}, image = SHRINK_TEX},
+    {title = "Springboard", lines = {"Aliases: spring / noteblock", "Going onto this surface will", "make the player immediately jump", "high.", ""}, image = SPRINGBOARD_TEX},
 }
 
 -- This is for the names of the buttons on the left side of the menu
@@ -654,12 +654,9 @@ local surface_buttons = {
     "Capless",
     "Breakable",
     "Disappearing",
-    "Shrinking"
+    "Shrinking",
+    "Springboard"
 }
-
------------------------------------------------------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 local surface_buttons_index_offset = 0
 local surface_buttons_rendered = 0
@@ -723,10 +720,12 @@ local function render_surfaces_tab(x, y, width, height)
     local button_count_div = button_space / y_increm
     surface_buttons_rendered = math.floor(button_count_div)
     y_increm = button_space / surface_buttons_rendered
+    mouse_hovering_over_surface_tip = false
     for i = 1, surface_buttons_rendered, 1 do
         local absolute_index = i + surface_buttons_index_offset
         if moved_mouse and mouse_is_within(button_x, button_y + y_increm * (i - 1), button_x + button_width, (button_y + y_increm * (i - 1)) + button_height) then
             current_surface_tip_index = absolute_index
+            mouse_hovering_over_surface_tip = true
         end
 
         local button_colors = {{r = 125, g = 125, b = 125, a = 255}, {r = 175, g = 175, b = 175, a = 255}, {r = 75, g = 75, b = 75, a = 255}}
@@ -1193,7 +1192,7 @@ local function handle_surface_inputs(m)
         end
     end
 
-    if (moved_mouse and mouse_has_clicked) or (not moved_mouse and m.controller.buttonPressed & A_BUTTON ~= 0) then
+    if (moved_mouse and mouse_has_clicked and mouse_hovering_over_surface_tip) or (not moved_mouse and m.controller.buttonPressed & A_BUTTON ~= 0) then
         on_set_surface_chat_command(surface_buttons[current_surface_tip_index])
         play_sound(SOUND_MENU_CLICK_FILE_SELECT, gGlobalSoundSource)
     end

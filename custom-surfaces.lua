@@ -294,6 +294,9 @@ local function custom_surface_mario_update(m)
                 if obj_is_mario_ground_pounding_platform(m, block) ~= 0 then
                     block.oAction = 2
                 end
+            elseif surface_id == MCE_BLOCK_COL_ID_SPRINGBOARD then
+                set_mario_action(m, ACT_DOUBLE_JUMP, 0)
+                m.vel.y = 80
             end
         else
             if surface_id == MCE_BLOCK_COL_ID_NO_FALL_DAMAGE or surface_id == MCE_BLOCK_COL_ID_BOUNCE then
