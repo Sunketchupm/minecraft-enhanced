@@ -89,9 +89,9 @@ local function act_free_move(m)
         vec3f_copy(m.pos, next_pos)
     end
 
-    if m.pos.y < m.floorHeight then
-        m.pos.y = m.floorHeight
-    end
+    --if m.pos.y < m.floorHeight then
+    --    m.pos.y = m.floorHeight
+    --end
     vec3f_zero(m.vel)
 
     vec3f_copy(m.marioObj.header.gfx.pos, m.pos)
@@ -135,6 +135,22 @@ end
 ---@param m MarioState
 local function allow_hazard_surface(m)
     if m.action == ACT_FREE_MOVE then return false end
+end
+
+---@param m MarioState
+local function override_geometry_inputs(m)
+    if m.action == ACT_FREE_MOVE then
+        m.floor = collision_find_floor(m.pos.x, m.pos.y, m.pos.z)
+        m.floorHeight = find_floor_height(m.pos.x, m.pos.y, m.pos.z)
+        if not m.floor then
+            vec3f_copy(m.pos, m.marioObj.header.gfx.pos)
+            m.floorHeight = find_floor_height(m.pos.x, m.pos.y, m.pos.z)
+        end
+
+        m.ceil = collision_find_ceil(m.pos.x, m.floorHeight, m.pos.z)
+        m.ceilHeight = find_ceil_height(m.pos.x, m.floorHeight, m.pos.z)
+        return false
+    end
 end
 
 local timer = 0
@@ -186,6 +202,7 @@ hook_event(HOOK_ON_DEATH, on_death)
 hook_event(HOOK_ON_WARP, on_warp)
 hook_event(HOOK_ALLOW_FORCE_WATER_ACTION, allow_force_water_action)
 hook_event(HOOK_ALLOW_HAZARD_SURFACE, allow_hazard_surface)
+hook_event(HOOK_MARIO_OVERRIDE_GEOMETRY_INPUTS, override_geometry_inputs)
 hook_event(HOOK_MARIO_UPDATE, mario_update)
 
 hook_chat_command("restart", "[<nothing>|reset] Restarts you to your current checkpoint, or use \"reset\" to respawn at spawn", function (msg)

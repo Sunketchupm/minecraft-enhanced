@@ -73,7 +73,7 @@ local function on_grid_size_chat_command(msg)
 	local sizes = split_string(msg, " ")
 	local sizes_count = #sizes
 
-	if not sizes[1] then
+	if not sizes[1] or not tonumber(sizes[1]) then
 		djui_chat_message_create("Usage: [num] or [x|y|z]")
 		return true
 	end
