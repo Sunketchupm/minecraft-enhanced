@@ -151,19 +151,6 @@ add_first_update(function ()
         menu_item.self = menu_item
         TabItemList[TAB_BUILDING_BLOCKS][i] = menu_item
     end
-    table.insert(TabItemList[TAB_BUILDING_BLOCKS], {
-        item = {
-            behavior = bhvMceBlock,
-            model = E_MODEL_MCE_BLOCK,
-            spawnYOffset = 0,
-            params = 0,
-            size = gVec3fOne(),
-            rotation = gVec3sZero(),
-            animState = MCE_BLOCK_BARRIER_ANIM,
-            mock = {}
-        },
-        icon = get_texture_info("barrier")
-    })
 
     for i = 1, #MenuBlockColorIcons, 1 do
         ---@type TextureInfo | DjuiColor
@@ -185,6 +172,19 @@ add_first_update(function ()
         menu_item.self = menu_item
         TabItemList[TAB_BUILDING_BLOCKS_COLORS][i] = menu_item
     end
+    table.insert(TabItemList[TAB_BUILDING_BLOCKS_COLORS], {
+        item = {
+            behavior = bhvMceBlock,
+            model = E_MODEL_MCE_COLOR_BLOCK,
+            spawnYOffset = 0,
+            params = 0,
+            size = gVec3fOne(),
+            rotation = gVec3sZero(),
+            animState = MCE_COLOR_BLOCK_BARRIER_ANIM,
+            mock = {}
+        },
+        icon = get_texture_info("barrier")
+    })
 
     local star_offset = 6
     add_item(TAB_ITEMS, bhvMceStar, E_MODEL_STAR, star_offset, 0, { animateFaceAngleYaw = 0x800 }, 0, gTextures.star)

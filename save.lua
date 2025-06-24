@@ -131,7 +131,7 @@ local function on_save_chat_command(msg)
                 local roll = convert_s16(obj.oFaceAngleRoll) + 32768
                 local addon =
                     pad(encode(item_behavior_ids), 3) .. -- 3
-                    pad(encode(obj.oModelId), 3) .. -- 6
+                    pad(encode(obj_get_model_id_extended(obj)), 3) .. -- 6
                     pad(encode((math.floor(obj.oPosX) + 65536)), 3) .. pad(encode(pos_decimal_expansion.x), 2) .. -- 11
                     pad(encode((math.floor(obj.oPosY) + 65536)), 3) .. pad(encode(pos_decimal_expansion.y), 2) .. -- 16
                     pad(encode((math.floor(obj.oPosZ) + 65536)), 3) .. pad(encode(pos_decimal_expansion.z), 2) .. -- 21
@@ -275,7 +275,6 @@ local function on_load_chat_command(msg)
                 obj_scale_xyz(obj, scaleX + (scale_decimalX * 0.01), scaleY + (scale_decimalY * 0.01), scaleZ + (scale_decimalZ * 0.01))
                 obj.globalPlayerIndex = gNetworkPlayers[0].globalIndex
                 obj.oOwner = gNetworkPlayers[0].globalIndex + 1
-                obj.oModelId = model
             end
         )
 

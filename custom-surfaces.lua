@@ -520,8 +520,9 @@ local function custom_surface_block_update()
             table.insert(special_surface_types.water, block)
         elseif surface_id == MCE_BLOCK_COL_ID_DISAPPEARING then
             if block.oAction == 1 then
-                if block.oAnimState < block.oBlockTransparentStart then
-                    block.oAnimState = block.oAnimState + block.oBlockTransparentStart
+                local transparent_start = mce_block_get_transparent_start_obj(block)
+                if block.oAnimState < transparent_start then
+                    block.oAnimState = block.oAnimState + transparent_start
                 end
                 block.oOpacity = math.max(block.oOpacity - 30, 0)
                 if block.oOpacity == 0 then

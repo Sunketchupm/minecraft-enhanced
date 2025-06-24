@@ -86,3 +86,42 @@ convert_s16 = function (x)
     x = math.floor(x) & (1 << 16) - 1
     return x - ((x & (1 << 15)) << 1)
 end
+
+local transparent_starts = {}
+local last_anims = {}
+
+add_first_update(function ()
+    transparent_starts = {
+        [E_MODEL_MCE_BLOCK] = MCE_BLOCK_TRANSPARENT_START,
+        [E_MODEL_MCE_COLOR_BLOCK] = MCE_COLOR_BLOCK_TRANSPARENT_START,
+    }
+
+    last_anims = {
+        [E_MODEL_MCE_BLOCK] = MCE_BLOCK_ANIM_MAX,
+        [E_MODEL_MCE_COLOR_BLOCK] = MCE_COLOR_BLOCK_BARRIER_ANIM,
+    }
+end)
+
+---@param obj Object
+---@return integer
+function mce_block_get_transparent_start_obj(obj)
+    return transparent_starts[obj_get_model_id_extended(obj)]
+end
+
+---@param item Item
+---@return integer
+function mce_block_get_transparent_start_item(item)
+    return transparent_starts[item.model]
+end
+
+---@param obj Object
+---@return integer
+function mce_block_get_anim_max_obj(obj)
+    return last_anims[obj_get_model_id_extended(obj)]
+end
+
+---@param item Item
+---@return integer
+function mce_block_get_anim_max_item(item)
+    return last_anims[item.model]
+end

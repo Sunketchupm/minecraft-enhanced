@@ -12,21 +12,17 @@
     ---@field oScaleX number
     ---@field oScaleY number
     ---@field oScaleZ number
-    ---@field oModelId integer
     ---@field oItemParams integer
     ---@field oOwner integer
     ---@field oPrevAnimState integer
-    ---@field oBlockTransparentStart integer
 
 define_custom_obj_fields({
     oScaleX = "f32",
     oScaleY = "f32",
     oScaleZ = "f32",
-    oModelId = "u32",
     oItemParams = "u32",
     oOwner = "s32",
     oPrevAnimState = "u32",
-    oBlockTransparentStart = "u32",
 })
 
 gCurrentItem = {behavior = nil, model = E_MODEL_NONE, params = {}}
@@ -169,10 +165,10 @@ MCE_BLOCK_COL_ID_JUMP_PAD = 28
 MCE_BLOCK_COL_ID_SHRINKING = 29
 MCE_BLOCK_COL_ID_SPRINGBOARD = 30
 
-MCE_BLOCK_TRANSPARENT_START = 2067
+MCE_BLOCK_TRANSPARENT_START = 1959
 MCE_COLOR_BLOCK_TRANSPARENT_START = 108
-MCE_BLOCK_BARRIER_ANIM = (MCE_BLOCK_TRANSPARENT_START * 2) + 1
-MCE_COLOR_BLOCK_ANIM_MAX = (MCE_COLOR_BLOCK_TRANSPARENT_START * 2)
+MCE_BLOCK_ANIM_MAX = (MCE_BLOCK_TRANSPARENT_START * 2)
+MCE_COLOR_BLOCK_BARRIER_ANIM = (MCE_COLOR_BLOCK_TRANSPARENT_START * 2) + 1
 MCE_BLOCK_ACT_RESET = 10
 
 local standard_collision_lookup = {
@@ -215,7 +211,7 @@ end
 ---@param obj Object
 function bhv_mce_block_init(obj)
     block_collision_lookup(obj)
-    if obj.oAnimState > obj.oBlockTransparentStart then
+    if obj.oAnimState > mce_block_get_transparent_start_obj(obj) then
         obj.oOpacity = 100
     end
     obj.oCollisionDistance = 500 * vec3f_length({x = obj.oScaleX, y = obj.oScaleY, z = obj.oScaleZ})
@@ -247,7 +243,7 @@ end
 function bhv_mce_block_loop(obj)
     if obj.oAction == MCE_BLOCK_ACT_RESET then
         block_collision_lookup(obj)
-        if obj.oAnimState > obj.oBlockTransparentStart then
+        if obj.oAnimState > mce_block_get_transparent_start_obj(obj) then
             obj.oOpacity = 100
         else
             obj.oOpacity = 255
@@ -257,13 +253,18 @@ function bhv_mce_block_loop(obj)
         obj.oAction = 0
     end
 
-    if obj.oAnimState > MCE_BLOCK_BARRIER_ANIM then
-        obj.oAnimState = MCE_BLOCK_BARRIER_ANIM
+    local max_anim = mce_block_get_anim_max_obj(obj)
+    if obj.oAnimState > max_anim then
+        obj.oAnimState = max_anim
     end
-    if obj.oAnimState == MCE_BLOCK_BARRIER_ANIM and gMarioStates[0].action ~= ACT_FREE_MOVE then
-        obj.header.gfx.node.flags = obj.header.gfx.node.flags | GRAPH_RENDER_INVISIBLE
-    else
-        obj.header.gfx.node.flags = obj.header.gfx.node.flags & ~GRAPH_RENDER_INVISIBLE
+
+    local current_model = obj_get_model_id_extended(obj)
+    if current_model == E_MODEL_MCE_COLOR_BLOCK then
+        if obj.oAnimState == max_anim and gMarioStates[0].action ~= ACT_FREE_MOVE then
+            obj.header.gfx.node.flags = obj.header.gfx.node.flags | GRAPH_RENDER_INVISIBLE
+        else
+            obj.header.gfx.node.flags = obj.header.gfx.node.flags & ~GRAPH_RENDER_INVISIBLE
+        end
     end
 
     -- Handle breakable surfaces, so that their particles properly spawn
@@ -288,7 +289,7 @@ function bhv_mce_block_loop(obj)
             spawn_mist_particles()
             spawn_triangle_break_particles(20, 138, 0.7, 3)
             create_sound_spawner(SOUND_GENERAL_BREAK_BOX)
-            obj.oAnimState = obj.oBlockTransparentStart + 1
+            obj.oAnimState = mce_block_get_transparent_start_obj(obj)
             obj.oOpacity = 0
             obj.collisionData = nil
             obj.oAction = 3
@@ -787,14 +788,17 @@ end
 local function on_transparent_chat_command()
     local item = HotbarItemList[SelectedHotbarIndex].item
     if item and item.behavior == bhvMceBlock then
-        local transparent_start = item.model == E_MODEL_MCE_BLOCK and MCE_BLOCK_TRANSPARENT_START or MCE_COLOR_BLOCK_TRANSPARENT_START
-        if item.animState > transparent_start then
+        local transparent_start = mce_block_get_transparent_start_item(item)
+        local anim_max = mce_block_get_anim_max_item(item)
+        if item.model == E_MODEL_MCE_COLOR_BLOCK and item.animState == anim_max then
+            djui_chat_message_create("The barrier block cannot become transparent")
+        elseif item.animState > transparent_start then
             item.animState = item.animState - transparent_start
             djui_chat_message_create("The current block is no longer transparent")
         else
             item.animState = item.animState + transparent_start
-            if item.animState > MCE_BLOCK_BARRIER_ANIM then
-                item.animState = MCE_BLOCK_BARRIER_ANIM
+            if item.animState > anim_max then
+                item.animState = anim_max
             end
             djui_chat_message_create("The current block is now transparent")
         end

@@ -196,15 +196,17 @@ function bhv_mock_item_loop(obj)
 		obj.oFaceAngleRoll = outline.oFaceAngleRoll
 
 		if current_item.behavior == bhvMceBlock then
-			local transparent_start = (current_item.model == E_MODEL_MCE_BLOCK) and MCE_BLOCK_TRANSPARENT_START or MCE_COLOR_BLOCK_TRANSPARENT_START
+			local transparent_start = mce_block_get_transparent_start_item(current_item)
+			local anim_max = mce_block_get_anim_max_item(current_item)
 			if obj.oAnimState >= transparent_start then
 				obj.oOpacity = 100
 			else
 				obj.oAnimState = current_item.animState + transparent_start
 				obj.oOpacity = 200
 			end
-			if obj.oAnimState > MCE_BLOCK_BARRIER_ANIM then
-				obj.oAnimState = MCE_BLOCK_BARRIER_ANIM
+
+			if obj.oAnimState > anim_max then
+				obj.oAnimState = anim_max
 			end
 		end
 	else
@@ -269,14 +271,6 @@ local function place_item()
 			obj.oAnimState = current_item.animState
 			obj.globalPlayerIndex = network_global_index_from_local(0)
 			obj.oOwner = network_global_index_from_local(0) + 1
-			obj.oModelId = current_item.model
-			if current_item.model == E_MODEL_MCE_BLOCK then
-				obj.oBlockTransparentStart = MCE_BLOCK_TRANSPARENT_START
-			elseif current_item.model == E_MODEL_MCE_COLOR_BLOCK then
-				obj.oBlockTransparentStart = MCE_COLOR_BLOCK_TRANSPARENT_START
-			else
-				obj.oBlockTransparentStart = 0
-			end
 		end
 	)
 
