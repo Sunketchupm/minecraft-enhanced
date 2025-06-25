@@ -279,6 +279,15 @@ local function place_item()
 		if item.oPosX < -0x8000 or item.oPosX > 0x7FFF or item.oPosY < -0x8000 or item.oPosY > 0x7FFF or item.oPosZ < -0x8000 or item.oPosZ > 0x7FFF then
 			djui_chat_message_create("Warning! Item placed in a PU! Some behaviors may not work as intended")
 		end
+
+		table.insert(load_block_datas, {
+			item, current_item.behavior, current_item.model,
+			outline.oPosX, outline.oPosY - (current_item.spawnYOffset * current_item.size.y), outline.oPosZ,
+			outline.oFaceAnglePitch, outline.oFaceAngleYaw, outline.oFaceAngleRoll,
+			current_item.params,
+			current_item.size.x, current_item.size.y, current_item.size.z,
+			current_item.animState, 0
+		})
 	else
 		play_sound(SOUND_MENU_CAMERA_BUZZ, gMarioStates[0].marioObj.header.gfx.cameraToObject)
 		djui_chat_message_create("Item failed to place. Perhaps the object limit was reached?")

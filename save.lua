@@ -164,6 +164,13 @@ local function on_save_chat_command(msg)
 
     if mod_storage_exists(msg .. "_1") then
         djui_chat_message_create("Save slot \"" .. msg .."\" found. It has been overwritten")
+        for i = 1, 500 do
+            if mod_storage_exists(msg .. "_" .. i) then
+                mod_storage_remove(msg .. "_" .. i)
+            else
+                break
+            end
+        end
     end
     for index, value in ipairs(lines) do
         if value ~= "" then
@@ -174,6 +181,167 @@ local function on_save_chat_command(msg)
     djui_chat_message_create("Saved items to slot \"" .. msg .. "\"")
     return true
 end
+
+
+local load_name = ""
+local load_lines = {}
+load_block_datas = {}
+local load_state = 0
+hook_event(HOOK_ON_HUD_RENDER, function ()
+    if load_state == 1 then
+        for _, texture in ipairs(MenuBlockTextureIcons) do
+            djui_hud_render_texture(texture, 0, 0, 1, 1)
+        end
+        load_state = 2
+    elseif load_state == 2 then
+        local decode = decode_base64
+        local encoded_string = table.concat(load_lines)
+        --local count = 0
+        for i = 1, #encoded_string, BLOCK_CHAR_SIZE do
+            --count = count + 1
+            --djui_chat_message_create(count, encoded_string:sub(i + 0, i + 2))
+            local behavior_id    = decode(encoded_string:sub(i + 0, i + 2)  )
+            --djui_chat_message_create(count, "ID: " .. encoded_string:sub(i + 0, i + 2))
+            local model          = decode(encoded_string:sub(i + 3, i + 5)  )
+            --djui_chat_message_create(count, "Model: " .. encoded_string:sub(i + 3, i + 5))
+            local x_pos          = decode(encoded_string:sub(i + 6, i + 8)  ) - 65536
+            --djui_chat_message_create(count, "X: " .. encoded_string:sub(i + 6, i + 8))
+            local x_pos_decimal  = decode(encoded_string:sub(i + 9, i + 10) )
+            --djui_chat_message_create(count, "X decimal: " .. encoded_string:sub(i + 9, i + 10))
+            local y_pos          = decode(encoded_string:sub(i + 11, i + 13)) - 65536
+            --djui_chat_message_create(count, "Y: " .. encoded_string:sub(i + 11, i + 13))
+            local y_pos_decimal  = decode(encoded_string:sub(i + 14, i + 15))
+            --djui_chat_message_create(count, "Y Decimal: " .. encoded_string:sub(i + 14, i + 15))
+            local z_pos          = decode(encoded_string:sub(i + 16, i + 18)) - 65536
+            --djui_chat_message_create(count, "Z: " .. encoded_string:sub(i + 16, i + 18))
+            local z_pos_decimal  = decode(encoded_string:sub(i + 19, i + 20))
+            --djui_chat_message_create(count, "Z Decimal: " .. encoded_string:sub(i + 19, i + 20))
+            local anim_state     = decode(encoded_string:sub(i + 21, i + 22))
+            --djui_chat_message_create(count, "Anim: " .. encoded_string:sub(i + 21, i + 22))
+            local params         = decode(encoded_string:sub(i + 23, i + 28))
+            --djui_chat_message_create(count, "Params: " .. encoded_string:sub(i + 23, i + 28))
+            local scaleX         = decode(encoded_string:sub(i + 29, i + 29))
+            --djui_chat_message_create(count, "Scale X: " .. encoded_string:sub(i + 29, i + 29))
+            local scale_decimalX = decode(encoded_string:sub(i + 30, i + 31))
+            --djui_chat_message_create(count, "Scale X Decimal: " .. encoded_string:sub(i + 30, i + 31))
+            local scaleY         = decode(encoded_string:sub(i + 32, i + 32))
+            --djui_chat_message_create(count, "Scale Y: " .. encoded_string:sub(i + 32, i + 32))
+            local scale_decimalY = decode(encoded_string:sub(i + 33, i + 34))
+            --djui_chat_message_create(count, "Scale Y Decimal: " .. encoded_string:sub(i + 33, i + 34))
+            local scaleZ         = decode(encoded_string:sub(i + 35, i + 35))
+            --djui_chat_message_create(count, "Scale Z: " .. encoded_string:sub(i + 35, i + 35))
+            local scale_decimalZ = decode(encoded_string:sub(i + 36, i + 37))
+            --djui_chat_message_create(count, "Scale Z Decimal: " .. encoded_string:sub(i + 36, i + 37))
+            local yaw            = decode(encoded_string:sub(i + 38, i + 40)) - 32768
+            --djui_chat_message_create(count, "Yaw: " .. encoded_string:sub(i + 38, i + 40))
+            local pitch          = decode(encoded_string:sub(i + 41, i + 43)) - 32768
+            --djui_chat_message_create(count, "Pitch: " .. encoded_string:sub(i + 41, i + 43))
+            local roll           = decode(encoded_string:sub(i + 44, i + 46)) - 32768
+            --djui_chat_message_create(count, "Roll: " .. encoded_string:sub(i + 44, i + 46))
+
+            local item = spawn_sync_object(
+                behavior_id,
+                model,
+                x_pos + x_pos_decimal * 0.01, y_pos + y_pos_decimal * 0.01, z_pos + z_pos_decimal * 0.01,
+                ---@param obj Object
+                function (obj)
+                    obj.oOpacity = 255
+                    obj.oFaceAngleYaw = yaw
+                    obj.oFaceAnglePitch = pitch
+                    obj.oFaceAngleRoll = roll
+                    obj.oMoveAngleYaw = yaw
+                    obj.oMoveAnglePitch = pitch
+                    obj.oMoveAngleRoll = roll
+                    obj.oItemParams = params
+                    obj.oScaleX = scaleX + (scale_decimalX * 0.01)
+                    obj.oScaleY = scaleY + (scale_decimalY * 0.01)
+                    obj.oScaleZ = scaleZ + (scale_decimalZ * 0.01)
+                    obj_scale_xyz(obj, scaleX + (scale_decimalX * 0.01), scaleY + (scale_decimalY * 0.01), scaleZ + (scale_decimalZ * 0.01))
+                    obj.oAnimState = anim_state
+                    obj.globalPlayerIndex = gNetworkPlayers[0].globalIndex
+                    obj.oOwner = gNetworkPlayers[0].globalIndex + 1
+                end
+            )
+
+            if not item then
+                djui_chat_message_create("Item failed to place. Perhaps the object limit was reached?")
+            else
+                table.insert(load_block_datas, {
+                    item, behavior_id, model,
+                    x_pos + x_pos_decimal * 0.01, y_pos + y_pos_decimal * 0.01, z_pos + z_pos_decimal * 0.01,
+                    pitch, yaw, roll,
+                    params,
+                    scaleX + scale_decimalX, scaleY + scale_decimalY, scaleZ + scale_decimalZ,
+                    anim_state, 0
+                })
+            end
+        end
+        djui_chat_message_create("Loaded items from slot \"" .. load_name .. "\"")
+        load_state = 0
+    end
+end)
+
+hook_event(HOOK_MARIO_UPDATE, function (m)
+    if m.playerIndex ~= 0 then return end
+
+    for index, respawn_item in ipairs(load_block_datas) do
+        ---@type Object
+        local item_obj = respawn_item[1]
+        if not item_obj or item_obj.activeFlags == 0 then
+            local behavior_id = respawn_item[2]
+            local model = respawn_item[3]
+            local x = respawn_item[4]
+            local y = respawn_item[5]
+            local z = respawn_item[6]
+            local pitch = respawn_item[7]
+            local yaw = respawn_item[8]
+            local roll = respawn_item[9]
+            local params = respawn_item[10]
+            local scaleX = respawn_item[11]
+            local scaleY = respawn_item[12]
+            local scaleZ = respawn_item[13]
+            local anim_state = respawn_item[14]
+            local respawned_item = spawn_sync_object(
+                behavior_id,
+                model,
+                x, y, z,
+                ---@param obj Object
+                function (obj)
+                    obj.oOpacity = 255
+                    obj.oFaceAngleYaw = yaw
+                    obj.oFaceAnglePitch = pitch
+                    obj.oFaceAngleRoll = roll
+                    obj.oMoveAngleYaw = yaw
+                    obj.oMoveAnglePitch = pitch
+                    obj.oMoveAngleRoll = roll
+                    obj.oItemParams = params
+                    obj.oScaleX = scaleX
+                    obj.oScaleY = scaleY
+                    obj.oScaleZ = scaleZ
+                    obj_scale_xyz(obj, scaleX, scaleY, scaleZ)
+                    obj.oAnimState = anim_state
+                    obj.globalPlayerIndex = gNetworkPlayers[0].globalIndex
+                    obj.oOwner = gNetworkPlayers[0].globalIndex + 1
+                end
+            )
+
+            if not respawned_item then
+                djui_chat_message_create("Item failed to place. Perhaps the object limit was reached?")
+                load_block_datas = {}
+                break
+            else
+                load_block_datas[index][1] = respawned_item
+                load_block_datas[index][15] = 0
+            end
+        else
+            load_block_datas[index][15] = respawn_item[15] + 1
+        end
+
+        if respawn_item[15] > 1 then
+            table.remove(load_block_datas, index)
+        end
+    end
+end)
 
 ---@param msg string
 local function on_load_chat_command(msg)
@@ -194,12 +362,11 @@ local function on_load_chat_command(msg)
         end
     end]]
 
-    local lines = {}
     local exists = false
     for i = 1, MAX_KEYS, 1 do
         if mod_storage_exists(msg .. "_" .. tostring(i)) then
             local encoded = mod_storage_load(msg .. "_" .. tostring(i))
-            table.insert(lines, encoded)
+            table.insert(load_lines, encoded)
             exists = true
         elseif exists then
             break
@@ -209,80 +376,11 @@ local function on_load_chat_command(msg)
         end
     end
 
-    local decode = decode_base64
-    local encoded_string = table.concat(lines)
-    --local count = 0
-    for i = 1, #encoded_string, BLOCK_CHAR_SIZE do
-        --count = count + 1
-        --djui_chat_message_create(count, encoded_string:sub(i + 0, i + 2))
-        local behavior_id    = decode(encoded_string:sub(i + 0, i + 2)  )
-        --djui_chat_message_create(count, "ID: " .. encoded_string:sub(i + 0, i + 2))
-        local model          = decode(encoded_string:sub(i + 3, i + 5)  )
-        --djui_chat_message_create(count, "Model: " .. encoded_string:sub(i + 3, i + 5))
-        local x_pos          = decode(encoded_string:sub(i + 6, i + 8)  ) - 65536
-        --djui_chat_message_create(count, "X: " .. encoded_string:sub(i + 6, i + 8))
-        local x_pos_decimal  = decode(encoded_string:sub(i + 9, i + 10) )
-        --djui_chat_message_create(count, "X decimal: " .. encoded_string:sub(i + 9, i + 10))
-        local y_pos          = decode(encoded_string:sub(i + 11, i + 13)) - 65536
-        --djui_chat_message_create(count, "Y: " .. encoded_string:sub(i + 11, i + 13))
-        local y_pos_decimal  = decode(encoded_string:sub(i + 14, i + 15))
-        --djui_chat_message_create(count, "Y Decimal: " .. encoded_string:sub(i + 14, i + 15))
-        local z_pos          = decode(encoded_string:sub(i + 16, i + 18)) - 65536
-        --djui_chat_message_create(count, "Z: " .. encoded_string:sub(i + 16, i + 18))
-        local z_pos_decimal  = decode(encoded_string:sub(i + 19, i + 20))
-        --djui_chat_message_create(count, "Z Decimal: " .. encoded_string:sub(i + 19, i + 20))
-        local anim_state     = decode(encoded_string:sub(i + 21, i + 22))
-        --djui_chat_message_create(count, "Anim: " .. encoded_string:sub(i + 21, i + 22))
-        local params         = decode(encoded_string:sub(i + 23, i + 28))
-        --djui_chat_message_create(count, "Params: " .. encoded_string:sub(i + 23, i + 28))
-        local scaleX         = decode(encoded_string:sub(i + 29, i + 29))
-        --djui_chat_message_create(count, "Scale X: " .. encoded_string:sub(i + 29, i + 29))
-        local scale_decimalX = decode(encoded_string:sub(i + 30, i + 31))
-        --djui_chat_message_create(count, "Scale X Decimal: " .. encoded_string:sub(i + 30, i + 31))
-        local scaleY         = decode(encoded_string:sub(i + 32, i + 32))
-        --djui_chat_message_create(count, "Scale Y: " .. encoded_string:sub(i + 32, i + 32))
-        local scale_decimalY = decode(encoded_string:sub(i + 33, i + 34))
-        --djui_chat_message_create(count, "Scale Y Decimal: " .. encoded_string:sub(i + 33, i + 34))
-        local scaleZ         = decode(encoded_string:sub(i + 35, i + 35))
-        --djui_chat_message_create(count, "Scale Z: " .. encoded_string:sub(i + 35, i + 35))
-        local scale_decimalZ = decode(encoded_string:sub(i + 36, i + 37))
-        --djui_chat_message_create(count, "Scale Z Decimal: " .. encoded_string:sub(i + 36, i + 37))
-        local yaw            = decode(encoded_string:sub(i + 38, i + 40)) - 32768
-        --djui_chat_message_create(count, "Yaw: " .. encoded_string:sub(i + 38, i + 40))
-        local pitch          = decode(encoded_string:sub(i + 41, i + 43)) - 32768
-        --djui_chat_message_create(count, "Pitch: " .. encoded_string:sub(i + 41, i + 43))
-        local roll           = decode(encoded_string:sub(i + 44, i + 46)) - 32768
-        --djui_chat_message_create(count, "Roll: " .. encoded_string:sub(i + 44, i + 46))
-
-        local item = spawn_sync_object(
-            behavior_id,
-            model,
-            x_pos + x_pos_decimal * 0.01, y_pos + y_pos_decimal * 0.01, z_pos + z_pos_decimal * 0.01,
-            ---@param obj Object
-            function (obj)
-                obj.oAnimState = anim_state
-                obj.oOpacity = 255
-                obj.oFaceAngleYaw = yaw
-                obj.oFaceAnglePitch = pitch
-                obj.oFaceAngleRoll = roll
-                obj.oMoveAngleYaw = yaw
-                obj.oMoveAnglePitch = pitch
-                obj.oMoveAngleRoll = roll
-                obj.oItemParams = params
-                obj.oScaleX = scaleX + (scale_decimalX * 0.01)
-                obj.oScaleY = scaleY + (scale_decimalY * 0.01)
-                obj.oScaleZ = scaleZ + (scale_decimalZ * 0.01)
-                obj_scale_xyz(obj, scaleX + (scale_decimalX * 0.01), scaleY + (scale_decimalY * 0.01), scaleZ + (scale_decimalZ * 0.01))
-                obj.globalPlayerIndex = gNetworkPlayers[0].globalIndex
-                obj.oOwner = gNetworkPlayers[0].globalIndex + 1
-            end
-        )
-
-        if not item then
-            djui_chat_message_create("Item failed to place. Perhaps the object limit was reached?")
-        end
+    if load_state == 0 then
+        load_state = 1
+        load_name = msg
+        load_block_datas = {}
     end
-    djui_chat_message_create("Loaded items from slot \"" .. msg .. "\"")
     return true
 end
 

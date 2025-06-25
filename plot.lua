@@ -3,7 +3,7 @@ gLevelValues.floorLowerLimitMisc = -32768
 gLevelValues.floorLowerLimitShadow = -32768
 gLevelValues.cellHeightLimit = 32767
 
-local LEVEL_PLOT = level_register("level_plot_entry", COURSE_NONE, "Plot", "plot", 20000, 0x28, 0x28, 0x28)
+local LEVEL_PLOT = level_register("level_plot_entry", COURSE_BOB, "Plot", "plot", 20000, 0x28, 0x28, 0x28)
 
 local function on_chat_command(msg)
     local act = 1
