@@ -1,5 +1,5 @@
--- name: Minecraft Enhanced \\[WIP]\\
--- description: An improved version of the Minecraft mod, originally by zKevin
+-- name: \\#31db02\\Minecraft \\#1dcff2\\Enhanced \\[WIP]\\
+-- description: An improved version of the Minecraft mod, originally by zKevin.\n\nModification by Sunk. Texture help by Sherbie. Minecraft+ made by Bene360 (which isn't used in this mod, but their effort shouldn't be wasted).
 
 gLevelValues.fixCollisionBugs = true
 gLevelValues.fixCollisionBugsFalseLedgeGrab = false
