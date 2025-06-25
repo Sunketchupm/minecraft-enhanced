@@ -233,8 +233,8 @@ local function custom_surface_mario_update(m)
 
         if surface_id == MCE_BLOCK_COL_ID_WIDE_WALLKICK then
             local wall = m.wall
-            local wallDYaw = (atan2s(wall.normal.z, wall.normal.x) - (m.faceAngle.y))
-            local limit = convert_s16(180 - 89)
+            local wallDYaw = atan2s(wall.normal.z, wall.normal.x) - (m.faceAngle.y)
+            local limit = degrees_to_sm64(180 - 89)
             wallDYaw = convert_s16(wallDYaw)
 
             -- Standard air hit wall requirements
