@@ -277,7 +277,7 @@ with open(BUILTIN_TEXTURES_FILE, "r") as file:
                 is_excluded_subfolder = line.find(folder) != -1
                 if is_excluded_subfolder:
                     break
-            is_override_in = any(params[0] in name for name in override_include_texture_names)
+            is_override_in = True#any(params[0] in name for name in override_include_texture_names)
             is_override_out = any(params[0] in name for name in override_exclude_texture_names)
             if is_power_of_2 and ((is_in_containing_folder and not is_excluded_subfolder and not is_override_out) or is_override_in):
                 texture_names.append(params[0])
