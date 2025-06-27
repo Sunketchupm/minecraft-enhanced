@@ -83,6 +83,11 @@ local SPRINGBOARD_TEX = get_texture_info("placeholder")
 local DPLAT_BLOCK_TEX = get_texture_info("dashpanel")
 local SPLAT_BLOCK_TEX = get_texture_info("shrinkingplatform")
 local CPLAT_BLOCK_TEX = get_texture_info("checkpoint")
+------------------- MENU SLOTS -------------------
+local SLOT_GOOMBA_TEX = get_texture_info("gombaslot")
+local SLOT_BOBOMB_TEX = get_texture_info("bobombslot")
+local SLOT_CHUCKYA_TEX = get_texture_info("chuckyaslot")
+local SLOT_STAR_TEX = get_texture_info("starslot")
 --------------------------------------
 
 ---@class MenuItemLink
@@ -943,8 +948,7 @@ local function hud_render()
     local screen_height = djui_hud_get_screen_height()
     if gCanBuild then
         render_menu(screen_width, screen_height)
-    end
-    if s_show_controls then
+    elseif s_show_controls then
         render_controls(screen_width, screen_height)
     end
 end
