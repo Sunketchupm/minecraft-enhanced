@@ -8,7 +8,7 @@ local function mario_is_within_block(m, block)
             m.pos.z > block.oPosZ - (100 * block.oScaleZ) and m.pos.z < block.oPosZ + (100 * block.oScaleZ)
 end
 
-local actions_can_bonk_can_wallkick = {
+local s_actions_can_bonk_can_wallkick = {
     [ACT_JUMP] = true,
     [ACT_HOLD_JUMP] = true,
     [ACT_DOUBLE_JUMP] = true,
@@ -21,7 +21,7 @@ local actions_can_bonk_can_wallkick = {
     [ACT_FREEFALL] = true,
 }
 
-local bounce_landing_actions = {
+local s_bounce_landing_actions = {
     [ACT_JUMP_LAND] = true,
     [ACT_FREEFALL_LAND] = true,
     [ACT_DOUBLE_JUMP_LAND] = true,
@@ -40,7 +40,7 @@ local bounce_landing_actions = {
     [ACT_FLYING] = true
 }
 
-local bounce_bonk_actions = {
+local s_bounce_bonk_actions = {
     [ACT_AIR_HIT_WALL] = true,
     [ACT_SOFT_BONK] = true,
     [ACT_BACKWARD_AIR_KB] = true,
@@ -56,14 +56,14 @@ local bounce_bonk_actions = {
     [ACT_FLYING] = true
 }
 
-local prev_speed = 0
-local hit_firsty_wall = false
+local s_prev_speed = 0
+local s_hit_firsty_wall = false
 
-local preserved_flight_speed = 0
-local flight_hit_bounce_wall = false
+local s_preserved_flight_speed = 0
+local s_flight_hit_bounce_wall = false
 
 ---@type Object?
-hit_breakable_block = nil
+g_hit_breakable_block = nil
 
 ---@param m MarioState
 local function vanilla_mario_update_geometry_inputs(m)
@@ -118,7 +118,7 @@ local function vanilla_mario_update_geometry_inputs(m)
     end
 end
 
-local special_surface_types = {
+local s_special_surface_types = {
     verticalWind = {},
     toxicGas = {},
     booster = {},
@@ -126,7 +126,7 @@ local special_surface_types = {
 }
 
 ---@type table<string, fun(m: MarioState):boolean?>
-local special_surface_handlers = {
+local s_special_surface_handlers = {
     verticalWind = function (m)
         if m.action ~= ACT_CUSTOM_VERTICAL_WIND and m.action & ACT_FLAG_ALLOW_VERTICAL_WIND_ACTION ~= 0 then
             drop_and_set_mario_action(m, ACT_CUSTOM_VERTICAL_WIND, 0)
@@ -137,22 +137,22 @@ local special_surface_handlers = {
         end
         spawn_wind_particles(1, 0)
         play_sound(SOUND_ENV_WIND2, m.marioObj.header.gfx.cameraToObject)
-        special_surface_types.verticalWind = {}
+        s_special_surface_types.verticalWind = {}
     end,
     toxicGas = function (m)
         if m.flags & MARIO_METAL_CAP == 0 then
             m.health = m.health - 3
         end
-        special_surface_types.toxicGas = {}
+        s_special_surface_types.toxicGas = {}
     end,
     booster = function (m)
         if m.action & ACT_FLAG_MOVING ~= 0 and m.action ~= ACT_DECELERATING then
             mario_set_forward_vel(m, m.forwardVel + 2.35)
         end
-        special_surface_types.booster = {}
+        s_special_surface_types.booster = {}
     end,
     water = function (m)
-        local blocks = special_surface_types.water
+        local blocks = s_special_surface_types.water
         local highest_water_y = gLevelValues.floorLowerLimit
         local first_check = true
         local in_water_block = false
@@ -172,7 +172,7 @@ local special_surface_handlers = {
             in_water_block = true
         end
 
-        special_surface_types.water = {}
+        s_special_surface_types.water = {}
         if in_water_block then
             return false
         end
@@ -238,7 +238,7 @@ local function custom_surface_mario_update(m)
             wallDYaw = convert_s16(wallDYaw)
 
             -- Standard air hit wall requirements
-            if m.forwardVel >= 16 and actions_can_bonk_can_wallkick[m.action] then
+            if m.forwardVel >= 16 and s_actions_can_bonk_can_wallkick[m.action] then
                 if wallDYaw >= limit or wallDYaw <= -limit then
                     mario_bonk_reflection(m, 0)
                     m.faceAngle.y = m.faceAngle.y + 0x8000
@@ -272,7 +272,7 @@ local function custom_surface_mario_update(m)
 
         if m.pos.y == m.floorHeight then
             if surface_id == MCE_BLOCK_COL_ID_CHECKPOINT then
-                respawn_location = {x = block.oPosX, y = block.oPosY + block.oScaleY * 200, z = block.oPosZ}
+                g_respawn_location = {x = block.oPosX, y = block.oPosY + block.oScaleY * 200, z = block.oPosZ}
             elseif surface_id == MCE_BLOCK_COL_ID_HEAL then
                 m.healCounter = 39
             elseif surface_id == MCE_BLOCK_COL_ID_CONVEYOR then
@@ -284,7 +284,7 @@ local function custom_surface_mario_update(m)
                 if m.action == ACT_FLYING then
                     m.faceAngle.x = -m.faceAngle.x
                     m.angleVel.x = -m.angleVel.x
-                elseif (m.action & ACT_FLAG_STATIONARY ~= 0 or m.action & ACT_FLAG_MOVING ~= 0) and not bounce_landing_actions[m.action] then
+                elseif (m.action & ACT_FLAG_STATIONARY ~= 0 or m.action & ACT_FLAG_MOVING ~= 0) and not s_bounce_landing_actions[m.action] then
                     m.vel.y = 50
                     set_mario_action(m, m.heldObj and ACT_HOLD_JUMP or ACT_DOUBLE_JUMP, 0)
                 end
@@ -332,26 +332,26 @@ local function custom_surface_mario_update(m)
         end
     end
     ------------------ MISC -------------------
-    if #special_surface_types.verticalWind > 0 then
-        special_surface_handlers.verticalWind(m)
+    if #s_special_surface_types.verticalWind > 0 then
+        s_special_surface_handlers.verticalWind(m)
     end
-    if #special_surface_types.toxicGas > 0 then
-        special_surface_handlers.toxicGas(m)
+    if #s_special_surface_types.toxicGas > 0 then
+        s_special_surface_handlers.toxicGas(m)
     end
-    if #special_surface_types.booster > 0 then
-        special_surface_handlers.booster(m)
+    if #s_special_surface_types.booster > 0 then
+        s_special_surface_handlers.booster(m)
     end
 
     if m.action == ACT_FLYING then
-        if flight_hit_bounce_wall then
-            flight_hit_bounce_wall = false
-            mario_set_forward_vel(m, preserved_flight_speed)
-        elseif preserved_flight_speed > 0 then
-            preserved_flight_speed = 0
+        if s_flight_hit_bounce_wall then
+            s_flight_hit_bounce_wall = false
+            mario_set_forward_vel(m, s_preserved_flight_speed)
+        elseif s_preserved_flight_speed > 0 then
+            s_preserved_flight_speed = 0
         end
     else
-        flight_hit_bounce_wall = false
-        preserved_flight_speed = 0
+        s_flight_hit_bounce_wall = false
+        s_preserved_flight_speed = 0
     end
 end
 
@@ -386,8 +386,8 @@ end
 local function custom_surface_before_phys_step(m)
     if m.playerIndex ~= 0 then return end
 
-    if not flight_hit_bounce_wall then
-        preserved_flight_speed = m.forwardVel
+    if not s_flight_hit_bounce_wall then
+        s_preserved_flight_speed = m.forwardVel
     end
 end
 
@@ -405,8 +405,8 @@ local function custom_surface_set_mario_action(m)
         local surface_id = block.oItemParams & 0xFF
 
         if surface_id == MCE_BLOCK_COL_ID_FIRSTY and m.action == ACT_AIR_HIT_WALL then
-            prev_speed = m.forwardVel
-            hit_firsty_wall = true
+            s_prev_speed = m.forwardVel
+            s_hit_firsty_wall = true
         elseif surface_id == MCE_BLOCK_COL_ID_ANY_BONK_WALLKICK then
             if (m.action == ACT_BACKWARD_AIR_KB or m.action == ACT_SOFT_BONK) and m.prevAction ~= ACT_LEDGE_GRAB then
                 m.prevAction = ACT_AIR_HIT_WALL
@@ -417,7 +417,7 @@ local function custom_surface_set_mario_action(m)
             m.actionTimer = 3
         elseif surface_id == MCE_BLOCK_COL_ID_BREAKABLE then
             if m.action == ACT_AIR_HIT_WALL then
-                hit_breakable_block = block
+                g_hit_breakable_block = block
             end
         end
     end
@@ -437,15 +437,15 @@ local function custom_surface_set_mario_action(m)
     end
     ------------------ MISC -------------------
     if m.action & ACT_FLAG_AIR == 0 then
-        hit_firsty_wall = false
+        s_hit_firsty_wall = false
     end
 
-    if hit_firsty_wall and m.action == ACT_WALL_KICK_AIR then
-        if prev_speed < 20 then
-            prev_speed = 20
+    if s_hit_firsty_wall and m.action == ACT_WALL_KICK_AIR then
+        if s_prev_speed < 20 then
+            s_prev_speed = 20
         end
-        m.forwardVel = prev_speed
-        hit_firsty_wall = false
+        m.forwardVel = s_prev_speed
+        s_hit_firsty_wall = false
     end
 end
 
@@ -465,8 +465,8 @@ local function custom_surface_before_set_mario_action(m, incoming)
         local surface_id = block.oItemParams & 0xFF
 
         if surface_id == MCE_BLOCK_COL_ID_BOUNCE then
-            flight_hit_bounce_wall = true
-            if bounce_bonk_actions[incoming] then
+            s_flight_hit_bounce_wall = true
+            if s_bounce_bonk_actions[incoming] then
                 mario_bonk_reflection(m, 1)
             end
             return 1
@@ -477,7 +477,7 @@ local function custom_surface_before_set_mario_action(m, incoming)
         local block = block_floor
         local surface_id = block.oItemParams & 0xFF
 
-        if surface_id == MCE_BLOCK_COL_ID_BOUNCE and m.pos.y == m.floorHeight and bounce_landing_actions[incoming] then
+        if surface_id == MCE_BLOCK_COL_ID_BOUNCE and m.pos.y == m.floorHeight and s_bounce_landing_actions[incoming] then
             m.vel.y = 50
             return 1
         end
@@ -490,7 +490,7 @@ end
 local function custom_surface_override_geometry_inputs(m)
     if m.playerIndex ~= 0 then return end
     ------------------ WATER -------------------
-    return special_surface_handlers.water(m)
+    return s_special_surface_handlers.water(m)
 end
 
 local function reset_block(m, block)
@@ -508,16 +508,16 @@ local function custom_surface_block_update()
         local surface_id = block.oItemParams & 0xFF
 
         if not already_exists.verticalWind and surface_id == MCE_BLOCK_COL_ID_VERTICAL_WIND and mario_is_within_block(m, block) then
-            table.insert(special_surface_types.verticalWind, block)
+            table.insert(s_special_surface_types.verticalWind, block)
             already_exists.verticalWind = true
         elseif not already_exists.toxicGas and surface_id == MCE_BLOCK_COL_ID_TOXIC_GAS and mario_is_within_block(m, block) then
-            table.insert(special_surface_types.toxicGas, block)
+            table.insert(s_special_surface_types.toxicGas, block)
             already_exists.toxicGas = true
         elseif not already_exists.booster and surface_id == MCE_BLOCK_COL_ID_BOOSTER and mario_is_within_block(m, block) then
-            table.insert(special_surface_types.booster, block)
+            table.insert(s_special_surface_types.booster, block)
             already_exists.booster = true
         elseif surface_id == MCE_BLOCK_COL_ID_WATER and mario_is_within_block(m, block) then
-            table.insert(special_surface_types.water, block)
+            table.insert(s_special_surface_types.water, block)
         elseif surface_id == MCE_BLOCK_COL_ID_DISAPPEARING then
             if block.oAction == 1 then
                 local transparent_start = mce_block_get_transparent_start_obj(block)

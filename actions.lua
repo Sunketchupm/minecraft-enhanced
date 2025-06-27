@@ -3,12 +3,12 @@ local mario_set_forward_vel,perform_air_step,set_character_animation,queue_rumbl
 
 ACT_FREE_MOVE = allocate_mario_action(ACT_GROUP_AUTOMATIC | ACT_FLAG_INTANGIBLE | ACT_FLAG_INVULNERABLE)
 
-local savedMarioYaw = 0
-local marioYaw_timer = 0
-local prev_romhack_cam_state = camera_get_romhack_override()
+local s_saved_mario_yaw = 0
+local s_mario_yaw_timer = 0
+local s_prev_romhack_cam_state = camera_get_romhack_override()
 ---@param m MarioState
 local function act_free_move(m)
-    if MenuOpen then return false end
+    if gMenuOpen then return false end
 
     m.peakHeight = m.pos.y
     m.health = 0x880
@@ -51,14 +51,14 @@ local function act_free_move(m)
     end
 
     if m.controller.buttonPressed & L_TRIG ~= 0 then
-        marioYaw_timer = marioYaw_timer + 1
-        if marioYaw_timer == 1 then
-            savedMarioYaw = m.faceAngle.y
+        s_mario_yaw_timer = s_mario_yaw_timer + 1
+        if s_mario_yaw_timer == 1 then
+            s_saved_mario_yaw = m.faceAngle.y
         end
     else
-        marioYaw_timer = 0
+        s_mario_yaw_timer = 0
     end
-    m.faceAngle.y = lHeld and savedMarioYaw or m.intendedYaw
+    m.faceAngle.y = lHeld and s_saved_mario_yaw or m.intendedYaw
 
     if m.controller.stickMag > 0 then
         if bHeld then
@@ -105,13 +105,13 @@ local function allow_interact(m)
     end
 end
 
-local default_respawn_location = gVec3fZero()
-respawn_location = gVec3fZero()
+local s_default_respawn_location = gVec3fZero()
+g_respawn_location = gVec3fZero()
 
 ---@param m MarioState
 local function on_death(m)
     if m.action == ACT_FREE_MOVE then return false end
-    vec3f_copy(m.pos, respawn_location)
+    vec3f_copy(m.pos, g_respawn_location)
     mario_pop_bubble(m)
     set_mario_action(m, ACT_FREEFALL, 0)
     m.invincTimer = 1
@@ -123,8 +123,8 @@ end
 
 local function on_warp()
     local m = gMarioStates[0]
-    vec3f_copy(default_respawn_location, m.pos)
-    vec3f_copy(respawn_location, m.pos)
+    vec3f_copy(s_default_respawn_location, m.pos)
+    vec3f_copy(g_respawn_location, m.pos)
 end
 
 ---@param m MarioState
@@ -176,17 +176,17 @@ local function mario_update(m)
             end
 
             if m.action ~= ACT_FREE_MOVE then
-                prev_romhack_cam_state = camera_get_romhack_override()
+                s_prev_romhack_cam_state = camera_get_romhack_override()
             end
             local next_action = m.action == ACT_FREE_MOVE and ACT_FREEFALL or ACT_FREE_MOVE
             if next_action == ACT_FREE_MOVE then
                 camera_set_romhack_override(RCO_ALL_INCLUDING_VANILLA)
             else
-                if prev_romhack_cam_state == RCO_NONE or
-                    (level_is_vanilla_level(gNetworkPlayers[0].currLevelNum) and prev_romhack_cam_state == RCO_ALL or prev_romhack_cam_state == RCO_ALL_EXCEPT_BOWSER) then
+                if s_prev_romhack_cam_state == RCO_NONE or
+                    (level_is_vanilla_level(gNetworkPlayers[0].currLevelNum) and s_prev_romhack_cam_state == RCO_ALL or s_prev_romhack_cam_state == RCO_ALL_EXCEPT_BOWSER) then
                     camera_set_romhack_override(RCO_DISABLE)
                 else
-                    camera_set_romhack_override(prev_romhack_cam_state)
+                    camera_set_romhack_override(s_prev_romhack_cam_state)
                 end
             end
             drop_and_set_mario_action(m, next_action, 0)
@@ -207,7 +207,7 @@ hook_event(HOOK_MARIO_UPDATE, mario_update)
 
 hook_chat_command("restart", "[<nothing>|reset] Restarts you to your current checkpoint, or use \"reset\" to respawn at spawn", function (msg)
     if msg:lower() == "reset" then
-        vec3f_copy(respawn_location, default_respawn_location)
+        vec3f_copy(g_respawn_location, s_default_respawn_location)
     end
     on_death(gMarioStates[0])
     return true

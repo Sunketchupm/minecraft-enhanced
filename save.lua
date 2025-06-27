@@ -109,7 +109,7 @@ local function on_save_chat_command(msg)
     local encoded_string = ""
     local pad = add_padding
     local encode = encode_base64
-    for _, item_behavior_ids in ipairs(all_item_behaviors) do
+    for _, item_behavior_ids in ipairs(g_all_item_behaviors) do
         local obj = obj_get_first_with_behavior_id(item_behavior_ids)
         ---@type NetworkPlayer
         local np = gNetworkPlayers[0]
@@ -183,19 +183,19 @@ local function on_save_chat_command(msg)
 end
 
 
-local load_name = ""
-local load_lines = {}
-load_block_datas = {}
+local s_load_name = ""
+local s_load_lines = {}
+g_load_block_datas = {}
 local load_state = 0
 hook_event(HOOK_ON_HUD_RENDER, function ()
     if load_state == 1 then
-        for _, texture in ipairs(MenuBlockTextureIcons) do
+        for _, texture in ipairs(gMenuBlockTextureIcons) do
             djui_hud_render_texture(texture, 0, 0, 1, 1)
         end
         load_state = 2
     elseif load_state == 2 then
         local decode = decode_base64
-        local encoded_string = table.concat(load_lines)
+        local encoded_string = table.concat(s_load_lines)
         --local count = 0
         for i = 1, #encoded_string, BLOCK_CHAR_SIZE do
             --count = count + 1
@@ -266,7 +266,7 @@ hook_event(HOOK_ON_HUD_RENDER, function ()
             if not item then
                 djui_chat_message_create("Item failed to place. Perhaps the object limit was reached?")
             else
-                table.insert(load_block_datas, {
+                table.insert(g_load_block_datas, {
                     item, behavior_id, model,
                     x_pos + x_pos_decimal * 0.01, y_pos + y_pos_decimal * 0.01, z_pos + z_pos_decimal * 0.01,
                     pitch, yaw, roll,
@@ -276,7 +276,7 @@ hook_event(HOOK_ON_HUD_RENDER, function ()
                 })
             end
         end
-        djui_chat_message_create("Loaded items from slot \"" .. load_name .. "\"")
+        djui_chat_message_create("Loaded items from slot \"" .. s_load_name .. "\"")
         load_state = 0
     end
 end)
@@ -284,7 +284,7 @@ end)
 hook_event(HOOK_MARIO_UPDATE, function (m)
     if m.playerIndex ~= 0 then return end
 
-    for index, respawn_item in ipairs(load_block_datas) do
+    for index, respawn_item in ipairs(g_load_block_datas) do
         ---@type Object
         local item_obj = respawn_item[1]
         if not item_obj or item_obj.activeFlags == 0 then
@@ -327,18 +327,18 @@ hook_event(HOOK_MARIO_UPDATE, function (m)
 
             if not respawned_item then
                 djui_chat_message_create("Item failed to place. Perhaps the object limit was reached?")
-                load_block_datas = {}
+                g_load_block_datas = {}
                 break
             else
-                load_block_datas[index][1] = respawned_item
-                load_block_datas[index][15] = 0
+                g_load_block_datas[index][1] = respawned_item
+                g_load_block_datas[index][15] = 0
             end
         else
-            load_block_datas[index][15] = respawn_item[15] + 1
+            g_load_block_datas[index][15] = respawn_item[15] + 1
         end
 
         if respawn_item[15] > 1 then
-            table.remove(load_block_datas, index)
+            table.remove(g_load_block_datas, index)
         end
     end
 end)
@@ -366,7 +366,7 @@ local function on_load_chat_command(msg)
     for i = 1, MAX_KEYS, 1 do
         if mod_storage_exists(msg .. "_" .. tostring(i)) then
             local encoded = mod_storage_load(msg .. "_" .. tostring(i))
-            table.insert(load_lines, encoded)
+            table.insert(s_load_lines, encoded)
             exists = true
         elseif exists then
             break
@@ -378,8 +378,8 @@ local function on_load_chat_command(msg)
 
     if load_state == 0 then
         load_state = 1
-        load_name = msg
-        load_block_datas = {}
+        s_load_name = msg
+        g_load_block_datas = {}
     end
     return true
 end

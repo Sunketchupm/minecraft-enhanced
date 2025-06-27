@@ -2,7 +2,7 @@
 -- If a table of coordinates, use the coordinates
 
 local g = get_texture_info
-MenuBlockTextureIcons = {
+gMenuBlockTextureIcons = {
     g("amp_seg8_texture_08000F18"),
     g("amp_seg8_texture_08001318"),
     g("amp_seg8_texture_08001B18"),
@@ -1964,7 +1964,7 @@ MenuBlockTextureIcons = {
     g("texture_ia8_up_arrow"),
 }
 
-MenuBlockColorIcons = {
+gMenuBlockColorIcons = {
     {r = 0, g = 0, b = 0, a = 255},
     {r = 10, g = 10, b = 10, a = 255},
     {r = 20, g = 20, b = 20, a = 255},
@@ -2075,10 +2075,10 @@ MenuBlockColorIcons = {
     {r = 209, g = 255, b = 236, a = 255},
 }
 
-MenuItemIcons = {
+gMenuItemIcons = {
     get_texture_info("coin_seg3_texture_03005780")
 }
 
-MenuEnemyIcons = {
+gMenuEnemyIcons = {
     --get_texture_info("")
 }

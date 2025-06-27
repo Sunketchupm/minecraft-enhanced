@@ -26,10 +26,10 @@ define_custom_obj_fields({
 })
 
 gCurrentItem = {behavior = nil, model = E_MODEL_NONE, params = {}}
-all_item_behaviors = {}
-local level_item_behaviors = {}
-local enemy_item_behaviors = {}
-local vanilla_clear_immune = {}
+g_all_item_behaviors = {}
+local g_level_item_behaviors = {}
+local g_enemy_item_behaviors = {}
+local g_vanilla_clear_immune = {}
 add_first_update(function ()
     ---@type Item
     gCurrentItem = {
@@ -43,24 +43,24 @@ add_first_update(function ()
         mock = {}
     }
     ---@type BehaviorId[]
-    all_item_behaviors = {
+    g_all_item_behaviors = {
         bhvMceBlock,
         bhvMceStar,
         bhvMceCoin,
         bhvMceExclamationBox
     }
     ---@type BehaviorId[]
-    level_item_behaviors = {
+    g_level_item_behaviors = {
         bhvMceStar,
         bhvMceCoin,
         bhvMceExclamationBox
     }
     ---@type BehaviorId[]
-    enemy_item_behaviors = {
+    g_enemy_item_behaviors = {
         --
     }
     ---@type BehaviorId[]
-    vanilla_clear_immune = {
+    g_vanilla_clear_immune = {
         [id_bhvSpinAirborneWarp] = true,
         [bhvMceBlock] = true,
         [bhvMceStar] = true,
@@ -106,7 +106,7 @@ end
 function obj_get_any_nearest_item(obj)
     local nearest_item = nil
     local nearest_dist = 0xFFFF
-    for _, item_behavior in ipairs(all_item_behaviors) do
+    for _, item_behavior in ipairs(g_all_item_behaviors) do
         local item = obj_get_nearest_object_with_behavior_id(obj, item_behavior)
         if item then
             local dist = dist_between_objects(item, obj)
@@ -270,10 +270,10 @@ function bhv_mce_block_loop(obj)
     -- Handle breakable surfaces, so that their particles properly spawn
     local surface_id = obj.oItemParams & 0xFF
     if surface_id == MCE_BLOCK_COL_ID_BREAKABLE then
-        if hit_breakable_block == obj then
+        if g_hit_breakable_block == obj then
             obj.oAction = 1
             obj.oTimer = 0
-            hit_breakable_block = nil
+            g_hit_breakable_block = nil
         end
 
         if obj.oAction == 1 then
@@ -559,7 +559,7 @@ local function on_clear_chat_command(msg)
     local args = split_string(msg, " ")
     local command = args[1] and args[1]:lower() or ""
     if command == "all" or command == "" then
-        for _, behavior in ipairs(all_item_behaviors) do
+        for _, behavior in ipairs(g_all_item_behaviors) do
             local obj = obj_get_first_with_behavior_id(behavior)
             while obj do
                 if object_removal_criteria(obj, args[2]) then
@@ -574,7 +574,7 @@ local function on_clear_chat_command(msg)
             local obj = obj_get_first(i)
             while obj do
                 local behavior_id = get_id_from_behavior(obj.behavior)
-                if not vanilla_clear_immune[behavior_id] then
+                if not g_vanilla_clear_immune[behavior_id] then
                     obj_mark_for_deletion(obj)
                 end
                 obj_mark_for_deletion(obj)
@@ -592,7 +592,7 @@ local function on_clear_chat_command(msg)
         end
         djui_chat_message_create("Removed all placed blocks")
     elseif command == "items" then
-        for _, behavior in ipairs(level_item_behaviors) do
+        for _, behavior in ipairs(g_level_item_behaviors) do
             local obj = obj_get_first_with_behavior_id(behavior)
             while obj do
                 if object_removal_criteria(obj, args[2]) then
@@ -603,7 +603,7 @@ local function on_clear_chat_command(msg)
         end
         djui_chat_message_create("Removed all placed level items")
     elseif command == "enemies" then
-        for _, behavior in ipairs(enemy_item_behaviors) do
+        for _, behavior in ipairs(g_enemy_item_behaviors) do
             local obj = obj_get_first_with_behavior_id(behavior)
             while obj  do
                 if object_removal_criteria(obj, args[2]) then
@@ -624,7 +624,7 @@ local function on_clear_chat_command(msg)
 end
 
 local function unrendered_items_update()
-    for _, behavior in ipairs(all_item_behaviors) do
+    for _, behavior in ipairs(g_all_item_behaviors) do
         if behavior ~= bhvMceBlock then
             local obj = obj_get_first_with_behavior_id(behavior)
             while obj do
@@ -663,14 +663,14 @@ local function on_set_item_size_chat_command(msg)
 		return true
 	end
 
-    local current_selected = HotbarItemList[SelectedHotbarIndex].item
+    local current_selected = gHotbarItemList[gSelectedHotbarIndex].item
     if current_selected then
             current_selected.size = gVec3fOne()
         if sizes_count == 1 then
             local new_size = math.clamp(tonumber(sizes[1]) or 1, 0.01, 25)
             local grid_size = new_size * 200
             vec3f_set(current_selected.size, new_size, new_size, new_size)
-		    vec3f_set(GridSize, grid_size, grid_size, grid_size)
+		    vec3f_set(gGridSize, grid_size, grid_size, grid_size)
             djui_chat_message_create("Set item size to " .. new_size)
         elseif sizes_count == 3 then
             local new_size_x = math.clamp(tonumber(sizes[1]) or 1, 0.01, 25)
@@ -679,7 +679,7 @@ local function on_set_item_size_chat_command(msg)
             local grid_size_x = new_size_x * 200
             local grid_size_y = new_size_y * 200
             local grid_size_z = new_size_z * 200
-            vec3f_set(GridSize, grid_size_x, grid_size_y, grid_size_z)
+            vec3f_set(gGridSize, grid_size_x, grid_size_y, grid_size_z)
             vec3f_set(current_selected.size, new_size_x, new_size_y, new_size_z)
             djui_chat_message_create("Set item size to (" .. new_size_x, new_size_y, new_size_z .. ")")
         else
@@ -773,8 +773,8 @@ local block_id_lookup = {
 ---@param msg string
 function on_set_surface_chat_command(msg)
     if block_id_lookup[msg:lower()] then
-        if HotbarItemList[SelectedHotbarIndex].item and HotbarItemList[SelectedHotbarIndex].item.behavior == bhvMceBlock then
-            HotbarItemList[SelectedHotbarIndex].item.params = block_id_lookup[msg:lower()]
+        if gHotbarItemList[gSelectedHotbarIndex].item and gHotbarItemList[gSelectedHotbarIndex].item.behavior == bhvMceBlock then
+            gHotbarItemList[gSelectedHotbarIndex].item.params = block_id_lookup[msg:lower()]
             djui_chat_message_create("Set the surface type to " .. msg)
         else
             djui_chat_message_create("You must have a block selected to change its surface type!")
@@ -786,7 +786,7 @@ function on_set_surface_chat_command(msg)
 end
 
 local function on_transparent_chat_command()
-    local item = HotbarItemList[SelectedHotbarIndex].item
+    local item = gHotbarItemList[gSelectedHotbarIndex].item
     if item and item.behavior == bhvMceBlock then
         local transparent_start = mce_block_get_transparent_start_item(item)
         local anim_max = mce_block_get_anim_max_item(item)

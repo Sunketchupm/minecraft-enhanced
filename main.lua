@@ -8,7 +8,7 @@ gLevelValues.fixCollisionBugsGroundPoundBonks = false
 gServerSettings.stayInLevelAfterStar = 1
 gLevelValues.fixInvalidShellRides = false
 
-CanBuild = true
+gCanBuild = true
 
 E_MODEL_MCE_BLOCK = smlua_model_util_get_id("mce_block_geo")
 E_MODEL_MCE_COLOR_BLOCK = smlua_model_util_get_id("mce_color_block_geo")
@@ -28,11 +28,11 @@ hook_event(HOOK_MARIO_UPDATE, model_test) ]]
 -------------------------------------------------------------------------------
 
 local on_grid = true
-GridSize = {x = 200, y = 200, z = 200}
+gGridSize = {x = 200, y = 200, z = 200}
 
 local function to_grid_x(n)
 	if on_grid then
-		return math.floor(n/GridSize.x + .5) * GridSize.x
+		return math.floor(n/gGridSize.x + .5) * gGridSize.x
 	else
 		return n
 	end
@@ -40,7 +40,7 @@ end
 
 local function to_grid_y(n)
 	if on_grid then
-		return math.floor(n/GridSize.y + .5) * GridSize.y
+		return math.floor(n/gGridSize.y + .5) * gGridSize.y
 	else
 		return n
 	end
@@ -48,7 +48,7 @@ end
 
 local function to_grid_z(n)
 	if on_grid then
-		return math.floor(n/GridSize.z + .5) * GridSize.z
+		return math.floor(n/gGridSize.z + .5) * gGridSize.z
 	else
 		return n
 	end
@@ -80,13 +80,13 @@ local function on_grid_size_chat_command(msg)
 
 	if sizes_count == 1 then
 		local new_size = (tonumber(sizes[1]) or 1) * 200
-		vec3f_set(GridSize, new_size, new_size, new_size)
+		vec3f_set(gGridSize, new_size, new_size, new_size)
 		djui_chat_message_create("Set grid size to " .. sizes[1])
 	elseif sizes_count == 3 then
 		local new_size_x = (tonumber(sizes[1]) or 1) * 200
 		local new_size_y = (tonumber(sizes[2]) or 1) * 200
 		local new_size_z = (tonumber(sizes[3]) or 1) * 200
-		vec3f_set(GridSize, new_size_x, new_size_y, new_size_z)
+		vec3f_set(gGridSize, new_size_x, new_size_y, new_size_z)
 		djui_chat_message_create("Set grid size to (" .. sizes[1], sizes[2], sizes[3] .. ")")
 	else
 		djui_chat_message_create("Usage: [num] or [x y z] or [on|off]")
@@ -99,14 +99,14 @@ hook_chat_command("grid", "[num] or [x|y|z] or [on|off] | Change the shape of th
 -------------------------------------------------------------------------------
 
 ---@type Object?
-local outline = nil
-outline_grid_y_offset = 0
+local s_outline = nil
+g_outline_grid_y_offset = 0
 
 --- Called from bhvOutline.bhv
 
 ---@param obj Object
 function bhv_outline_init(obj)
-	outline = obj
+	s_outline = obj
 	obj.oOpacity = 255
 	obj.oFaceAnglePitch = 0
 	obj.oFaceAngleYaw = 0
@@ -120,30 +120,30 @@ function bhv_outline_loop(obj)
 	local current_item = gCurrentItem
 	if not current_item then
 		obj_mark_for_deletion(obj)
-		outline = nil
+		s_outline = nil
 		return
 	end
-	outline = obj
+	s_outline = obj
 
 	local m = gMarioStates[0]
 	local facing_x = sins(m.intendedYaw)
 	local facing_z = coss(m.intendedYaw)
 
-	local posX = to_grid_x( m.pos.x + facing_x * math.max(GridSize.x, 200) )
-	local posY = to_grid_y( m.pos.y ) + (GridSize.y * outline_grid_y_offset)
-	local posZ = to_grid_z( m.pos.z + facing_z * math.max(GridSize.z, 200) )
+	local posX = to_grid_x( m.pos.x + facing_x * math.max(gGridSize.x, 200) )
+	local posY = to_grid_y( m.pos.y ) + (gGridSize.y * g_outline_grid_y_offset)
+	local posZ = to_grid_z( m.pos.z + facing_z * math.max(gGridSize.z, 200) )
 
-	outline.oPosX = posX
-	outline.oPosY = posY
-	outline.oPosZ = posZ
+	s_outline.oPosX = posX
+	s_outline.oPosY = posY
+	s_outline.oPosZ = posZ
 	obj_scale_xyz(obj, current_item.size.x, current_item.size.y, current_item.size.z)
 	if current_item.rotation then
-		outline.oFaceAnglePitch = current_item.rotation.x
-		outline.oFaceAngleYaw = current_item.rotation.y
-		outline.oFaceAngleRoll = current_item.rotation.z
-		outline.oMoveAnglePitch = current_item.rotation.x
-		outline.oMoveAngleYaw = current_item.rotation.y
-		outline.oMoveAngleRoll = current_item.rotation.z
+		s_outline.oFaceAnglePitch = current_item.rotation.x
+		s_outline.oFaceAngleYaw = current_item.rotation.y
+		s_outline.oFaceAngleRoll = current_item.rotation.z
+		s_outline.oMoveAnglePitch = current_item.rotation.x
+		s_outline.oMoveAngleYaw = current_item.rotation.y
+		s_outline.oMoveAngleRoll = current_item.rotation.z
 	end
 end
 
@@ -154,13 +154,13 @@ end
 ---@param obj Object
 function bhv_mock_item_loop(obj)
 	local current_item = gCurrentItem
-	if outline and obj_get_first_with_behavior_id(bhvOutline) and current_item and current_item.model then
-		obj.oPosX = outline.oPosX
-		obj.oPosY = outline.oPosY - (current_item.spawnYOffset * current_item.size.y)
-		obj.oPosZ = outline.oPosZ
+	if s_outline and obj_get_first_with_behavior_id(bhvOutline) and current_item and current_item.model then
+		obj.oPosX = s_outline.oPosX
+		obj.oPosY = s_outline.oPosY - (current_item.spawnYOffset * current_item.size.y)
+		obj.oPosZ = s_outline.oPosZ
 		obj.header.gfx.node.flags = obj.header.gfx.node.flags & ~GRAPH_RENDER_BILLBOARD
 		obj.oItemParams = current_item.params
-		local outline_scale = outline.header.gfx.scale
+		local outline_scale = s_outline.header.gfx.scale
 		obj_scale_xyz(obj, outline_scale.x, outline_scale.y, outline_scale.z)
 		obj_set_model_extended(obj, current_item.model)
 
@@ -190,10 +190,10 @@ function bhv_mock_item_loop(obj)
 		if mock_settings.animateFaceAngleYaw then
 			obj.oFaceAngleYaw = convert_s16(obj.oFaceAngleYaw + mock_settings.animateFaceAngleYaw)
 		else
-			obj.oFaceAngleYaw = outline.oFaceAngleYaw
+			obj.oFaceAngleYaw = s_outline.oFaceAngleYaw
 		end
-		obj.oFaceAnglePitch = outline.oFaceAnglePitch
-		obj.oFaceAngleRoll = outline.oFaceAngleRoll
+		obj.oFaceAnglePitch = s_outline.oFaceAnglePitch
+		obj.oFaceAngleRoll = s_outline.oFaceAngleRoll
 
 		if current_item.behavior == bhvMceBlock then
 			local transparent_start = mce_block_get_transparent_start_item(current_item)
@@ -216,25 +216,25 @@ end
 
 --------------------------------------
 
-local show_arrow = true
+local s_show_arrow = true
 
 --- Called from bhvArrow.bhv
 
 ---@param obj Object
 function bhv_arrow_loop(obj)
 	local current_item = gCurrentItem
-	if outline and obj_get_first_with_behavior_id(bhvOutline) and current_item and current_item.model then
-		outline_scale = outline.header.gfx.scale
-		obj.oPosX = outline.oPosX + sins(outline.oFaceAngleYaw) * 200 * outline_scale.x
-		obj.oPosY = outline.oPosY - (current_item.spawnYOffset * current_item.size.y)
-		obj.oPosZ = outline.oPosZ + coss(outline.oFaceAngleYaw) * 200 * outline_scale.z
+	if s_outline and obj_get_first_with_behavior_id(bhvOutline) and current_item and current_item.model then
+		outline_scale = s_outline.header.gfx.scale
+		obj.oPosX = s_outline.oPosX + sins(s_outline.oFaceAngleYaw) * 200 * outline_scale.x
+		obj.oPosY = s_outline.oPosY - (current_item.spawnYOffset * current_item.size.y)
+		obj.oPosZ = s_outline.oPosZ + coss(s_outline.oFaceAngleYaw) * 200 * outline_scale.z
 		obj_scale_xyz(obj, outline_scale.x, outline_scale.y, outline_scale.z)
-		obj.oFaceAngleYaw = outline.oFaceAngleYaw - 16384
+		obj.oFaceAngleYaw = s_outline.oFaceAngleYaw - 16384
 	else
 		obj_mark_for_deletion(obj)
 	end
 
-	if gMarioStates[0].controller.buttonDown & L_TRIG ~= 0 and show_arrow then
+	if gMarioStates[0].controller.buttonDown & L_TRIG ~= 0 and s_show_arrow then
 		cur_obj_enable_rendering()
 	else
 		cur_obj_disable_rendering()
@@ -242,27 +242,27 @@ function bhv_arrow_loop(obj)
 end
 
 hook_mod_menu_checkbox("Show Angle Arrow", true, function (_, value)
-	show_arrow = value
+	s_show_arrow = value
 end)
 
 -------------------------------------------------------------------------------
 
 local function place_item()
 	local current_item = gCurrentItem
-	if not outline or not current_item or not current_item.behavior or not current_item.model then return end
+	if not s_outline or not current_item or not current_item.behavior or not current_item.model then return end
 	local item = spawn_sync_object(
 		current_item.behavior,
 		current_item.model,
-		outline.oPosX, outline.oPosY - (current_item.spawnYOffset * current_item.size.y), outline.oPosZ,
+		s_outline.oPosX, s_outline.oPosY - (current_item.spawnYOffset * current_item.size.y), s_outline.oPosZ,
 		---@param obj Object
 		function (obj)
 			obj.oOpacity = 255
-			obj.oFaceAnglePitch = outline.oFaceAnglePitch
-			obj.oFaceAngleYaw = outline.oFaceAngleYaw
-			obj.oFaceAngleRoll = outline.oFaceAngleRoll
-			obj.oMoveAnglePitch = outline.oMoveAnglePitch
-			obj.oMoveAngleYaw = outline.oMoveAngleYaw
-			obj.oMoveAngleRoll = outline.oMoveAngleRoll
+			obj.oFaceAnglePitch = s_outline.oFaceAnglePitch
+			obj.oFaceAngleYaw = s_outline.oFaceAngleYaw
+			obj.oFaceAngleRoll = s_outline.oFaceAngleRoll
+			obj.oMoveAnglePitch = s_outline.oMoveAnglePitch
+			obj.oMoveAngleYaw = s_outline.oMoveAngleYaw
+			obj.oMoveAngleRoll = s_outline.oMoveAngleRoll
 			obj.oItemParams = current_item.params
 			obj.oScaleX = current_item.size.x
 			obj.oScaleY = current_item.size.y
@@ -280,10 +280,10 @@ local function place_item()
 			djui_chat_message_create("Warning! Item placed in a PU! Some behaviors may not work as intended")
 		end
 
-		table.insert(load_block_datas, {
+		table.insert(g_load_block_datas, {
 			item, current_item.behavior, current_item.model,
-			outline.oPosX, outline.oPosY - (current_item.spawnYOffset * current_item.size.y), outline.oPosZ,
-			outline.oFaceAnglePitch, outline.oFaceAngleYaw, outline.oFaceAngleRoll,
+			s_outline.oPosX, s_outline.oPosY - (current_item.spawnYOffset * current_item.size.y), s_outline.oPosZ,
+			s_outline.oFaceAnglePitch, s_outline.oFaceAngleYaw, s_outline.oFaceAngleRoll,
 			current_item.params,
 			current_item.size.x, current_item.size.y, current_item.size.z,
 			current_item.animState, 0
@@ -297,17 +297,17 @@ end
 ---@param allow_build_delete {build: boolean, delete: boolean}?
 ---@return boolean
 local function determine_place_or_delete(allow_build_delete)
-	if not outline then return false end
+	if not s_outline then return false end
 	if allow_build_delete == nil then allow_build_delete = {build = true, delete = true} end
-	local nearest = obj_get_any_nearest_item(outline)
+	local nearest = obj_get_any_nearest_item(s_outline)
 
 	if nearest then
 		local dists = {
-			x = math.abs(nearest.oPosX - outline.oPosX),
-			y = math.abs(nearest.oPosY - outline.oPosY),
-			z = math.abs(nearest.oPosZ - outline.oPosZ)
+			x = math.abs(nearest.oPosX - s_outline.oPosX),
+			y = math.abs(nearest.oPosY - s_outline.oPosY),
+			z = math.abs(nearest.oPosZ - s_outline.oPosZ)
 		}
-		local is_out_range = (dists.x >= GridSize.x * 0.5 or dists.y >= GridSize.y * 0.5 or dists.z >= GridSize.z * 0.5)
+		local is_out_range = (dists.x >= gGridSize.x * 0.5 or dists.y >= gGridSize.y * 0.5 or dists.z >= gGridSize.z * 0.5)
 		if allow_build_delete.build and is_out_range then
 			place_item()
 			return true
@@ -325,9 +325,9 @@ end
 
 ---@param m MarioState
 local function set_item_size_control(m)
-	if not outline or m.controller.buttonDown & L_TRIG == 0 then return end
+	if not s_outline or m.controller.buttonDown & L_TRIG == 0 then return end
 
-	local current_selected = HotbarItemList[SelectedHotbarIndex].item
+	local current_selected = gHotbarItemList[gSelectedHotbarIndex].item
 	if current_selected then
 		local pressed = m.controller.buttonPressed
 		local size = current_selected.size
@@ -367,39 +367,39 @@ end
 
 ---@param m MarioState
 local function set_outline_offset(m)
-	if not outline or m.controller.buttonDown & L_TRIG ~= 0 then return end
+	if not s_outline or m.controller.buttonDown & L_TRIG ~= 0 then return end
 	local pressed = m.controller.buttonPressed
 
-	if pressed & U_JPAD ~= 0 and outline_grid_y_offset < 3 then
-		outline_grid_y_offset = outline_grid_y_offset + 1
-	elseif pressed & D_JPAD ~= 0 and outline_grid_y_offset > -3 then
-		outline_grid_y_offset = outline_grid_y_offset - 1
+	if pressed & U_JPAD ~= 0 and g_outline_grid_y_offset < 3 then
+		g_outline_grid_y_offset = g_outline_grid_y_offset + 1
+	elseif pressed & D_JPAD ~= 0 and g_outline_grid_y_offset > -3 then
+		g_outline_grid_y_offset = g_outline_grid_y_offset - 1
 	end
 end
 
-local rotation_increment = degrees_to_sm64(15)
+local s_rotation_increment = degrees_to_sm64(15)
 ---@param m MarioState
 local function set_item_rotation(m)
-	if not outline or m.controller.buttonDown & L_TRIG == 0 then return end
+	if not s_outline or m.controller.buttonDown & L_TRIG == 0 then return end
 	local current_item = gCurrentItem
 	if not current_item then return end
 	local pressed = m.controller.buttonPressed
 	local item_rotation = current_item.rotation
 
 	if pressed & U_CBUTTONS ~= 0 then
-		item_rotation.x = item_rotation.x + rotation_increment
+		item_rotation.x = item_rotation.x + s_rotation_increment
 	elseif pressed & D_CBUTTONS ~= 0 then
-		item_rotation.x = item_rotation.x - rotation_increment
+		item_rotation.x = item_rotation.x - s_rotation_increment
 	end
 	if pressed & L_CBUTTONS ~= 0 then
-		item_rotation.y = item_rotation.y + rotation_increment
+		item_rotation.y = item_rotation.y + s_rotation_increment
 	elseif pressed & R_CBUTTONS ~= 0 then
-		item_rotation.y = item_rotation.y - rotation_increment
+		item_rotation.y = item_rotation.y - s_rotation_increment
 	end
 	if pressed & L_JPAD ~= 0 then
-		item_rotation.z = item_rotation.z + rotation_increment
+		item_rotation.z = item_rotation.z + s_rotation_increment
 	elseif pressed & R_JPAD ~= 0 then
-		item_rotation.z = item_rotation.z - rotation_increment
+		item_rotation.z = item_rotation.z - s_rotation_increment
 	end
 	if pressed & X_BUTTON ~= 0 then
 		gCurrentItem.rotation = gVec3sZero()
@@ -409,13 +409,13 @@ local function set_item_rotation(m)
 end
 
 hook_mod_menu_inputbox("Angle Increment", "15", 4, function (index, value)
-	rotation_increment = degrees_to_sm64(tonumber(value) or 15)
-	update_mod_menu_element_inputbox(index, tostring(math.round(sm64_to_degrees(rotation_increment))))
+	s_rotation_increment = degrees_to_sm64(tonumber(value) or 15)
+	update_mod_menu_element_inputbox(index, tostring(math.round(sm64_to_degrees(s_rotation_increment))))
 end)
 
 local function delete_outline()
-	if outline then
-		obj_mark_for_deletion(outline)
+	if s_outline then
+		obj_mark_for_deletion(s_outline)
 	end
 	local mock = obj_get_first_with_behavior_id(bhvMockItem)
 	if mock then
@@ -425,14 +425,14 @@ end
 
 ---------------------------------------
 
-local auto_build = true
-local auto_build_timer = 0
-local initial_block_placed = false
+local s_auto_build = true
+local s_auto_build_timer = 0
+local s_initial_block_placed = false
 
 ---@param m MarioState
 local function builder_mario_update(m)
 	if not obj_get_first_with_behavior_id(bhvOutline) then
-		outline = nil
+		s_outline = nil
 		if gCurrentItem then
 			spawn_non_sync_object(
 				bhvOutline,
@@ -448,21 +448,21 @@ local function builder_mario_update(m)
 	set_outline_offset(m)
 	set_item_rotation(m)
 	if m.controller.buttonPressed & Y_BUTTON ~= 0 then
-		initial_block_placed = determine_place_or_delete()
-		auto_build_timer = 5
+		s_initial_block_placed = determine_place_or_delete()
+		s_auto_build_timer = 5
     end
-	if auto_build and m.controller.buttonDown & Y_BUTTON ~= 0 then
-		if auto_build_timer > 0 then
-			auto_build_timer = auto_build_timer - 1
+	if s_auto_build and m.controller.buttonDown & Y_BUTTON ~= 0 then
+		if s_auto_build_timer > 0 then
+			s_auto_build_timer = s_auto_build_timer - 1
 		else
-			determine_place_or_delete({build = initial_block_placed, delete = not initial_block_placed})
-			auto_build_timer = 5
+			determine_place_or_delete({build = s_initial_block_placed, delete = not s_initial_block_placed})
+			s_auto_build_timer = 5
 		end
 	end
 end
 
 hook_mod_menu_checkbox("Autobuild", true, function (_, value)
-	auto_build = value
+	s_auto_build = value
 end)
 
 -------------------------------------------------------------------------------
@@ -474,15 +474,15 @@ end
 ---@param m MarioState
 local function mario_update(m)
 	if m.playerIndex ~= 0 then return end
-	if CanBuild then
-		if not MenuOpen then
+	if gCanBuild then
+		if not gMenuOpen then
 			builder_mario_update(m)
 		end
 	else
 		delete_outline()
 	end
 
-	CanBuild = m.action == ACT_FREE_MOVE
+	gCanBuild = m.action == ACT_FREE_MOVE
 end
 
 
