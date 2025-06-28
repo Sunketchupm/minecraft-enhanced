@@ -426,7 +426,6 @@ end
 ---------------------------------------
 
 local s_auto_build = true
-local s_auto_build_timer = 0
 local s_initial_block_placed = false
 
 ---@param m MarioState
@@ -449,15 +448,9 @@ local function builder_mario_update(m)
 	set_item_rotation(m)
 	if m.controller.buttonPressed & Y_BUTTON ~= 0 then
 		s_initial_block_placed = determine_place_or_delete()
-		s_auto_build_timer = 5
     end
 	if s_auto_build and m.controller.buttonDown & Y_BUTTON ~= 0 then
-		if s_auto_build_timer > 0 then
-			s_auto_build_timer = s_auto_build_timer - 1
-		else
-			determine_place_or_delete({build = s_initial_block_placed, delete = not s_initial_block_placed})
-			s_auto_build_timer = 5
-		end
+		determine_place_or_delete({build = s_initial_block_placed, delete = not s_initial_block_placed})
 	end
 end
 
