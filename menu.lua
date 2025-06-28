@@ -87,7 +87,7 @@ local CPLAT_BLOCK_TEX = get_texture_info("checkpoint")
 local SLOT_GOOMBA_TEX = get_texture_info("gombaslot")
 local SLOT_BOBOMB_TEX = get_texture_info("bobombslot")
 local SLOT_CHUCKYA_TEX = get_texture_info("chuckyaslot")
-local SLOT_STAR_TEX = get_texture_info("starslot")
+local SLOT_STAR_TEX = get_texture_info("starslot") -- This texture is not a power of 2
 --------------------------------------
 
 ---@class MenuItemLink
@@ -516,6 +516,18 @@ local function render_tab_header(x, y, width, height, text)
     local text_x = x + width * 0.5 - size * 0.5
     local text_y = y + height * 0.04
     djui_hud_print_text(text, text_x, text_y, scale)
+    if s_current_item_page > 1 then
+        local texture_scale = 3
+        local texture_x = (x + width * 0.1) - (L_CBUTTON_TEX.width * 0.5 * texture_scale)
+        djui_hud_set_color(255, 255, 255, 255)
+        djui_hud_render_texture(L_CBUTTON_TEX, texture_x, text_y, texture_scale, texture_scale)
+    end
+    if s_current_item_page < s_item_page_max then
+        local texture_scale = 3
+        local texture_x = (x + width * 0.9) - (R_CBUTTON_TEX.width * 0.5 * texture_scale)
+        djui_hud_set_color(255, 255, 255, 255)
+        djui_hud_render_texture(R_CBUTTON_TEX, texture_x, text_y, texture_scale, texture_scale)
+    end
 end
 
 ---@param x number
@@ -753,11 +765,11 @@ local function render_surfaces_tab(x, y, width, height)
 end
 
 local sMenuTabs = {
-    render_building_blocks_tab,
-    render_building_blocks_colors_tab,
-    render_items_tab,
-    render_enemies_tab,
-    render_surfaces_tab
+    {tab = render_building_blocks_tab, icon = {texture = DPLAT_BLOCK_TEX, color = {r = 255, g = 255, b = 255, a = 255}}},
+    {tab = render_building_blocks_colors_tab, icon = {texture = DPLAT_BLOCK_TEX, color = {r = 255, g = 255, b = 255, a = 255}}},
+    {tab = render_items_tab, icon = {texture = gTextures.star, color = {r = 255, g = 255, b = 255, a = 255}}},
+    {tab = render_enemies_tab, icon = {texture = SLOT_GOOMBA_TEX, color = {r = 255, g = 255, b = 255, a = 255}}},
+    {tab = render_surfaces_tab, icon = {texture = CPLAT_BLOCK_TEX, color = {r = 255, g = 255, b = 255, a = 255}}},
 }
 
 ----------------------------------------------------
@@ -777,6 +789,16 @@ local function render_menu_tab(x, y, width, height, index)
     local tab_x = x + (tab_width * (index - 1))
     local tab_y = y - (tab_height - (tab_height * 0.1))
     render_bordered_rectangle(tab_x, tab_y, tab_width, tab_height, colors, 0.05, 0.07)
+    if sMenuTabs[index].icon then
+        local icon = sMenuTabs[index].icon
+        if icon.texture then
+            djui_hud_set_color_with_table(icon.color)
+            local texture_scale = 1
+            local texture_x = tab_x + tab_width * 0.5 - icon.texture.width * 0.5 * texture_scale
+            local texture_y = tab_y + tab_height * 0.5 - icon.texture.height * 0.5 * texture_scale
+            djui_hud_render_texture(icon.texture, texture_x, texture_y, texture_scale, texture_scale)
+        end
+    end
     if mouse_is_within(tab_x, tab_y, tab_x + tab_width, tab_y + tab_height) and s_mouse_has_clicked then
         s_mouse_tab_was_clicked_on = index
     end
@@ -842,7 +864,7 @@ local function render_menu(screen_width, screen_height)
     render_hotbar(screen_width, screen_height)
     if gMenuOpen then
         local x, y, width, height = render_main_rectangle(screen_width, screen_height)
-        sMenuTabs[s_active_tab](x, y, width, height)
+        sMenuTabs[s_active_tab].tab(x, y, width, height)
         render_mouse()
     end
 end
@@ -987,36 +1009,6 @@ end
 
 ----------------------------------------------------
 
-local function on_change_tab_input()
-    s_mouse_tab_was_clicked_on = 0
-    s_selected_item_index = 0
-    s_current_item_page = 1
-    s_current_surface_tip_index = 1
-    s_surface_buttons_index_offset = 0
-    s_mouse_prev_item_index = 0
-    play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
-end
-
----@param pressed integer
-local function handle_change_tab_inputs(pressed)
-    if pressed & L_TRIG ~= 0 then
-        s_active_tab = s_active_tab - 1
-        if s_active_tab < 1 then
-            s_active_tab = TAB_MAIN_END
-        end
-        on_change_tab_input()
-    elseif pressed & R_TRIG ~= 0 then
-        s_active_tab = s_active_tab + 1
-        if s_active_tab > TAB_MAIN_END then
-            s_active_tab = 1
-        end
-        on_change_tab_input()
-    elseif s_mouse_tab_was_clicked_on > 0 then
-        s_active_tab = s_mouse_tab_was_clicked_on
-        on_change_tab_input()
-    end
-end
-
 -- Control stick direction
 local s_csd = {up = false, left = false, down = false, right = false}
 local s_used_csd = {up = false, left = false, down = false, right = false}
@@ -1052,6 +1044,72 @@ local function handle_control_stick_inputs(m)
     if (s_hold_movement or not s_used_csd.right) and controller.stickX > 30 then s_csd.right = true s_used_csd.right = true s_moved_mouse = false else s_csd.right = false end
 end
 
+local s_cbutton_csd = {up = false, left = false, down = false, right = false}
+local s_cbutton_used_csd = {up = false, left = false, down = false, right = false}
+local s_cbutton_hold_timer = 0
+local s_cbutton_hold_movement_timer = 0
+local s_cbutton_hold_movement = false
+
+---@param m MarioState
+local function handle_scrolling_inputs(m)
+    local down = m.controller.buttonDown
+    if down & C_BUTTONS ~= 0 then
+        s_cbutton_hold_timer = s_cbutton_hold_timer + 1
+    else
+        s_cbutton_hold_timer = 0
+        s_cbutton_hold_movement = false
+    end
+    if s_cbutton_hold_timer >= 10 then
+        if s_cbutton_hold_movement_timer < 2 then
+            s_cbutton_hold_movement_timer = s_cbutton_hold_movement_timer + 1
+            s_cbutton_hold_movement = false
+        else
+            s_cbutton_hold_movement_timer = 0
+            s_cbutton_hold_movement = true
+        end
+    end
+    if not s_cbutton_csd.up and down & U_CBUTTONS == 0 then s_cbutton_used_csd.up = false end
+    if not s_cbutton_csd.down and down & D_CBUTTONS == 0 then s_cbutton_used_csd.down = false end
+    if not s_cbutton_csd.left and down & L_CBUTTONS == 0 then s_cbutton_used_csd.left = false end
+    if not s_cbutton_csd.right and down & R_CBUTTONS == 0 then s_cbutton_used_csd.right = false end
+    if (s_cbutton_hold_movement or not s_cbutton_used_csd.up) and down & U_CBUTTONS ~= 0 then s_cbutton_csd.up = true s_cbutton_used_csd.up = true s_moved_mouse = false else s_cbutton_csd.up = false end
+    if (s_cbutton_hold_movement or not s_cbutton_used_csd.down) and down & D_CBUTTONS ~= 0  then s_cbutton_csd.down = true s_cbutton_used_csd.down = true s_moved_mouse = false else s_cbutton_csd.down = false end
+    if (s_cbutton_hold_movement or not s_cbutton_used_csd.left) and down & L_CBUTTONS ~= 0  then s_cbutton_csd.left = true s_cbutton_used_csd.left = true s_moved_mouse = false else s_cbutton_csd.left = false end
+    if (s_cbutton_hold_movement or not s_cbutton_used_csd.right) and down & R_CBUTTONS ~= 0 then s_cbutton_csd.right = true s_cbutton_used_csd.right = true s_moved_mouse = false else s_cbutton_csd.right = false end
+end
+
+----------------------------------------------------
+
+local function on_change_tab_input()
+    s_mouse_tab_was_clicked_on = 0
+    s_selected_item_index = 0
+    s_current_item_page = 1
+    s_current_surface_tip_index = 1
+    s_surface_buttons_index_offset = 0
+    s_mouse_prev_item_index = 0
+    play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
+end
+
+---@param pressed integer
+local function handle_change_tab_inputs(pressed)
+    if pressed & L_TRIG ~= 0 then
+        s_active_tab = s_active_tab - 1
+        if s_active_tab < 1 then
+            s_active_tab = TAB_MAIN_END
+        end
+        on_change_tab_input()
+    elseif pressed & R_TRIG ~= 0 then
+        s_active_tab = s_active_tab + 1
+        if s_active_tab > TAB_MAIN_END then
+            s_active_tab = 1
+        end
+        on_change_tab_input()
+    elseif s_mouse_tab_was_clicked_on > 0 then
+        s_active_tab = s_mouse_tab_was_clicked_on
+        on_change_tab_input()
+    end
+end
+
 ---@param m MarioState
 local function handle_item_selection_inputs(m)
     local current_item_set_count = #s_item_pages[s_current_item_page]
@@ -1063,8 +1121,10 @@ local function handle_item_selection_inputs(m)
 
     if s_csd.up or s_csd.left or s_csd.down or s_csd.right then
         if s_selected_item_index == 0 then
-            s_selected_item_index = selected_item_offset
+            s_selected_item_index = selected_item_offset + 1
             relative_item_index = 1
+            play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource)
+            return
         end
 
         if s_csd.up and relative_item_index > 1 then
@@ -1108,17 +1168,30 @@ local function handle_pick_item_inputs(pressed)
     end
 end
 
----@param pressed integer
-local function handle_paging_inputs(pressed)
+---@param m MarioState
+local function handle_paging_inputs(m)
     local invert_multiplier = s_invert_scroll and -1 or 1
-    if (pressed & L_CBUTTONS ~= 0 or (s_moved_mouse and (s_mouse_has_scrolled * invert_multiplier) > 0)) and s_current_item_page > 1 then
-        s_current_item_page = s_current_item_page - 1
-        s_selected_item_index = 0
-        play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
-    elseif (pressed & R_CBUTTONS ~= 0 or (s_moved_mouse and (s_mouse_has_scrolled * invert_multiplier) < 0)) and s_current_item_page < s_item_page_max then
-        s_current_item_page = s_current_item_page + 1
-        s_selected_item_index = 0
-        play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
+    if s_moved_mouse then
+        if s_mouse_has_scrolled * invert_multiplier > 0 and s_current_item_page > 1 then
+            s_current_item_page = s_current_item_page - 1
+            s_selected_item_index = 0
+            play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
+        elseif s_mouse_has_scrolled * invert_multiplier < 0 and s_current_item_page < s_item_page_max then
+            s_current_item_page = s_current_item_page + 1
+            s_selected_item_index = 0
+            play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
+        end
+    else
+        handle_scrolling_inputs(m)
+        if s_cbutton_csd.left and s_current_item_page > 1 then
+            s_current_item_page = s_current_item_page - 1
+            s_selected_item_index = 0
+            play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
+        elseif s_cbutton_csd.right and s_current_item_page < s_item_page_max then
+            s_current_item_page = s_current_item_page + 1
+            s_selected_item_index = 0
+            play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
+        end
     end
 end
 
@@ -1158,7 +1231,7 @@ local function handle_standard_inputs(m)
     local pressed = m.controller.buttonPressed
 
     handle_item_selection_inputs(m)
-    handle_paging_inputs(pressed)
+    handle_paging_inputs(m)
     handle_extra_inputs(pressed)
     if s_selected_item_index > 0 then
         handle_pick_item_inputs(pressed)
@@ -1183,15 +1256,21 @@ local function handle_surface_inputs(m)
         end
     else
         local relative_button_index = s_current_surface_tip_index - s_surface_buttons_index_offset
-        if s_csd.up and s_current_surface_tip_index > 1 then
+        if s_cbutton_csd.up then
             s_current_surface_tip_index = s_current_surface_tip_index - 1
-            if relative_button_index < 4 and s_surface_buttons_index_offset > 0 then
+            if s_current_surface_tip_index <= 0 then
+                s_current_surface_tip_index = #s_surface_buttons
+                s_surface_buttons_index_offset = #s_surface_buttons - s_surface_buttons_rendered
+            elseif relative_button_index < 4 and s_surface_buttons_index_offset > 0 then
                 s_surface_buttons_index_offset = s_surface_buttons_index_offset - 1
             end
             play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource)
-        elseif s_csd.down and s_current_surface_tip_index < #s_surface_buttons then
+        elseif s_cbutton_csd.down then
             s_current_surface_tip_index = s_current_surface_tip_index + 1
-            if relative_button_index > s_surface_buttons_rendered - 3 and s_current_surface_tip_index + 1 < #s_surface_buttons then
+            if s_current_surface_tip_index > #s_surface_buttons then
+                s_current_surface_tip_index = 1
+                s_surface_buttons_index_offset = 0
+            elseif relative_button_index > s_surface_buttons_rendered - 3 and s_current_surface_tip_index + 1 < #s_surface_buttons then
                 s_surface_buttons_index_offset = s_surface_buttons_index_offset + 1
             end
             play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource)
