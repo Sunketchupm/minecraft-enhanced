@@ -264,6 +264,7 @@ local function place_item()
 			obj.oMoveAngleYaw = s_outline.oMoveAngleYaw
 			obj.oMoveAngleRoll = s_outline.oMoveAngleRoll
 			obj.oItemParams = current_item.params
+			obj.oBlockSurfaceProperties = current_item.blockProperties
 			obj.oScaleX = current_item.size.x
 			obj.oScaleY = current_item.size.y
 			obj.oScaleZ = current_item.size.z

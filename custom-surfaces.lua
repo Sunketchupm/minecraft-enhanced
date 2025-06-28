@@ -231,8 +231,22 @@ local function custom_surface_mario_update(m)
     if block_wall then
         local block = block_wall
         local surface_id = block.oItemParams & 0xFF
+        local surface_properties = block.oBlockSurfaceProperties
 
-        if surface_id == MCE_BLOCK_COL_ID_WIDE_WALLKICK then
+        if surface_id == MCE_BLOCK_COL_ID_BOUNCE then
+            local wall = m.wall
+            local wallDYaw = convert_s16(atan2s(wall.normal.z, wall.normal.x) - (m.faceAngle.y))
+            local limit = degrees_to_sm64(90)
+            local speed = m.forwardVel < 32 and 32 or m.forwardVel
+            local negative = (wallDYaw >= limit or wallDYaw <= -limit) and -1 or 1
+            if m.action == ACT_FLYING then
+                m.faceAngle.y = m.faceAngle.y + 0x8000
+            else
+                mario_set_forward_vel(m, speed * negative)
+            end
+        end
+
+        if surface_properties & MCE_BLOCK_PROPERTY_WIDE_WALLKICK ~= 0 then
             local wall = m.wall
             local wallDYaw = atan2s(wall.normal.z, wall.normal.x) - (m.faceAngle.y)
             local limit = degrees_to_sm64(180 - 89)
@@ -247,40 +261,21 @@ local function custom_surface_mario_update(m)
                     set_mario_action(m, ACT_AIR_HIT_WALL, 0)
                 end
             end
-        elseif surface_id == MCE_BLOCK_COL_ID_BOUNCE then
-            local wall = m.wall
-            local wallDYaw = convert_s16(atan2s(wall.normal.z, wall.normal.x) - (m.faceAngle.y))
-            local limit = degrees_to_sm64(90)
-            local speed = m.forwardVel < 32 and 32 or m.forwardVel
-            local negative = (wallDYaw >= limit or wallDYaw <= -limit) and -1 or 1
-            if m.action == ACT_FLYING then
-                m.faceAngle.y = m.faceAngle.y + 0x8000
-            else
-                mario_set_forward_vel(m, speed * negative)
-            end
-        elseif surface_id == MCE_BLOCK_COL_ID_DISAPPEARING then
+        end
+        if surface_properties & MCE_BLOCK_PROPERTY_DISAPPEARING ~= 0 then
             block.oAction = 1
-        elseif surface_id == MCE_BLOCK_COL_ID_BREAKABLE then
-            if m.action & ACT_FLAG_ATTACKING ~= 0 then
-                block.oAction = 2
-            end
+        elseif surface_properties & MCE_BLOCK_PROPERTY_BREAKABLE ~= 0 and m.action & ACT_FLAG_ATTACKING ~= 0 then
+            block.oAction = 2
         end
     end
     ------------------ FLOOR -------------------
     if block_floor then
         local block = block_floor
         local surface_id = block.oItemParams & 0xFF
+        local surface_properties = block.oBlockSurfaceProperties
 
         if m.pos.y == m.floorHeight then
-            if surface_id == MCE_BLOCK_COL_ID_CHECKPOINT then
-                g_respawn_location = {x = block.oPosX, y = block.oPosY + block.oScaleY * 200, z = block.oPosZ}
-                g_respawn_angle = block.oFaceAngleYaw
-            elseif surface_id == MCE_BLOCK_COL_ID_HEAL then
-                m.healCounter = 39
-            elseif surface_id == MCE_BLOCK_COL_ID_CONVEYOR then
-                m.pos.x = m.pos.x + sins(block.oFaceAngleYaw) * 15
-                m.pos.z = m.pos.z + coss(block.oFaceAngleYaw) * 15
-            elseif surface_id == MCE_BLOCK_COL_ID_DASH_PANEL then
+            if surface_id == MCE_BLOCK_COL_ID_DASH_PANEL then
                 set_mario_action(m, ACT_DASH, 0)
             elseif surface_id == MCE_BLOCK_COL_ID_BOUNCE then
                 if m.action == ACT_FLYING then
@@ -290,22 +285,33 @@ local function custom_surface_mario_update(m)
                     m.vel.y = 50
                     set_mario_action(m, m.heldObj and ACT_HOLD_JUMP or ACT_DOUBLE_JUMP, 0)
                 end
-            elseif surface_id == MCE_BLOCK_COL_ID_DISAPPEARING or surface_id == MCE_BLOCK_COL_ID_SHRINKING then
-                block.oAction = 1
-            elseif surface_id == MCE_BLOCK_COL_ID_BREAKABLE then
-                if obj_is_mario_ground_pounding_platform(m, block) ~= 0 then
-                    block.oAction = 2
-                end
             elseif surface_id == MCE_BLOCK_COL_ID_SPRINGBOARD then
                 set_mario_action(m, ACT_DOUBLE_JUMP, 0)
                 m.vel.y = 80
             end
+
+            if surface_properties & MCE_BLOCK_PROPERTY_CHECKPOINT ~= 0 then
+                g_respawn_location = {x = block.oPosX, y = block.oPosY + block.oScaleY * 200, z = block.oPosZ}
+                g_respawn_angle = block.oFaceAngleYaw
+            end
+            if surface_properties & MCE_BLOCK_PROPERTY_CONVEYOR ~= 0 then
+                m.pos.x = m.pos.x + sins(block.oFaceAngleYaw) * 15
+                m.pos.z = m.pos.z + coss(block.oFaceAngleYaw) * 15
+            end
+            if surface_properties & (MCE_BLOCK_PROPERTY_DISAPPEARING | MCE_BLOCK_PROPERTY_SHRINKING) ~= 0 then
+                block.oAction = 1
+            elseif surface_properties & MCE_BLOCK_PROPERTY_BREAKABLE ~= 0 and obj_is_mario_ground_pounding_platform(m, block) ~= 0 then
+                block.oAction = 2
+            end
         else
-            if surface_id == MCE_BLOCK_COL_ID_NO_FALL_DAMAGE or surface_id == MCE_BLOCK_COL_ID_BOUNCE then
-                if m.pos.y - m.floorHeight < 76 then
-                    m.peakHeight = m.pos.y
-                end
-            elseif surface_id == MCE_BLOCK_COL_ID_REMOVE_CAPS then
+            if surface_id == MCE_BLOCK_COL_ID_BOUNCE and m.pos.y - m.floorHeight < 76 then
+                m.peakHeight = m.pos.y
+            end
+
+            if surface_properties & MCE_BLOCK_PROPERTY_NO_FALL_DAMAGE ~= 0 and m.pos.y - m.floorHeight < 76 then
+                m.peakHeight = m.pos.y
+            end
+            if surface_properties & MCE_BLOCK_PROPERTY_REMOVE_CAPS ~= 0 then
                 m.capTimer = 1
             end
         end
@@ -314,6 +320,7 @@ local function custom_surface_mario_update(m)
     if block_ceiling then
         local block = block_ceiling
         local surface_id = block.oItemParams & 0xFF
+        local surface_properties = block.oBlockSurfaceProperties
         local is_rising_into_block = m.pos.y + m.marioObj.hitboxHeight + m.vel.y >= m.ceilHeight and m.vel.y > 0
 
         if is_rising_into_block then
@@ -323,12 +330,13 @@ local function custom_surface_mario_update(m)
                     m.faceAngle.x = -m.faceAngle.x
                     m.angleVel.x = -m.angleVel.x
                 end
-            elseif surface_id == MCE_BLOCK_COL_ID_BREAKABLE then
+            end
+            if surface_properties & MCE_BLOCK_PROPERTY_BREAKABLE ~= 0 then
                 block.oAction = 2
                 m.vel.y = 0
             end
         end
-        if surface_id == MCE_BLOCK_COL_ID_CONVEYOR and m.action & ACT_FLAG_HANGING ~= 0 then
+        if surface_properties & MCE_BLOCK_PROPERTY_CONVEYOR ~= 0 and m.action & ACT_FLAG_HANGING ~= 0 then
             m.pos.x = m.pos.x + sins(block.oFaceAngleYaw) * 15
             m.pos.z = m.pos.z + coss(block.oFaceAngleYaw) * 15
         end
@@ -367,14 +375,15 @@ local function custom_surface_before_mario_update(m)
     if block_floor then
         local block = block_floor
         local surface_id = block.oItemParams & 0xFF
+        local surface_properties = block.oBlockSurfaceProperties
 
-        if surface_id == MCE_BLOCK_COL_ID_NO_A then
+        if surface_id == MCE_BLOCK_COL_ID_JUMP_PAD and m.controller.buttonPressed & A_BUTTON ~= 0 then
+            set_mario_action(m, ACT_DOUBLE_JUMP, 0)
+            m.vel.y = 100
+        end
+
+        if surface_properties & MCE_BLOCK_PROPERTY_NO_A ~= 0 then
             m.controller.buttonPressed = m.controller.buttonPressed & ~A_BUTTON
-        elseif surface_id == MCE_BLOCK_COL_ID_JUMP_PAD then
-            if m.controller.buttonPressed & A_BUTTON ~= 0 then
-                set_mario_action(m, ACT_DOUBLE_JUMP, 0)
-                m.vel.y = 100
-            end
         end
     end
     ------------------ CEILING -------------------
@@ -405,32 +414,35 @@ local function custom_surface_set_mario_action(m)
     ------------------ WALL -------------------
     if block_wall then
         local block = block_wall
-        local surface_id = block.oItemParams & 0xFF
+        --local surface_id = block.oItemParams & 0xFF
+        local surface_properties = block.oBlockSurfaceProperties
 
-        if surface_id == MCE_BLOCK_COL_ID_FIRSTY and m.action == ACT_AIR_HIT_WALL then
+        if surface_properties & MCE_BLOCK_PROPERTY_FIRSTY ~= 0 and m.action == ACT_AIR_HIT_WALL then
             s_prev_speed = m.forwardVel
             s_hit_firsty_wall = true
-        elseif surface_id == MCE_BLOCK_COL_ID_ANY_BONK_WALLKICK then
+        end
+        if surface_properties & MCE_BLOCK_PROPERTY_ANY_BONK_WALLKICK ~= 0 then
             if (m.action == ACT_BACKWARD_AIR_KB or m.action == ACT_SOFT_BONK) and m.prevAction ~= ACT_LEDGE_GRAB then
                 m.prevAction = ACT_AIR_HIT_WALL
                 m.wallKickTimer = 5
             end
-        elseif surface_id == MCE_BLOCK_COL_ID_NO_A or surface_id == MCE_BLOCK_COL_ID_NO_WALLKICKS then
+        end
+        if surface_properties & (MCE_BLOCK_PROPERTY_NO_A | MCE_BLOCK_PROPERTY_NO_WALLKICKS) ~= 0 then
             m.wallKickTimer = 0
             m.actionTimer = 3
-        elseif surface_id == MCE_BLOCK_COL_ID_BREAKABLE then
-            if m.action == ACT_AIR_HIT_WALL then
-                g_hit_breakable_block = block
-            end
+        end
+        if surface_properties & MCE_BLOCK_PROPERTY_BREAKABLE ~= 0 and m.action == ACT_AIR_HIT_WALL then
+            g_hit_breakable_block = block
         end
     end
     ------------------ FLOOR -------------------
     ------------------ CEILING -------------------
     if block_ceiling then
         local block = block_ceiling
-        local surface_id = block.oItemParams & 0xFF
+        --local surface_id = block.oItemParams & 0xFF
+        local surface_properties = block.oBlockSurfaceProperties
 
-        if surface_id == MCE_BLOCK_COL_ID_ANY_BONK_WALLKICK then
+        if surface_properties & MCE_BLOCK_PROPERTY_ANY_BONK_WALLKICK ~= 0 then
             local is_within_height = m.ceilHeight - m.pos.y < 200 and m.ceilHeight - m.pos.y > 0
             if is_within_height and (m.action == ACT_BACKWARD_AIR_KB or m.action == ACT_SOFT_BONK) and m.prevAction ~= ACT_LEDGE_GRAB then
                 m.prevAction = ACT_AIR_HIT_WALL
@@ -466,6 +478,7 @@ local function custom_surface_before_set_mario_action(m, incoming)
     if block_wall then
         local block = block_wall
         local surface_id = block.oItemParams & 0xFF
+        --local surface_properties = block.oBlockSurfaceProperties
 
         if surface_id == MCE_BLOCK_COL_ID_BOUNCE then
             s_flight_hit_bounce_wall = true
@@ -479,6 +492,7 @@ local function custom_surface_before_set_mario_action(m, incoming)
     if block_floor then
         local block = block_floor
         local surface_id = block.oItemParams & 0xFF
+        --local surface_properties = block.oBlockSurfaceProperties
 
         if surface_id == MCE_BLOCK_COL_ID_BOUNCE and m.pos.y == m.floorHeight and s_bounce_landing_actions[incoming] then
             m.vel.y = 50
@@ -509,6 +523,7 @@ local function custom_surface_block_update()
     local already_exists = {verticalWind = false, toxicGas = false, booster = false}
     while block do
         local surface_id = block.oItemParams & 0xFF
+        local surface_properties = block.oBlockSurfaceProperties
 
         if not already_exists.verticalWind and surface_id == MCE_BLOCK_COL_ID_VERTICAL_WIND and mario_is_within_block(m, block) then
             table.insert(s_special_surface_types.verticalWind, block)
@@ -521,7 +536,9 @@ local function custom_surface_block_update()
             already_exists.booster = true
         elseif surface_id == MCE_BLOCK_COL_ID_WATER and mario_is_within_block(m, block) then
             table.insert(s_special_surface_types.water, block)
-        elseif surface_id == MCE_BLOCK_COL_ID_DISAPPEARING then
+        end
+
+        if surface_properties & MCE_BLOCK_PROPERTY_DISAPPEARING ~= 0 then
             if block.oAction == 1 then
                 local transparent_start = mce_block_get_transparent_start_obj(block)
                 if block.oAnimState < transparent_start then
@@ -534,7 +551,7 @@ local function custom_surface_block_update()
                 end
             end
             reset_block(m, block)
-        elseif surface_id == MCE_BLOCK_COL_ID_SHRINKING then
+        elseif surface_properties & MCE_BLOCK_PROPERTY_SHRINKING ~= 0 then
             if block.oAction == 1 then
                 block.header.gfx.scale.x = block.header.gfx.scale.x - (0.01 * block.oScaleX)
                 block.header.gfx.scale.y = block.header.gfx.scale.y - (0.01 * block.oScaleY)
@@ -544,7 +561,7 @@ local function custom_surface_block_update()
                 end
             end
             reset_block(m, block)
-        elseif surface_id == MCE_BLOCK_COL_ID_BREAKABLE then
+        elseif surface_properties & MCE_BLOCK_PROPERTY_BREAKABLE ~= 0 then
             -- Behavior is handled in the block behavior itself to have good particles
             reset_block(m, block)
         end

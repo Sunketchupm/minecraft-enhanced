@@ -3,6 +3,7 @@
     ---@field model ModelExtendedId
     ---@field spawnYOffset number
     ---@field params integer
+    ---@field blockProperties integer
     ---@field size Vec3f
     ---@field rotation Vec3s x = pitch, y = yaw, z = roll
     ---@field animState integer
@@ -15,6 +16,7 @@
     ---@field oItemParams integer
     ---@field oOwner integer
     ---@field oPrevAnimState integer
+    ---@field oBlockSurfaceProperties integer
 
 define_custom_obj_fields({
     oScaleX = "f32",
@@ -23,6 +25,7 @@ define_custom_obj_fields({
     oItemParams = "u32",
     oOwner = "s32",
     oPrevAnimState = "u32",
+    oBlockSurfaceProperties = "u32",
 })
 
 gCurrentItem = {behavior = nil, model = E_MODEL_NONE, params = {}}
@@ -37,6 +40,7 @@ add_first_update(function ()
         model = E_MODEL_MCE_BLOCK,
         spawnYOffset = 0,
         params = 0,
+        blockProperties = 0,
         size = gVec3fOne(),
         rotation = gVec3sZero(),
         animState = 0,
@@ -132,6 +136,7 @@ local COL_MCE_BLOCK_VERY_SLIPPERY = smlua_collision_util_get("mce_block_col_very
 local COL_MCE_BLOCK_HANGABLE = smlua_collision_util_get("mce_block_col_hangable")
 local COL_MCE_BLOCK_VANISH = smlua_collision_util_get("mce_block_col_vanish")
 
+-- Surfaces
 MCE_BLOCK_COL_ID_NO_COLLISION = 0xFF
 MCE_BLOCK_COL_ID_DEFAULT = 0
 MCE_BLOCK_COL_ID_LAVA = 1
@@ -145,25 +150,26 @@ MCE_BLOCK_COL_ID_HANGABLE = 8
 MCE_BLOCK_COL_ID_VANISH = 9
 MCE_BLOCK_COL_ID_VERTICAL_WIND = 10
 MCE_BLOCK_COL_ID_WATER = 11
-MCE_BLOCK_COL_ID_CHECKPOINT = 12
-MCE_BLOCK_COL_ID_BOUNCE = 13
-MCE_BLOCK_COL_ID_FIRSTY = 14
-MCE_BLOCK_COL_ID_WIDE_WALLKICK = 15
-MCE_BLOCK_COL_ID_BOOSTER = 16
-MCE_BLOCK_COL_ID_HEAL = 17
-MCE_BLOCK_COL_ID_NO_A = 18
-MCE_BLOCK_COL_ID_ANY_BONK_WALLKICK = 19
-MCE_BLOCK_COL_ID_NO_FALL_DAMAGE = 20
-MCE_BLOCK_COL_ID_CONVEYOR = 21
-MCE_BLOCK_COL_ID_BREAKABLE = 22
-MCE_BLOCK_COL_ID_DISAPPEARING = 23
-MCE_BLOCK_COL_ID_REMOVE_CAPS = 24
-MCE_BLOCK_COL_ID_NO_WALLKICKS = 25
-MCE_BLOCK_COL_ID_DASH_PANEL = 26
-MCE_BLOCK_COL_ID_TOXIC_GAS = 27
-MCE_BLOCK_COL_ID_JUMP_PAD = 28
-MCE_BLOCK_COL_ID_SHRINKING = 29
-MCE_BLOCK_COL_ID_SPRINGBOARD = 30
+MCE_BLOCK_COL_ID_BOUNCE = 12
+MCE_BLOCK_COL_ID_BOOSTER = 13
+MCE_BLOCK_COL_ID_DASH_PANEL = 14
+MCE_BLOCK_COL_ID_TOXIC_GAS = 15
+MCE_BLOCK_COL_ID_JUMP_PAD = 16
+MCE_BLOCK_COL_ID_SPRINGBOARD = 17
+
+-- Properties
+MCE_BLOCK_PROPERTY_FIRSTY = (1 << 0)
+MCE_BLOCK_PROPERTY_WIDE_WALLKICK = (1 << 1)
+MCE_BLOCK_PROPERTY_NO_A = (1 << 2)
+MCE_BLOCK_PROPERTY_ANY_BONK_WALLKICK = (1 << 3)
+MCE_BLOCK_PROPERTY_NO_FALL_DAMAGE = (1 << 4)
+MCE_BLOCK_PROPERTY_CONVEYOR = (1 << 5)
+MCE_BLOCK_PROPERTY_BREAKABLE = (1 << 6)
+MCE_BLOCK_PROPERTY_DISAPPEARING = (1 << 7)
+MCE_BLOCK_PROPERTY_REMOVE_CAPS = (1 << 8)
+MCE_BLOCK_PROPERTY_NO_WALLKICKS = (1 << 9)
+MCE_BLOCK_PROPERTY_SHRINKING = (1 << 10)
+MCE_BLOCK_PROPERTY_CHECKPOINT = (1 << 11)
 
 MCE_BLOCK_TRANSPARENT_START = 1959
 MCE_COLOR_BLOCK_TRANSPARENT_START = 108
@@ -201,7 +207,7 @@ local function block_collision_lookup(obj)
             collision = standard_collision_lookup[surface_id]
         end
         obj.collisionData = collision
-        if surface_id == MCE_BLOCK_COL_ID_CONVEYOR then
+        if surface_id == MCE_BLOCK_PROPERTY_CONVEYOR then
             obj.collisionData = COL_MCE_BLOCK_HANGABLE
         end
     end
@@ -269,8 +275,7 @@ function bhv_mce_block_loop(obj)
     end
 
     -- Handle breakable surfaces, so that their particles properly spawn
-    local surface_id = obj.oItemParams & 0xFF
-    if surface_id == MCE_BLOCK_COL_ID_BREAKABLE then
+    if obj.oBlockSurfaceProperties & MCE_BLOCK_PROPERTY_BREAKABLE ~= 0 then
         if g_hit_breakable_block == obj then
             obj.oAction = 1
             obj.oTimer = 0
@@ -290,7 +295,7 @@ function bhv_mce_block_loop(obj)
             spawn_mist_particles()
             spawn_triangle_break_particles(20, 138, 0.7, 3)
             create_sound_spawner(SOUND_GENERAL_BREAK_BOX)
-            obj.oAnimState = mce_block_get_transparent_start_obj(obj)
+            obj.oAnimState = mce_block_get_transparent_start_obj(obj) + 1
             obj.oOpacity = 0
             obj.collisionData = nil
             obj.oAction = 3
@@ -692,95 +697,138 @@ local function on_set_item_size_chat_command(msg)
     return true
 end
 
-local block_id_lookup = {
+local s_block_surface_id_lookup = {
     ["default"] = MCE_BLOCK_COL_ID_DEFAULT,
     ["normal"] = MCE_BLOCK_COL_ID_DEFAULT,
-    ["none"] = -1,
-    ["no collision"] = -1,
-    ["intangible"] = -1,    
-    ["no fall damage"] = MCE_BLOCK_COL_ID_NO_FALL_DAMAGE,
-    ["nofall"] = MCE_BLOCK_COL_ID_NO_FALL_DAMAGE,
-    ["lava"] = MCE_BLOCK_COL_ID_LAVA,    
+    --------
+    ["none"] = MCE_BLOCK_COL_ID_NO_COLLISION,
+    ["no collision"] = MCE_BLOCK_COL_ID_NO_COLLISION,
+    ["intangible"] = MCE_BLOCK_COL_ID_NO_COLLISION,
+    --------
+    ["lava"] = MCE_BLOCK_COL_ID_LAVA,
+    --------
     ["toxic gas"] = MCE_BLOCK_COL_ID_TOXIC_GAS,
     ["toxic"] = MCE_BLOCK_COL_ID_TOXIC_GAS,
     ["gas"] = MCE_BLOCK_COL_ID_TOXIC_GAS,
+    --------
     ["death"] = MCE_BLOCK_COL_ID_DEATH,
+    --------
     ["quicksand"] = MCE_BLOCK_COL_ID_QUICKSAND,
     ["qsand"] = MCE_BLOCK_COL_ID_QUICKSAND,
+    --------
     ["shallow quicksand"] = MCE_BLOCK_COL_ID_SHALLOW_QUICKSAND,
     ["shallowsand"] = MCE_BLOCK_COL_ID_SHALLOW_QUICKSAND,
     ["ssand"] = MCE_BLOCK_COL_ID_SHALLOW_QUICKSAND,
+    --------
     ["not slippery"] = MCE_BLOCK_COL_ID_NOT_SLIPPERY,
     ["not slip"] = MCE_BLOCK_COL_ID_NOT_SLIPPERY,
     ["nslip"] = MCE_BLOCK_COL_ID_NOT_SLIPPERY,
     ["n slippery"] = MCE_BLOCK_COL_ID_NOT_SLIPPERY,
+    --------
     ["slippery"] = MCE_BLOCK_COL_ID_SLIPPERY,
     ["slip"] = MCE_BLOCK_COL_ID_SLIPPERY,
+    --------
     ["very slippery"] = MCE_BLOCK_COL_ID_VERY_SLIPPERY,
     ["v slippery"] = MCE_BLOCK_COL_ID_VERY_SLIPPERY,
     ["vslip"] = MCE_BLOCK_COL_ID_VERY_SLIPPERY,
+    --------
     ["hangable"] = MCE_BLOCK_COL_ID_HANGABLE,
     ["hang"] = MCE_BLOCK_COL_ID_HANGABLE,
+    --------
     ["vanish"] = MCE_BLOCK_COL_ID_VANISH,
+    --------
     ["vertical wind"] = MCE_BLOCK_COL_ID_VERTICAL_WIND,
     ["vwind"] = MCE_BLOCK_COL_ID_VERTICAL_WIND,
+    --------
     ["water"] = MCE_BLOCK_COL_ID_WATER,
     ["swim"] = MCE_BLOCK_COL_ID_WATER,
-    ["checkpoint"] = MCE_BLOCK_COL_ID_CHECKPOINT,    
-    ["heal"] = MCE_BLOCK_COL_ID_HEAL,
-    ["respawn"] = MCE_BLOCK_COL_ID_CHECKPOINT,
-    ["bounce"] = MCE_BLOCK_COL_ID_BOUNCE,    
-    ["conveyor"] = MCE_BLOCK_COL_ID_CONVEYOR,
-    ["firsty"] = MCE_BLOCK_COL_ID_FIRSTY,
-    ["firstie"] = MCE_BLOCK_COL_ID_FIRSTY,
-    ["wide"] = MCE_BLOCK_COL_ID_WIDE_WALLKICK,
-    ["wide wallkick"] = MCE_BLOCK_COL_ID_WIDE_WALLKICK,
-    ["widekick"] = MCE_BLOCK_COL_ID_WIDE_WALLKICK,    
-    ["any bonk"] = MCE_BLOCK_COL_ID_ANY_BONK_WALLKICK,
-    ["anykick"] = MCE_BLOCK_COL_ID_ANY_BONK_WALLKICK,
-    ["no wallkicks"] = MCE_BLOCK_COL_ID_NO_WALLKICKS,
-    ["wallkickless"] = MCE_BLOCK_COL_ID_NO_WALLKICKS,
-    ["wkless"] = MCE_BLOCK_COL_ID_NO_WALLKICKS,
+    --------
+    ["bounce"] = MCE_BLOCK_COL_ID_BOUNCE,
+    --------
     ["booster"] = MCE_BLOCK_COL_ID_BOOSTER,
-    ["boost"] = MCE_BLOCK_COL_ID_BOOSTER,    
+    ["boost"] = MCE_BLOCK_COL_ID_BOOSTER,
+    --------
     ["dash"] = MCE_BLOCK_COL_ID_DASH_PANEL,
     ["dash panel"] = MCE_BLOCK_COL_ID_DASH_PANEL,
-    ["no a"] = MCE_BLOCK_COL_ID_NO_A,
-    ["abc"] = MCE_BLOCK_COL_ID_NO_A,
-    ["jumpless"] = MCE_BLOCK_COL_ID_NO_A,
-    ---
-    ["breakable"] = MCE_BLOCK_COL_ID_BREAKABLE,
-    ["break"] = MCE_BLOCK_COL_ID_BREAKABLE,
-    ---
-    ["disappear"] = MCE_BLOCK_COL_ID_DISAPPEARING,
-    ["disappearing"] = MCE_BLOCK_COL_ID_DISAPPEARING,
-    ---
-    ["remove caps"] = MCE_BLOCK_COL_ID_REMOVE_CAPS,
-    ["capsless"] = MCE_BLOCK_COL_ID_REMOVE_CAPS,
-    ["capless"] = MCE_BLOCK_COL_ID_REMOVE_CAPS,
-    ---
-    ["jump pad"] = MCE_BLOCK_COL_ID_JUMP_PAD,
-    ["jpad"] = MCE_BLOCK_COL_ID_JUMP_PAD,
-    ---
-    ["shrink"] = MCE_BLOCK_COL_ID_SHRINKING,
-    ["shrinking"] = MCE_BLOCK_COL_ID_SHRINKING,
-    ---
+    --------
     ["springboard"] = MCE_BLOCK_COL_ID_SPRINGBOARD,
     ["spring"] = MCE_BLOCK_COL_ID_SPRINGBOARD,
     ["noteblock"] = MCE_BLOCK_COL_ID_SPRINGBOARD,
+    --------
+    ["jump pad"] = MCE_BLOCK_COL_ID_JUMP_PAD,
+    ["jpad"] = MCE_BLOCK_COL_ID_JUMP_PAD,
+}
+
+local s_block_property_lookup = {
+    ["conveyor"] = MCE_BLOCK_PROPERTY_CONVEYOR,
+    --------
+    ["firsty"] = MCE_BLOCK_PROPERTY_FIRSTY,
+    ["firstie"] = MCE_BLOCK_PROPERTY_FIRSTY,
+    --------
+    ["wide"] = MCE_BLOCK_PROPERTY_WIDE_WALLKICK,
+    ["wide wallkick"] = MCE_BLOCK_PROPERTY_WIDE_WALLKICK,
+    ["widekick"] = MCE_BLOCK_PROPERTY_WIDE_WALLKICK,
+    --------
+    ["any bonk"] = MCE_BLOCK_PROPERTY_ANY_BONK_WALLKICK,
+    ["anykick"] = MCE_BLOCK_PROPERTY_ANY_BONK_WALLKICK,
+    --------
+    ["no wallkicks"] = MCE_BLOCK_PROPERTY_NO_WALLKICKS,
+    ["wallkickless"] = MCE_BLOCK_PROPERTY_NO_WALLKICKS,
+    ["wkless"] = MCE_BLOCK_PROPERTY_NO_WALLKICKS,
+    --------
+    ["no a"] = MCE_BLOCK_PROPERTY_NO_A,
+    ["abc"] = MCE_BLOCK_PROPERTY_NO_A,
+    ["jumpless"] = MCE_BLOCK_PROPERTY_NO_A,
+    --------
+    ["breakable"] = MCE_BLOCK_PROPERTY_BREAKABLE,
+    ["break"] = MCE_BLOCK_PROPERTY_BREAKABLE,
+    --------
+    ["disappear"] = MCE_BLOCK_PROPERTY_DISAPPEARING,
+    ["disappearing"] = MCE_BLOCK_PROPERTY_DISAPPEARING,
+    --------
+    ["remove caps"] = MCE_BLOCK_PROPERTY_REMOVE_CAPS,
+    ["capsless"] = MCE_BLOCK_PROPERTY_REMOVE_CAPS,
+    ["capless"] = MCE_BLOCK_PROPERTY_REMOVE_CAPS,
+    --------
+    ["shrink"] = MCE_BLOCK_PROPERTY_SHRINKING,
+    ["shrinking"] = MCE_BLOCK_PROPERTY_SHRINKING,
+    --------
+    ["no fall damage"] = MCE_BLOCK_PROPERTY_NO_FALL_DAMAGE,
+    ["nofall"] = MCE_BLOCK_PROPERTY_NO_FALL_DAMAGE,
+    --------
+    ["checkpoint"] = MCE_BLOCK_PROPERTY_CHECKPOINT,
+    ["respawn"] = MCE_BLOCK_PROPERTY_CHECKPOINT,
 }
 
 ---@param msg string
 function on_set_surface_chat_command(msg)
-    if block_id_lookup[msg:lower()] then
-        if gHotbarItemList[gSelectedHotbarIndex].item and gHotbarItemList[gSelectedHotbarIndex].item.behavior == bhvMceBlock then
-            gHotbarItemList[gSelectedHotbarIndex].item.params = block_id_lookup[msg:lower()]
+    local item = gHotbarItemList[gSelectedHotbarIndex].item
+    if item and item.behavior == bhvMceBlock then
+        local surf = s_block_surface_id_lookup[msg:lower()]
+        if surf then
+            gHotbarItemList[gSelectedHotbarIndex].item.params = surf
             djui_chat_message_create("Set the surface type to " .. msg)
         else
-            djui_chat_message_create("You must have a block selected to change its surface type!")
+            surf = s_block_property_lookup[msg:lower()]
+            if surf then
+                local properties = gHotbarItemList[gSelectedHotbarIndex].item.blockProperties
+                if properties & surf == 0 then
+                    if properties & (MCE_BLOCK_PROPERTY_BREAKABLE | MCE_BLOCK_PROPERTY_DISAPPEARING | MCE_BLOCK_PROPERTY_SHRINKING) ~= 0 then
+                        properties = properties & ~(MCE_BLOCK_PROPERTY_BREAKABLE | MCE_BLOCK_PROPERTY_DISAPPEARING | MCE_BLOCK_PROPERTY_SHRINKING)
+                        djui_chat_message_create("The breakable, disappearing, and shrinking properties are incompatible with each other. Incompatibilities removed")
+                    end
+                    gHotbarItemList[gSelectedHotbarIndex].item.blockProperties = properties | surf
+                    djui_chat_message_create("Added the surface property " .. msg)
+                else
+                    gHotbarItemList[gSelectedHotbarIndex].item.blockProperties = properties & ~surf
+                    djui_chat_message_create("Removed the surface property " .. msg)
+                end
+            else
+                djui_chat_message_create("Could not find surface type or property" .. "\"" .. msg .. "\"")
+            end
         end
     else
-        djui_chat_message_create("Could not find surface type " .. "\"" .. msg .. "\"")
+        djui_chat_message_create("You must have a block selected to change its surface type!")
     end
     return true
 end
