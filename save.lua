@@ -1,11 +1,9 @@
--- localize functions to improve performance
+-- localize functions to improve performance (soon)
 
 --[[
     There isn't very much space in mod storage and blocks take up a lot of space
     The base64 conversion code was created from ChatGPT :(
 ]]
-
---gGlobalSyncTable.allowSameAreaSaveLoad = true
 
 local BLOCK_CHAR_SIZE = 47
 
@@ -95,11 +93,7 @@ end
 
 ---@param msg string
 local function on_save_chat_command(msg)
-    --[[if not CanBuild then
-        djui_chat_message_create("Can't save. Forbidden from building.")
-        return true
-    end]]
-
+    local save_all = false
     if msg:lower() == "clear" then
         if mod_storage_clear() then
             djui_chat_message_create("All save slots have been cleared")
@@ -107,6 +101,9 @@ local function on_save_chat_command(msg)
             djui_chat_message_create("Failed to clear save slots")
         end
         return true
+    elseif msg:lower() == "all" then
+        djui_chat_message_create("All items placed in this area will be saved")
+        save_all = true
     end
 
     local encoded_string = ""
@@ -117,7 +114,7 @@ local function on_save_chat_command(msg)
         ---@type NetworkPlayer
         local np = gNetworkPlayers[0]
         while obj do
-            if obj.oOwner == np.globalIndex + 1 then
+            if save_all or obj.oOwner == np.globalIndex + 1 then
                 local scale_decimal_expansion = {
                     x = math.floor((obj.header.gfx.scale.x - math.floor(obj.header.gfx.scale.x)) * 100),
                     y = math.floor((obj.header.gfx.scale.y - math.floor(obj.header.gfx.scale.y)) * 100),
@@ -185,12 +182,16 @@ local function on_save_chat_command(msg)
     return true
 end
 
+-----------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------
 
 local s_load_name = ""
 local s_load_lines = {}
 g_load_block_datas = {}
 local s_load_state = 0
-hook_event(HOOK_ON_HUD_RENDER, function ()
+
+local function on_load_part_2()
     if s_load_state == 1 then
         for _, texture in ipairs(gMenuBlockTextureIcons) do
             djui_hud_render_texture(texture, 0, 0, 1, 1)
@@ -283,9 +284,10 @@ hook_event(HOOK_ON_HUD_RENDER, function ()
         s_load_state = 0
         s_load_name = ""
     end
-end)
+end
 
-hook_event(HOOK_MARIO_UPDATE, function (m)
+---@param m MarioState
+local function retry_place_block(m)
     if m.playerIndex ~= 0 then return end
 
     for index, respawn_item in ipairs(g_load_block_datas) do
@@ -345,27 +347,10 @@ hook_event(HOOK_MARIO_UPDATE, function (m)
             table.remove(g_load_block_datas, index)
         end
     end
-end)
+end
 
 ---@param msg string
 local function on_load_chat_command(msg)
-    --[[if not allowBuild then
-        djui_chat_message_create("Can't load. Forbidden from building.")
-        return true
-    end]]
-    --[[if not gGlobalSyncTable.allowSameAreaSaveLoad then
-        ---@type NetworkPlayer
-        local np = gNetworkPlayers[0]
-        for i = 1, MAX_PLAYERS - 1, 1 do
-            if (np and np.connected and gNetworkPlayers[i] and gNetworkPlayers[i].connected) and
-                np.currLevelNum == gNetworkPlayers[i].currLevelNum and np.currAreaIndex == gNetworkPlayers[i].currAreaIndex and np.currActNum == gNetworkPlayers[i].currActNum then
-
-                djui_chat_message_create("Can't load. Loading while anyone is in the same level is disabled.")
-                return true
-            end
-        end
-    end]]
-
     local exists = false
     for i = 1, MAX_KEYS, 1 do
         if mod_storage_exists(msg .. "_" .. tostring(i)) then
@@ -388,8 +373,11 @@ local function on_load_chat_command(msg)
     return true
 end
 
-hook_chat_command("save", "[<slot name>|clear] | Stores the items you placed to be loaded again for later use", on_save_chat_command)
+hook_chat_command("save", "[<slot name>|clear|all] | Stores the items you placed to be loaded again for later use", on_save_chat_command)
 hook_chat_command("load", "[<slot name>] | Loads the items that have been stored", on_load_chat_command)
+
+hook_event(HOOK_ON_HUD_RENDER, on_load_part_2)
+hook_event(HOOK_MARIO_UPDATE, retry_place_block)
 
 local save_slot_name = ""
 
