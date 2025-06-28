@@ -5,7 +5,7 @@
     The base64 conversion code was created from ChatGPT :(
 ]]
 
-local BLOCK_CHAR_SIZE = 47
+local BLOCK_CHAR_SIZE = 53
 
 local base64Chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
 
@@ -140,7 +140,8 @@ local function on_save_chat_command(msg)
                     pad(encode(math.floor(obj.header.gfx.scale.x)), 1) .. pad(encode(scale_decimal_expansion.x), 2) .. -- 32
                     pad(encode(math.floor(obj.header.gfx.scale.y)), 1) .. pad(encode(scale_decimal_expansion.y), 2) .. -- 35
                     pad(encode(math.floor(obj.header.gfx.scale.z)), 1) .. pad(encode(scale_decimal_expansion.z), 2) .. -- 38
-                    pad(encode(yaw), 3) .. pad(encode(pitch), 3) .. pad(encode(roll), 3) -- 47
+                    pad(encode(yaw), 3) .. pad(encode(pitch), 3) .. pad(encode(roll), 3) .. -- 47
+                    pad(encode(obj.oBlockSurfaceProperties), 6) -- 53
 
                 encoded_string = encoded_string .. addon
             end
@@ -242,6 +243,7 @@ local function on_load_part_2()
             --djui_chat_message_create(count, "Pitch: " .. encoded_string:sub(i + 41, i + 43))
             local roll           = decode(encoded_string:sub(i + 44, i + 46)) - 32768
             --djui_chat_message_create(count, "Roll: " .. encoded_string:sub(i + 44, i + 46))
+            local properties     = decode(encoded_string:sub(i + 47, i + 52))
 
             local item = spawn_sync_object(
                 behavior_id,
@@ -257,6 +259,7 @@ local function on_load_part_2()
                     obj.oMoveAnglePitch = pitch
                     obj.oMoveAngleRoll = roll
                     obj.oItemParams = params
+                    obj.oBlockSurfaceProperties = properties
                     obj.oScaleX = scaleX + (scale_decimalX * 0.01)
                     obj.oScaleY = scaleY + (scale_decimalY * 0.01)
                     obj.oScaleZ = scaleZ + (scale_decimalZ * 0.01)
@@ -274,7 +277,7 @@ local function on_load_part_2()
                     item, behavior_id, model,
                     x_pos + x_pos_decimal * 0.01, y_pos + y_pos_decimal * 0.01, z_pos + z_pos_decimal * 0.01,
                     pitch, yaw, roll,
-                    params,
+                    params, properties,
                     scaleX + scale_decimalX, scaleY + scale_decimalY, scaleZ + scale_decimalZ,
                     anim_state, 0
                 })
@@ -283,6 +286,7 @@ local function on_load_part_2()
         djui_chat_message_create("Loaded items from slot \"" .. s_load_name .. "\"")
         s_load_state = 0
         s_load_name = ""
+        s_load_lines = {}
     end
 end
 
@@ -303,10 +307,11 @@ local function retry_place_block(m)
             local yaw = respawn_item[8]
             local roll = respawn_item[9]
             local params = respawn_item[10]
-            local scaleX = respawn_item[11]
-            local scaleY = respawn_item[12]
-            local scaleZ = respawn_item[13]
-            local anim_state = respawn_item[14]
+            local properties = respawn_item[11]
+            local scaleX = respawn_item[12]
+            local scaleY = respawn_item[13]
+            local scaleZ = respawn_item[14]
+            local anim_state = respawn_item[15]
             local respawned_item = spawn_sync_object(
                 behavior_id,
                 model,
@@ -321,6 +326,7 @@ local function retry_place_block(m)
                     obj.oMoveAnglePitch = pitch
                     obj.oMoveAngleRoll = roll
                     obj.oItemParams = params
+                    obj.oBlockSurfaceProperties = properties
                     obj.oScaleX = scaleX
                     obj.oScaleY = scaleY
                     obj.oScaleZ = scaleZ

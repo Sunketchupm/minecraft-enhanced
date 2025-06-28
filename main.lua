@@ -285,7 +285,7 @@ local function place_item()
 			item, current_item.behavior, current_item.model,
 			s_outline.oPosX, s_outline.oPosY - (current_item.spawnYOffset * current_item.size.y), s_outline.oPosZ,
 			s_outline.oFaceAnglePitch, s_outline.oFaceAngleYaw, s_outline.oFaceAngleRoll,
-			current_item.params,
+			current_item.params, current_item.blockProperties,
 			current_item.size.x, current_item.size.y, current_item.size.z,
 			current_item.animState, 0
 		})
