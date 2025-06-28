@@ -8,15 +8,15 @@ local s_mario_yaw_timer = 0
 local s_prev_romhack_cam_state = camera_get_romhack_override()
 ---@param m MarioState
 local function act_free_move(m)
-    if gMenuOpen then return false end
+    if gMenuOpen or is_game_paused() then return false end
 
     m.peakHeight = m.pos.y
     m.health = 0x880
     m.capTimer = 1
     m.squishTimer = 0
     local camera = m.area.camera
-    if camera.cutscene == CUTSCENE_QUICKSAND_DEATH then
-        soft_reset_camera(camera)
+    if camera.cutscene ~= 0 then
+        reset_camera(camera)
     end
     if camera.mode == CAMERA_MODE_WATER_SURFACE or camera.mode == CAMERA_MODE_BEHIND_MARIO then
         set_camera_mode(camera, CAMERA_MODE_NONE, 0)
@@ -107,24 +107,30 @@ end
 
 local s_default_respawn_location = gVec3fZero()
 g_respawn_location = gVec3fZero()
+g_respawn_angle = 0
 
 ---@param m MarioState
 local function on_death(m)
-    if m.action == ACT_FREE_MOVE then return false end
+    if m.action == ACT_FREE_MOVE then
+        m.marioBodyState.modelState = m.marioBodyState.modelState | MODEL_STATE_NOISE_ALPHA
+        return false
+    end
     vec3f_copy(m.pos, g_respawn_location)
     mario_pop_bubble(m)
     set_mario_action(m, ACT_FREEFALL, 0)
     m.invincTimer = 1
     m.capTimer = 1
     m.squishTimer = 1
-    m.faceAngle.y = 0
+    m.faceAngle.y = g_respawn_angle
     return false
 end
 
 local function on_warp()
+    ---@type MarioState
     local m = gMarioStates[0]
     vec3f_copy(s_default_respawn_location, m.pos)
     vec3f_copy(g_respawn_location, m.pos)
+    g_respawn_angle = m.faceAngle.y
 end
 
 ---@param m MarioState
@@ -208,6 +214,7 @@ hook_event(HOOK_MARIO_UPDATE, mario_update)
 hook_chat_command("restart", "[<nothing>|reset] Restarts you to your current checkpoint, or use \"reset\" to respawn at spawn", function (msg)
     if msg:lower() == "reset" then
         vec3f_copy(g_respawn_location, s_default_respawn_location)
+        g_respawn_angle = 0
     end
     on_death(gMarioStates[0])
     return true

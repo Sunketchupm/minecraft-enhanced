@@ -307,7 +307,7 @@ local function determine_place_or_delete(allow_build_delete)
 			y = math.abs(nearest.oPosY - s_outline.oPosY),
 			z = math.abs(nearest.oPosZ - s_outline.oPosZ)
 		}
-		local is_out_range = (dists.x >= gGridSize.x * 0.5 or dists.y >= gGridSize.y * 0.5 or dists.z >= gGridSize.z * 0.5)
+		local is_out_range = (dists.x >= gGridSize.x or dists.y >= gGridSize.y or dists.z >= gGridSize.z)
 		if allow_build_delete.build and is_out_range then
 			place_item()
 			return true

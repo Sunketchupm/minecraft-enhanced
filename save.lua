@@ -101,8 +101,11 @@ local function on_save_chat_command(msg)
     end]]
 
     if msg:lower() == "clear" then
-        mod_storage_clear()
-        djui_chat_message_create("All save slots have been cleared")
+        if mod_storage_clear() then
+            djui_chat_message_create("All save slots have been cleared")
+        else
+            djui_chat_message_create("Failed to clear save slots")
+        end
         return true
     end
 
@@ -186,14 +189,14 @@ end
 local s_load_name = ""
 local s_load_lines = {}
 g_load_block_datas = {}
-local load_state = 0
+local s_load_state = 0
 hook_event(HOOK_ON_HUD_RENDER, function ()
-    if load_state == 1 then
+    if s_load_state == 1 then
         for _, texture in ipairs(gMenuBlockTextureIcons) do
             djui_hud_render_texture(texture, 0, 0, 1, 1)
         end
-        load_state = 2
-    elseif load_state == 2 then
+        s_load_state = 2
+    elseif s_load_state == 2 then
         local decode = decode_base64
         local encoded_string = table.concat(s_load_lines)
         --local count = 0
@@ -277,7 +280,8 @@ hook_event(HOOK_ON_HUD_RENDER, function ()
             end
         end
         djui_chat_message_create("Loaded items from slot \"" .. s_load_name .. "\"")
-        load_state = 0
+        s_load_state = 0
+        s_load_name = ""
     end
 end)
 
@@ -376,8 +380,8 @@ local function on_load_chat_command(msg)
         end
     end
 
-    if load_state == 0 then
-        load_state = 1
+    if s_load_state == 0 then
+        s_load_state = 1
         s_load_name = msg
         g_load_block_datas = {}
     end

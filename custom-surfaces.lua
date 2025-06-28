@@ -146,8 +146,9 @@ local s_special_surface_handlers = {
         s_special_surface_types.toxicGas = {}
     end,
     booster = function (m)
-        if m.action & ACT_FLAG_MOVING ~= 0 and m.action ~= ACT_DECELERATING then
-            mario_set_forward_vel(m, m.forwardVel + 2.35)
+        if m.action ~= ACT_DECELERATING then
+            m.vel.x = m.vel.x * 1.1
+            m.vel.z = m.vel.z * 1.1
         end
         s_special_surface_types.booster = {}
     end,
@@ -273,6 +274,7 @@ local function custom_surface_mario_update(m)
         if m.pos.y == m.floorHeight then
             if surface_id == MCE_BLOCK_COL_ID_CHECKPOINT then
                 g_respawn_location = {x = block.oPosX, y = block.oPosY + block.oScaleY * 200, z = block.oPosZ}
+                g_respawn_angle = block.oFaceAngleYaw
             elseif surface_id == MCE_BLOCK_COL_ID_HEAL then
                 m.healCounter = 39
             elseif surface_id == MCE_BLOCK_COL_ID_CONVEYOR then
@@ -338,9 +340,6 @@ local function custom_surface_mario_update(m)
     if #s_special_surface_types.toxicGas > 0 then
         s_special_surface_handlers.toxicGas(m)
     end
-    if #s_special_surface_types.booster > 0 then
-        s_special_surface_handlers.booster(m)
-    end
 
     if m.action == ACT_FLYING then
         if s_flight_hit_bounce_wall then
@@ -388,6 +387,10 @@ local function custom_surface_before_phys_step(m)
 
     if not s_flight_hit_bounce_wall then
         s_preserved_flight_speed = m.forwardVel
+    end
+
+    if #s_special_surface_types.booster > 0 then
+        s_special_surface_handlers.booster(m)
     end
 end
 

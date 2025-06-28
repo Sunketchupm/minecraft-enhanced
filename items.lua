@@ -27,9 +27,9 @@ define_custom_obj_fields({
 
 gCurrentItem = {behavior = nil, model = E_MODEL_NONE, params = {}}
 g_all_item_behaviors = {}
-local g_level_item_behaviors = {}
-local g_enemy_item_behaviors = {}
-local g_vanilla_clear_immune = {}
+local s_level_item_behaviors = {}
+local s_enemy_item_behaviors = {}
+local s_vanilla_clear_immune = {}
 add_first_update(function ()
     ---@type Item
     gCurrentItem = {
@@ -50,17 +50,17 @@ add_first_update(function ()
         bhvMceExclamationBox
     }
     ---@type BehaviorId[]
-    g_level_item_behaviors = {
+    s_level_item_behaviors = {
         bhvMceStar,
         bhvMceCoin,
         bhvMceExclamationBox
     }
     ---@type BehaviorId[]
-    g_enemy_item_behaviors = {
+    s_enemy_item_behaviors = {
         --
     }
     ---@type BehaviorId[]
-    g_vanilla_clear_immune = {
+    s_vanilla_clear_immune = {
         [id_bhvSpinAirborneWarp] = true,
         [bhvMceBlock] = true,
         [bhvMceStar] = true,
@@ -189,6 +189,7 @@ local ignore_collision_lookup = {
     [MCE_BLOCK_COL_ID_VERTICAL_WIND] = true,
     [MCE_BLOCK_COL_ID_WATER] = true,
     [MCE_BLOCK_COL_ID_TOXIC_GAS] = true,
+    [MCE_BLOCK_COL_ID_BOOSTER] = true,
 }
 
 ---@param obj Object
@@ -574,10 +575,9 @@ local function on_clear_chat_command(msg)
             local obj = obj_get_first(i)
             while obj do
                 local behavior_id = get_id_from_behavior(obj.behavior)
-                if not g_vanilla_clear_immune[behavior_id] then
+                if not s_vanilla_clear_immune[behavior_id] then
                     obj_mark_for_deletion(obj)
                 end
-                obj_mark_for_deletion(obj)
                 obj = obj_get_next(obj)
             end
         end
@@ -592,7 +592,7 @@ local function on_clear_chat_command(msg)
         end
         djui_chat_message_create("Removed all placed blocks")
     elseif command == "items" then
-        for _, behavior in ipairs(g_level_item_behaviors) do
+        for _, behavior in ipairs(s_level_item_behaviors) do
             local obj = obj_get_first_with_behavior_id(behavior)
             while obj do
                 if object_removal_criteria(obj, args[2]) then
@@ -603,7 +603,7 @@ local function on_clear_chat_command(msg)
         end
         djui_chat_message_create("Removed all placed level items")
     elseif command == "enemies" then
-        for _, behavior in ipairs(g_enemy_item_behaviors) do
+        for _, behavior in ipairs(s_enemy_item_behaviors) do
             local obj = obj_get_first_with_behavior_id(behavior)
             while obj  do
                 if object_removal_criteria(obj, args[2]) then

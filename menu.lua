@@ -193,14 +193,14 @@ add_first_update(function ()
         icon = get_texture_info("barrier")
     })
 
-    local star_offset = 6
+    local star_offset = 0--6
     add_item(TAB_ITEMS, bhvMceStar, E_MODEL_STAR, star_offset, 0, { animateFaceAngleYaw = 0x800 }, 0, gTextures.star)
     add_item(TAB_ITEMS, bhvMceStar, E_MODEL_TRANSPARENT_STAR, star_offset, 0, { animateFaceAngleYaw = 0x800 }, 0, gTextures.star)
-    local coin_offset = 32
+    local coin_offset = 0--32
     add_item(TAB_ITEMS, bhvMceCoin, E_MODEL_YELLOW_COIN, coin_offset, 0, { animateAnimState = true, animateFrame = 2, billboard = true }, 1, gTextures.coin)
-    add_item(TAB_ITEMS, bhvMceCoin, E_MODEL_RED_COIN, coin_offset + 3, 0, { animateAnimState = true, animateFrame = 2, billboard = true }, 2, gTextures.coin)
-    add_item(TAB_ITEMS, bhvMceCoin, E_MODEL_BLUE_COIN, coin_offset + 26, 0, { animateAnimState = true, animateFrame = 2, billboard = true, scale = 1.25 }, 5, gTextures.coin)
-    local exclamation_box_offset = 50
+    add_item(TAB_ITEMS, bhvMceCoin, E_MODEL_RED_COIN, coin_offset--[[+ 3]], 0, { animateAnimState = true, animateFrame = 2, billboard = true }, 2, gTextures.coin)
+    add_item(TAB_ITEMS, bhvMceCoin, E_MODEL_BLUE_COIN, coin_offset--[[ + 26]], 0, { animateAnimState = true, animateFrame = 2, billboard = true, scale = 1.25 }, 5, gTextures.coin)
+    local exclamation_box_offset = 0--50
     add_item(TAB_ITEMS, bhvMceExclamationBox, E_MODEL_EXCLAMATION_BOX, exclamation_box_offset, 0, { scale = 2 }, 1, gTextures.apostrophe)
     add_item(TAB_ITEMS, bhvMceExclamationBox, E_MODEL_EXCLAMATION_BOX, exclamation_box_offset, 1, { scale = 2 }, 2, gTextures.apostrophe)
     add_item(TAB_ITEMS, bhvMceExclamationBox, E_MODEL_EXCLAMATION_BOX, exclamation_box_offset, 2, { scale = 2 }, 3, gTextures.apostrophe)
@@ -1238,6 +1238,9 @@ local function before_mario_update(m)
 
     if not gMenuOpen and m.controller.buttonPressed & X_BUTTON ~= 0 then
         gMenuOpen = true
+        return
+    end
+    if is_game_paused() then
         return
     end
 
