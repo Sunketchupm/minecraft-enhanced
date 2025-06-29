@@ -14,12 +14,15 @@ local function act_free_move(m)
     m.health = 0x880
     m.capTimer = 1
     m.squishTimer = 0
-    local camera = m.area.camera
-    if camera.cutscene ~= 0 then
-        reset_camera(camera)
-    end
-    if camera.mode == CAMERA_MODE_WATER_SURFACE or camera.mode == CAMERA_MODE_BEHIND_MARIO then
-        set_camera_mode(camera, CAMERA_MODE_NONE, 0)
+
+    if m.playerIndex == 0 then
+        local camera = m.area.camera
+        if camera.cutscene ~= 0 then
+            reset_camera(camera)
+        end
+        if camera.mode == CAMERA_MODE_WATER_SURFACE or camera.mode == CAMERA_MODE_BEHIND_MARIO then
+            set_camera_mode(camera, CAMERA_MODE_NONE, 0)
+        end
     end
 
     local lHeld = (m.controller.buttonDown & L_TRIG) ~= 0
@@ -122,6 +125,13 @@ local function on_death(m)
     m.capTimer = 1
     m.squishTimer = 1
     m.faceAngle.y = g_respawn_angle
+
+    reset_non_block_items(true)
+    local block = obj_get_first_with_behavior_id(bhvMceBlock)
+    while block do
+        block.oAction = MCE_BLOCK_ACT_RESET
+        block = obj_get_next_with_same_behavior_id(block)
+    end
     return false
 end
 

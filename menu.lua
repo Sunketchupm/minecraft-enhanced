@@ -771,7 +771,7 @@ end
 local sMenuTabs = {
     {tab = render_building_blocks_tab, icon = {texture = DPLAT_BLOCK_TEX, color = {r = 255, g = 255, b = 255, a = 255}}},
     {tab = render_building_blocks_colors_tab, icon = {texture = DPLAT_BLOCK_TEX, color = {r = 255, g = 255, b = 255, a = 255}}},
-    {tab = render_items_tab, icon = {texture = gTextures.star, color = {r = 255, g = 255, b = 255, a = 255}}},
+    {tab = render_items_tab, icon = {texture = SLOT_STAR_TEX, color = {r = 255, g = 255, b = 255, a = 255}}},
     {tab = render_enemies_tab, icon = {texture = SLOT_GOOMBA_TEX, color = {r = 255, g = 255, b = 255, a = 255}}},
     {tab = render_surfaces_tab, icon = {texture = CPLAT_BLOCK_TEX, color = {r = 255, g = 255, b = 255, a = 255}}},
 }
@@ -974,7 +974,8 @@ local function hud_render()
     local screen_height = djui_hud_get_screen_height()
     if gCanBuild then
         render_menu(screen_width, screen_height)
-    elseif s_show_controls then
+    end
+    if s_show_controls then
         render_controls(screen_width, screen_height)
     end
 end

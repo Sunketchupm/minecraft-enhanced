@@ -561,7 +561,7 @@ local function object_removal_criteria(obj, mod_command)
 end
 
 ---@param msg string
-local function on_clear_chat_command(msg)
+function on_clear_chat_command(msg)
     local args = split_string(msg, " ")
     local command = args[1] and args[1]:lower() or ""
     if command == "all" or command == "" then
@@ -628,19 +628,25 @@ local function on_clear_chat_command(msg)
     return true
 end
 
-local function unrendered_items_update()
-    for _, behavior in ipairs(g_all_item_behaviors) do
-        if behavior ~= bhvMceBlock then
-            local obj = obj_get_first_with_behavior_id(behavior)
-            while obj do
-                local render_flags = obj.header.gfx.node.flags
-                if gMarioStates[0].action == ACT_FREE_MOVE and (render_flags & GRAPH_RENDER_INVISIBLE ~= 0 or render_flags & GRAPH_RENDER_ACTIVE == 0) then
-                    obj.header.gfx.node.flags = obj.header.gfx.node.flags &~ GRAPH_RENDER_INVISIBLE
-                    obj.header.gfx.node.flags = obj.header.gfx.node.flags | GRAPH_RENDER_ACTIVE
-                    obj_become_tangible(obj)
-                    obj.oAction = 0
+-- HOOK_UPDATE passes no parameters (so far) and so this param will
+-- always be false, so other places where this function gets called can pass a
+-- parameter to disable the free move check
+---@param override_free_move_check boolean?
+function reset_non_block_items(override_free_move_check)
+    if gMarioStates[0].action == ACT_FREE_MOVE or override_free_move_check then
+            for _, behavior in ipairs(g_all_item_behaviors) do
+            if behavior ~= bhvMceBlock then
+                local obj = obj_get_first_with_behavior_id(behavior)
+                while obj do
+                    local render_flags = obj.header.gfx.node.flags
+                    if render_flags & GRAPH_RENDER_INVISIBLE ~= 0 or render_flags & GRAPH_RENDER_ACTIVE == 0 then
+                        obj.header.gfx.node.flags = obj.header.gfx.node.flags &~ GRAPH_RENDER_INVISIBLE
+                        obj.header.gfx.node.flags = obj.header.gfx.node.flags | GRAPH_RENDER_ACTIVE
+                        obj_become_tangible(obj)
+                        obj.oAction = 0
+                    end
+                    obj = obj_get_next_with_same_behavior_id(obj)
                 end
-                obj = obj_get_next_with_same_behavior_id(obj)
             end
         end
     end
@@ -654,7 +660,7 @@ if network_is_privileged() then
     Use 'ALL' to remove EVERY object of that criteria \
     Use 'orphaned' to remove all objects of that criteria with no owner")
 end
-hook_event(HOOK_UPDATE, unrendered_items_update)
+hook_event(HOOK_UPDATE, reset_non_block_items)
 
 ------------------------------------------------------------------------------------------
 

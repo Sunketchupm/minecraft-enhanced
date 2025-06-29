@@ -106,6 +106,10 @@ local function on_save_chat_command(msg)
         save_all = true
     end
 
+    if msg == "" then
+        msg = "default"
+    end
+
     local encoded_string = ""
     local pad = add_padding
     local encode = encode_base64
@@ -187,10 +191,12 @@ end
 -----------------------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------------------
 
-local s_load_name = ""
+local s_load_name = "default"
 local s_load_lines = {}
 g_load_block_datas = {}
 local s_load_state = 0
+local s_check_failure = false
+local s_reload_items = false
 
 local function on_load_part_2()
     if s_load_state == 1 then
@@ -199,9 +205,19 @@ local function on_load_part_2()
         end
         s_load_state = 2
     elseif s_load_state == 2 then
+        if s_reload_items then
+            on_clear_chat_command("")
+        end
+
         local decode = decode_base64
         local encoded_string = table.concat(s_load_lines)
         --local count = 0
+        if s_check_failure then
+            s_load_state = 0
+            djui_chat_message_create("Failed to load blocks")
+            return true
+        end
+        s_check_failure = true
         for i = 1, #encoded_string, BLOCK_CHAR_SIZE do
             --count = count + 1
             --djui_chat_message_create(count, encoded_string:sub(i + 0, i + 2))
@@ -283,9 +299,10 @@ local function on_load_part_2()
                 })
             end
         end
+        s_check_failure = false
         djui_chat_message_create("Loaded items from slot \"" .. s_load_name .. "\"")
         s_load_state = 0
-        s_load_name = ""
+        s_load_name = "default"
         s_load_lines = {}
     end
 end
@@ -357,7 +374,14 @@ end
 
 ---@param msg string
 local function on_load_chat_command(msg)
+    if msg == "" then
+        msg = "default"
+    end
     local exists = false
+    local has_reload_param = (msg:sub(-6, #msg)):lower() == "reload"
+    if has_reload_param then
+        msg = msg:sub(1, -8)
+    end
     for i = 1, MAX_KEYS, 1 do
         if mod_storage_exists(msg .. "_" .. tostring(i)) then
             local encoded = mod_storage_load(msg .. "_" .. tostring(i))
@@ -375,19 +399,20 @@ local function on_load_chat_command(msg)
         s_load_state = 1
         s_load_name = msg
         g_load_block_datas = {}
+        s_reload_items = true
     end
     return true
 end
 
 hook_chat_command("save", "[<slot name>|clear|all] | Stores the items you placed to be loaded again for later use", on_save_chat_command)
-hook_chat_command("load", "[<slot name>] | Loads the items that have been stored", on_load_chat_command)
+hook_chat_command("load", "[<slot name>] [reload] | Loads the items that have been stored", on_load_chat_command)
 
 hook_event(HOOK_ON_HUD_RENDER, on_load_part_2)
 hook_event(HOOK_MARIO_UPDATE, retry_place_block)
 
 local save_slot_name = ""
 
-hook_mod_menu_inputbox("Save Slot Name", "", 20, function (_, val)
+hook_mod_menu_inputbox("Save Slot Name", "default", 20, function (_, val)
     save_slot_name = val
 end)
 hook_mod_menu_button("Save", function (_)
