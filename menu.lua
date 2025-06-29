@@ -87,7 +87,7 @@ local CPLAT_BLOCK_TEX = get_texture_info("checkpoint")
 local SLOT_GOOMBA_TEX = get_texture_info("gombaslot")
 local SLOT_BOBOMB_TEX = get_texture_info("bobombslot")
 local SLOT_CHUCKYA_TEX = get_texture_info("chuckyaslot")
-local SLOT_STAR_TEX = get_texture_info("starslot") -- This texture is not a power of 2
+local SLOT_STAR_TEX = get_texture_info("starslot") 
 --------------------------------------
 
 ---@class MenuItemLink
@@ -974,7 +974,8 @@ local function hud_render()
     local screen_height = djui_hud_get_screen_height()
     if gCanBuild then
         render_menu(screen_width, screen_height)
-    elseif s_show_controls then
+    end
+    if s_show_controls then
         render_controls(screen_width, screen_height)
     end
 end
