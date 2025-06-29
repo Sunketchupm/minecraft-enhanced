@@ -87,7 +87,7 @@ local CPLAT_BLOCK_TEX = get_texture_info("checkpoint")
 local SLOT_GOOMBA_TEX = get_texture_info("gombaslot")
 local SLOT_BOBOMB_TEX = get_texture_info("bobombslot")
 local SLOT_CHUCKYA_TEX = get_texture_info("chuckyaslot")
-local SLOT_STAR_TEX = get_texture_info("starslot") -- This texture is not a power of 2
+local SLOT_STAR_TEX = get_texture_info("starslot") 
 --------------------------------------
 
 ---@class MenuItemLink
