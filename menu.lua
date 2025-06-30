@@ -2,6 +2,8 @@ gMenuOpen = false
 
 local s_active_tab = 1
 local s_selected_item_index = 1
+local s_is_holding_item = false
+
 local s_current_page = 1
 local s_pages_count = 1
 ---@type MenuItemLink[][]
@@ -87,7 +89,7 @@ local CPLAT_BLOCK_TEX = get_texture_info("checkpoint")
 local SLOT_GOOMBA_TEX = get_texture_info("gombaslot")
 local SLOT_BOBOMB_TEX = get_texture_info("bobombslot")
 local SLOT_CHUCKYA_TEX = get_texture_info("chuckyaslot")
-local SLOT_STAR_TEX = get_texture_info("starslot") 
+local SLOT_STAR_TEX = get_texture_info("starslot")
 --------------------------------------
 
 ---@class MenuItemLink
@@ -96,7 +98,7 @@ local SLOT_STAR_TEX = get_texture_info("starslot")
     ---@field self MenuItemLink?
 
 ---@type table<integer, MenuItemLink[]>
-local TabItemList = {
+local sTabItemList = {
     [TAB_BUILDING_BLOCKS] = {},
     [TAB_BUILDING_BLOCKS_COLORS] = {},
     [TAB_ITEMS] = {},
@@ -135,7 +137,7 @@ local function add_item(tab, behavior, model, offset, anim_state, mock_settings,
     }, icon = icon }
 
     item.self = item
-    table.insert(TabItemList[tab], item)
+    table.insert(sTabItemList[tab], item)
 end
 
 add_first_update(function ()
@@ -158,7 +160,7 @@ add_first_update(function ()
             icon = texture
         }
         menu_item.self = menu_item
-        TabItemList[TAB_BUILDING_BLOCKS][i] = menu_item
+        sTabItemList[TAB_BUILDING_BLOCKS][i] = menu_item
     end
 
     for i = 1, #gMenuBlockColorIcons, 1 do
@@ -180,9 +182,9 @@ add_first_update(function ()
             icon = texture
         }
         menu_item.self = menu_item
-        TabItemList[TAB_BUILDING_BLOCKS_COLORS][i] = menu_item
+        sTabItemList[TAB_BUILDING_BLOCKS_COLORS][i] = menu_item
     end
-    table.insert(TabItemList[TAB_BUILDING_BLOCKS_COLORS], {
+    table.insert(sTabItemList[TAB_BUILDING_BLOCKS_COLORS], {
         item = {
             behavior = bhvMceBlock,
             model = E_MODEL_MCE_COLOR_BLOCK,
@@ -308,6 +310,28 @@ local function render_bordered_rectangle(x, y, width, height, colors, margin_wid
     render_colored_rectangle(x, y, width, height, colors[1], margin_width, margin_height)
 end
 
+---@param icon TextureInfo
+local function rescale_icon(icon)
+    local texture_width = icon.width
+    local texture_height = icon.height
+    local item_scale_x = 1
+    local item_scale_y = 1
+    -- Normalize to 32x32
+    if texture_width > 32 then
+        local exponent = 2^(math.log(texture_width, 2) - 5)
+        if exponent ~= 0 then
+            item_scale_x = item_scale_x * (1/exponent)
+        end
+    end
+    if texture_height > 32 then
+        local exponent = 2^(math.log(texture_height, 2) - 5)
+        if exponent ~= 0 then
+            item_scale_y = item_scale_y * (1/exponent)
+        end
+    end
+    return item_scale_x, item_scale_y
+end
+
 ---@param x number
 ---@param y number
 ---@param width number
@@ -318,21 +342,9 @@ local function render_icon(x, y, width, height, icon)
         ---@cast icon TextureInfo
         local texture_width = icon.width
         local texture_height = icon.height
-        local item_scale_x = 1.5
-        local item_scale_y = 1.5
-        -- Normalize to 32x32
-        if texture_width > 32 then
-            local exponent = 2^(math.log(texture_width, 2) - 5)
-            if exponent ~= 0 then
-                item_scale_x = item_scale_x * (1/exponent)
-            end
-        end
-        if texture_height > 32 then
-            local exponent = 2^(math.log(texture_height, 2) - 5)
-            if exponent ~= 0 then
-                item_scale_y = item_scale_y * (1/exponent)
-            end
-        end
+        local item_scale_x, item_scale_y = rescale_icon(icon)
+        item_scale_x = item_scale_x * 1.5
+        item_scale_y = item_scale_y * 1.5
         local item_x = (x + width * 0.5) - (texture_width * 0.5 * item_scale_x)
         local item_y = (y + height * 0.5) - (texture_height * 0.5 * item_scale_y)
         djui_hud_set_color(255, 255, 255, 255)
@@ -358,8 +370,8 @@ local s_mouse_x = 0
 local s_mouse_y = 0
 local s_mouse_has_clicked = false
 local s_mouse_has_right_clicked = false
---local mouse_click_held = false
---local mouse_hold_released = false
+--local s_mouse_click_held = false
+local s_mouse_hold_released = false
 --local mouse_hold_timer = 0
 local s_mouse_prev_item_index = 1
 local s_mouse_tab_was_clicked_on = 0
@@ -380,6 +392,24 @@ local function render_mouse()
     end
 end
 
+local function render_dragging_icon()
+    if s_moved_mouse then
+        local menu_item = sTabItemList[s_active_tab][s_mouse_prev_item_index]
+        if menu_item then
+            local icon = menu_item.icon
+            if icon.texture then
+                ---@cast icon TextureInfo
+                local scale_x, scale_y = rescale_icon(icon)
+                djui_hud_render_texture_interpolated(icon, s_prev_mouse_x, s_prev_mouse_y, scale_x, scale_y, s_mouse_x, s_mouse_y, scale_x, scale_y)
+            else
+                ---@cast icon DjuiColor
+                djui_hud_set_color(icon.r, icon.g, icon.b, icon.a)
+                djui_hud_render_rect_interpolated(s_prev_mouse_x, s_prev_mouse_y, 30, 30, s_mouse_x, s_mouse_y, 30, 30)
+            end
+        end
+    end
+end
+
 local function mouse_is_within(start_x, start_y, end_x, end_y)
     return s_mouse_x > start_x and s_mouse_y > start_y and s_mouse_x < end_x and s_mouse_y < end_y
 end
@@ -391,9 +421,9 @@ local function handle_mouse_input()
     s_mouse_has_clicked = djui_hud_get_mouse_buttons_pressed() == 1
     s_mouse_has_right_clicked = djui_hud_get_mouse_buttons_pressed() == 4
     s_mouse_has_scrolled = djui_hud_get_mouse_scroll_y()
+    --s_mouse_click_held = djui_hud_get_mouse_buttons_down() == 1
+    s_mouse_hold_released = djui_hud_get_mouse_buttons_released() == 1
     --[[
-    mouse_click_held = djui_hud_get_mouse_buttons_down() == 1
-    mouse_hold_released = djui_hud_get_mouse_buttons_released() == 1
     if mouse_click_held then
         mouse_hold_timer = mouse_hold_timer + 1
     else
@@ -545,7 +575,7 @@ local function render_interior_rectangle(x, y, width, height)
     local color = {r = 175, g = 175, b = 175, a = 255}
     djui_hud_set_color_with_table(color)
     djui_hud_render_rect(interior_rect_x, interior_rect_y, interior_rect_width, interior_rect_height)
-    render_item_list(interior_rect_x, interior_rect_y, interior_rect_width, interior_rect_height, TabItemList[s_active_tab])
+    render_item_list(interior_rect_x, interior_rect_y, interior_rect_width, interior_rect_height, sTabItemList[s_active_tab])
 end
 
 ------------------------------------------------------------------------------------------------
@@ -620,7 +650,7 @@ local s_surface_descriptions = {
     {title = "Quicksand", details = {alias = "Aliases: qsand", type = "Type: Surface"}, lines = {"Hazardous surface that ", "instantly sinks any player  ", "upon contact.", ""}, image = QUICKSAND_TEX},
     {title = "Lava", details = {alias = "Aliases: N/A", type = "Type: Surface"}, lines = {"Hazardous surface that", "launches the player upwards", "and deals damage.", ""}, image = LAVA_TEX},
     {title = "Toxic Gas", details = {alias = "Aliases: toxic / gas", type = "Type: Effect"}, lines = {"Hazardous gas that slowly", "depletes the player's HP. Has", "no collision.", ""}, image = TOXIC_TEX},
-    {title = "Death", details = {alias = "Aliases: N/A", type = "Type: Surface"}, lines = {"Hazardous surface that kills", "the player if they're 10.25", "blocks above its surface.", ""}, image = DEATH_TEX}, 
+    {title = "Death", details = {alias = "Aliases: N/A", type = "Type: Surface"}, lines = {"Hazardous surface that kills", "the player if they're 10.25", "blocks above its surface.", ""}, image = DEATH_TEX},
     {title = "Vanish", details = {alias = "Aliases: N/A", type = "Type: Surface"}, lines = {"Acts like a normal surface, but", "can be phased through with the", "Vanish Cap.", ""}, image = VANISH_TEX},
     {title = "Hangable", details = {alias = "Aliases: hang", type = "Type: Surface"}, lines = {"Holding A while touching this", "surface's ceiling will make the", "player hang on until they let", "go."}, image = HANGABLE_TEX},
     {title = "Water", details = {alias = "Aliases: swim", type = "Type: Effect"}, lines = {"A block of water. Overlap", "multiple blocks to swim", "between them.", ""}, image = WATER_TEX},
@@ -664,7 +694,7 @@ local s_surface_buttons = {
     "Checkpoint",
     "Bounce",
     "Conveyor",
-    "Firsty", 
+    "Firsty",
     "Widekick",
     "Anykick",
     "Wallkickless",
@@ -754,7 +784,6 @@ local function render_surfaces_tab(x, y, width, height)
         local button_colors = {{r = 125, g = 125, b = 125, a = 255}, {r = 175, g = 175, b = 175, a = 255}, {r = 75, g = 75, b = 75, a = 255}}
         if s_current_surface_tip_index == absolute_index then
             button_colors = {{r = 65, g = 65, b = 65, a = 255}, {r = 175, g = 175, b = 175, a = 255}, {r = 75, g = 75, b = 75, a = 255}}
-            -- add chosen surface to selected block
         end
         render_bordered_rectangle(button_x, button_y + y_increm * (i - 1), button_width, button_height, button_colors, 0.01, 0.06)
 
@@ -849,11 +878,18 @@ local function render_hotbar(screen_width, screen_height)
 
         if index == gSelectedHotbarIndex then
             djui_hud_set_color(255, 255, 255, 150)
+            if s_is_holding_item then
+                djui_hud_set_color(255, 255, 127, 150)
+            end
             djui_hud_render_rect(slot_x, slot_y, slot_width, slot_height)
         end
 
         if item.icon then
             render_icon(slot_x, slot_y, slot_width, slot_height, item.icon)
+        end
+
+        if index == gSelectedHotbarIndex and not s_moved_mouse and s_is_holding_item then
+            render_icon(slot_x, slot_y, slot_width, slot_height, sTabItemList[s_active_tab][s_selected_item_index].icon)
         end
         djui_hud_set_color(128, 128, 128, 255)
         djui_hud_render_rect(slot_x, y, 3, slot_height)
@@ -870,6 +906,9 @@ local function render_menu(screen_width, screen_height)
         local x, y, width, height = render_main_rectangle(screen_width, screen_height)
         sMenuTabs[s_active_tab].tab(x, y, width, height)
         render_mouse()
+        if s_is_holding_item then
+            render_dragging_icon()
+        end
     end
 end
 
@@ -984,7 +1023,7 @@ end
 
 local function on_set_hotbar_item()
     vec3f_copy(gGridSize, gHotbarItemList[gSelectedHotbarIndex].item.size)
-    vec3f_mul(gGridSize, 200)
+    vec3f_mul(gGridSize, GRID_SIZE_DEFAULT)
     g_outline_grid_y_offset = 0
 end
 
@@ -1149,27 +1188,54 @@ local function handle_item_selection_inputs(m)
     end
 end
 
-local function on_pick_item_input()
+local function on_confirm_item_input()
     ---@type MenuItemLink
-    local hotbar_item = table.deepcopy(TabItemList[s_active_tab][s_selected_item_index])
+    local hotbar_item = table.deepcopy(sTabItemList[s_active_tab][s_selected_item_index])
     gHotbarItemList[gSelectedHotbarIndex] = hotbar_item
-    vec3f_set(gGridSize, 200, 200, 200)
+    vec3f_set(gGridSize, GRID_SIZE_DEFAULT, GRID_SIZE_DEFAULT, GRID_SIZE_DEFAULT)
     play_sound(SOUND_MENU_CLICK_FILE_SELECT, gGlobalSoundSource)
+end
+
+---@param m MarioState
+local function handle_holding_item_inputs(m)
+    if not sTabItemList[s_active_tab] then return end
+
+    if s_moved_mouse then
+        if s_mouse_hold_released then
+            s_is_holding_item = false
+            s_selected_item_index = s_mouse_prev_item_index
+            on_confirm_item_input()
+        end
+    else
+        handle_control_stick_inputs(m)
+        if s_csd.left and gSelectedHotbarIndex > 1 then
+            gSelectedHotbarIndex = gSelectedHotbarIndex - 1
+            play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource)
+        elseif s_csd.right and gSelectedHotbarIndex < #gHotbarItemList then
+            gSelectedHotbarIndex = gSelectedHotbarIndex + 1
+            play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource)
+        end
+
+        if m.controller.buttonReleased & A_BUTTON ~= 0 then
+            s_is_holding_item = false
+            on_confirm_item_input()
+        end
+    end
 end
 
 ---@param pressed integer
 local function handle_pick_item_inputs(pressed)
-    if not TabItemList[s_active_tab] or not TabItemList[s_active_tab][s_selected_item_index] then return end
+    if not sTabItemList[s_active_tab] or not sTabItemList[s_active_tab][s_selected_item_index] then return end
     if s_moved_mouse then
         if s_mouse_prev_item_index ~= s_selected_item_index then
             play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource)
         end
         s_mouse_prev_item_index = s_selected_item_index
         if s_mouse_has_clicked then
-            on_pick_item_input()
+            s_is_holding_item = true
         end
     elseif pressed & A_BUTTON ~= 0 then
-        on_pick_item_input()
+        s_is_holding_item = true
     end
 end
 
@@ -1235,11 +1301,15 @@ end
 local function handle_standard_inputs(m)
     local pressed = m.controller.buttonPressed
 
-    handle_item_selection_inputs(m)
     handle_paging_inputs(m)
     handle_extra_inputs(pressed)
-    if s_selected_item_index > 0 then
-        handle_pick_item_inputs(pressed)
+    if s_is_holding_item then
+        handle_holding_item_inputs(m)
+    else
+        handle_item_selection_inputs(m)
+        if s_selected_item_index > 0 then
+            handle_pick_item_inputs(pressed)
+        end
     end
 end
 

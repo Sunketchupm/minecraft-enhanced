@@ -291,7 +291,7 @@ local function custom_surface_mario_update(m)
             end
 
             if surface_properties & MCE_BLOCK_PROPERTY_CHECKPOINT ~= 0 then
-                g_respawn_location = {x = block.oPosX, y = block.oPosY + block.oScaleY * 200, z = block.oPosZ}
+                g_respawn_location = {x = block.oPosX, y = block.oPosY + block.oScaleY * GRID_SIZE_DEFAULT, z = block.oPosZ}
                 g_respawn_angle = block.oFaceAngleYaw
             end
             if surface_properties & MCE_BLOCK_PROPERTY_CONVEYOR ~= 0 then

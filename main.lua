@@ -28,7 +28,9 @@ hook_event(HOOK_MARIO_UPDATE, model_test) ]]
 -------------------------------------------------------------------------------
 
 local on_grid = true
-gGridSize = {x = 200, y = 200, z = 200}
+
+GRID_SIZE_DEFAULT = 200
+gGridSize = {x = GRID_SIZE_DEFAULT, y = GRID_SIZE_DEFAULT, z = GRID_SIZE_DEFAULT}
 
 local function to_grid_x(n)
 	if on_grid then
@@ -79,13 +81,13 @@ local function on_grid_size_chat_command(msg)
 	end
 
 	if sizes_count == 1 then
-		local new_size = (tonumber(sizes[1]) or 1) * 200
+		local new_size = (tonumber(sizes[1]) or 1) * GRID_SIZE_DEFAULT
 		vec3f_set(gGridSize, new_size, new_size, new_size)
 		djui_chat_message_create("Set grid size to " .. sizes[1])
 	elseif sizes_count == 3 then
-		local new_size_x = (tonumber(sizes[1]) or 1) * 200
-		local new_size_y = (tonumber(sizes[2]) or 1) * 200
-		local new_size_z = (tonumber(sizes[3]) or 1) * 200
+		local new_size_x = (tonumber(sizes[1]) or 1) * GRID_SIZE_DEFAULT
+		local new_size_y = (tonumber(sizes[2]) or 1) * GRID_SIZE_DEFAULT
+		local new_size_z = (tonumber(sizes[3]) or 1) * GRID_SIZE_DEFAULT
 		vec3f_set(gGridSize, new_size_x, new_size_y, new_size_z)
 		djui_chat_message_create("Set grid size to (" .. sizes[1], sizes[2], sizes[3] .. ")")
 	else
@@ -129,9 +131,9 @@ function bhv_outline_loop(obj)
 	local facing_x = sins(m.intendedYaw)
 	local facing_z = coss(m.intendedYaw)
 
-	local posX = to_grid_x( m.pos.x + facing_x * math.max(gGridSize.x, 200) )
+	local posX = to_grid_x( m.pos.x + facing_x * math.max(gGridSize.x, GRID_SIZE_DEFAULT) )
 	local posY = to_grid_y( m.pos.y ) + (gGridSize.y * g_outline_grid_y_offset)
-	local posZ = to_grid_z( m.pos.z + facing_z * math.max(gGridSize.z, 200) )
+	local posZ = to_grid_z( m.pos.z + facing_z * math.max(gGridSize.z, GRID_SIZE_DEFAULT) )
 
 	s_outline.oPosX = posX
 	s_outline.oPosY = posY
@@ -225,9 +227,9 @@ function bhv_arrow_loop(obj)
 	local current_item = gCurrentItem
 	if s_outline and obj_get_first_with_behavior_id(bhvOutline) and current_item and current_item.model then
 		outline_scale = s_outline.header.gfx.scale
-		obj.oPosX = s_outline.oPosX + sins(s_outline.oFaceAngleYaw) * 200 * outline_scale.x
+		obj.oPosX = s_outline.oPosX + sins(s_outline.oFaceAngleYaw) * GRID_SIZE_DEFAULT * outline_scale.x
 		obj.oPosY = s_outline.oPosY - (current_item.spawnYOffset * current_item.size.y)
-		obj.oPosZ = s_outline.oPosZ + coss(s_outline.oFaceAngleYaw) * 200 * outline_scale.z
+		obj.oPosZ = s_outline.oPosZ + coss(s_outline.oFaceAngleYaw) * GRID_SIZE_DEFAULT * outline_scale.z
 		obj_scale_xyz(obj, outline_scale.x, outline_scale.y, outline_scale.z)
 		obj.oFaceAngleYaw = s_outline.oFaceAngleYaw - 16384
 	else

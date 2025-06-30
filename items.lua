@@ -679,7 +679,7 @@ local function on_set_item_size_chat_command(msg)
             current_selected.size = gVec3fOne()
         if sizes_count == 1 then
             local new_size = math.clamp(tonumber(sizes[1]) or 1, 0.01, 25)
-            local grid_size = new_size * 200
+            local grid_size = new_size * GRID_SIZE_DEFAULT
             vec3f_set(current_selected.size, new_size, new_size, new_size)
 		    vec3f_set(gGridSize, grid_size, grid_size, grid_size)
             djui_chat_message_create("Set item size to " .. new_size)
@@ -687,9 +687,9 @@ local function on_set_item_size_chat_command(msg)
             local new_size_x = math.clamp(tonumber(sizes[1]) or 1, 0.01, 25)
             local new_size_y = math.clamp(tonumber(sizes[2]) or 1, 0.01, 25)
             local new_size_z = math.clamp(tonumber(sizes[3]) or 1, 0.01, 25)
-            local grid_size_x = new_size_x * 200
-            local grid_size_y = new_size_y * 200
-            local grid_size_z = new_size_z * 200
+            local grid_size_x = new_size_x * GRID_SIZE_DEFAULT
+            local grid_size_y = new_size_y * GRID_SIZE_DEFAULT
+            local grid_size_z = new_size_z * GRID_SIZE_DEFAULT
             vec3f_set(gGridSize, grid_size_x, grid_size_y, grid_size_z)
             vec3f_set(current_selected.size, new_size_x, new_size_y, new_size_z)
             djui_chat_message_create("Set item size to (" .. new_size_x, new_size_y, new_size_z .. ")")
