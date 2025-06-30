@@ -61,15 +61,16 @@ add_first_update(function ()
     }
     ---@type BehaviorId[]
     s_enemy_item_behaviors = {
-        --
+        id_bhvGoomba,
+        id_bhvBobomb,
+        id_bhvChuckya,
     }
     ---@type BehaviorId[]
     s_vanilla_clear_immune = {
         [id_bhvSpinAirborneWarp] = true,
-        [bhvMceBlock] = true,
-        [bhvMceStar] = true,
-        [bhvMceCoin] = true,
-        [bhvMceExclamationBox] = true,
+        [id_bhvDoorWarp] = true,
+        [id_bhvWarp] = true,
+        [id_bhvWarpPipe] = true,
     }
 end)
 
@@ -580,7 +581,7 @@ function on_clear_chat_command(msg)
             local obj = obj_get_first(i)
             while obj do
                 local behavior_id = get_id_from_behavior(obj.behavior)
-                if not s_vanilla_clear_immune[behavior_id] then
+                if not s_vanilla_clear_immune[behavior_id] or behavior_id > 0x7FFF then
                     obj_mark_for_deletion(obj)
                 end
                 obj = obj_get_next(obj)

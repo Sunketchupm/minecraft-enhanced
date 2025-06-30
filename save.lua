@@ -79,6 +79,11 @@ local function decode_base64(encoded)
         end
     end
 
+    local num = tonumber(bin, 2)
+    if num == nil then
+        djui_chat_message_create("Failed to load save file. It may be incompatible")
+        return 0
+    end
     return tonumber(bin, 2) - 1
 end
 
@@ -195,7 +200,6 @@ local s_load_name = "default"
 local s_load_lines = {}
 g_load_block_datas = {}
 local s_load_state = 0
-local s_check_failure = false
 local s_reload_items = false
 
 local function on_load_part_2()
@@ -212,12 +216,6 @@ local function on_load_part_2()
         local decode = decode_base64
         local encoded_string = table.concat(s_load_lines)
         --local count = 0
-        if s_check_failure then
-            s_load_state = 0
-            djui_chat_message_create("Failed to load blocks")
-            return true
-        end
-        s_check_failure = true
         for i = 1, #encoded_string, BLOCK_CHAR_SIZE do
             --count = count + 1
             --djui_chat_message_create(count, encoded_string:sub(i + 0, i + 2))
@@ -299,11 +297,11 @@ local function on_load_part_2()
                 })
             end
         end
-        s_check_failure = false
         djui_chat_message_create("Loaded items from slot \"" .. s_load_name .. "\"")
         s_load_state = 0
         s_load_name = "default"
         s_load_lines = {}
+        s_reload_items = false
     end
 end
 
@@ -374,14 +372,17 @@ end
 
 ---@param msg string
 local function on_load_chat_command(msg)
-    if msg == "" then
-        msg = "default"
-    end
     local exists = false
     local has_reload_param = (msg:sub(-6, #msg)):lower() == "reload"
     if has_reload_param then
         msg = msg:sub(1, -8)
+        s_reload_items = true
     end
+
+    if msg == "" then
+        msg = "default"
+    end
+
     for i = 1, MAX_KEYS, 1 do
         if mod_storage_exists(msg .. "_" .. tostring(i)) then
             local encoded = mod_storage_load(msg .. "_" .. tostring(i))
@@ -399,7 +400,6 @@ local function on_load_chat_command(msg)
         s_load_state = 1
         s_load_name = msg
         g_load_block_datas = {}
-        s_reload_items = true
     end
     return true
 end

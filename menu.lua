@@ -65,7 +65,6 @@ local QUICKSAND_TEX = get_texture_info("quicksandhelp")
 local LAVA_TEX =get_texture_info("lavahelp")
 local DEATH_TEX = get_texture_info("deathhelp")
 local CHECKPOINT_TEX = get_texture_info("placeholder")
-local HEAL_TEX = get_texture_info("healhelp")
 local BOUNCE_TEX = get_texture_info("placeholder")
 local CONVEYOR_TEX = get_texture_info("conveyorhelp")
 local FIRSTY_TEX = get_texture_info("placeholder")
@@ -90,6 +89,10 @@ local SLOT_GOOMBA_TEX = get_texture_info("gombaslot")
 local SLOT_BOBOMB_TEX = get_texture_info("bobombslot")
 local SLOT_CHUCKYA_TEX = get_texture_info("chuckyaslot")
 local SLOT_STAR_TEX = get_texture_info("starslot")
+local SLOT_EXCLAMATION_BOX_VANISH = get_texture_info("exclamation_box_seg8_texture_08012E28")
+local SLOT_EXCLAMATION_BOX_METAL = get_texture_info("exclamation_box_seg8_texture_08014628")
+local SLOT_EXCLAMATION_BOX_WING = get_texture_info("exclamation_box_seg8_texture_08015E28")
+local SLOT_EXCLAMATION_BOX_NORMAL = get_texture_info("exclamation_box_seg8_texture_08017628")
 --------------------------------------
 
 ---@class MenuItemLink
@@ -206,16 +209,16 @@ add_first_update(function ()
     add_item(TAB_ITEMS, bhvMceCoin, E_MODEL_RED_COIN, coin_offset--[[+ 3]], 0, { animateAnimState = true, animateFrame = 2, billboard = true }, 2, gTextures.coin)
     add_item(TAB_ITEMS, bhvMceCoin, E_MODEL_BLUE_COIN, coin_offset--[[ + 26]], 0, { animateAnimState = true, animateFrame = 2, billboard = true, scale = 1.25 }, 5, gTextures.coin)
     local exclamation_box_offset = 0--50
-    add_item(TAB_ITEMS, bhvMceExclamationBox, E_MODEL_EXCLAMATION_BOX, exclamation_box_offset, 0, { scale = 2 }, 1, gTextures.apostrophe)
-    add_item(TAB_ITEMS, bhvMceExclamationBox, E_MODEL_EXCLAMATION_BOX, exclamation_box_offset, 1, { scale = 2 }, 2, gTextures.apostrophe)
-    add_item(TAB_ITEMS, bhvMceExclamationBox, E_MODEL_EXCLAMATION_BOX, exclamation_box_offset, 2, { scale = 2 }, 3, gTextures.apostrophe)
-    add_item(TAB_ITEMS, bhvMceExclamationBox, E_MODEL_EXCLAMATION_BOX, exclamation_box_offset, 3, { scale = 2 }, 4, gTextures.apostrophe)
-    add_item(TAB_ITEMS, bhvMceExclamationBox, E_MODEL_EXCLAMATION_BOX, exclamation_box_offset, 3, { scale = 2 }, 99, gTextures.apostrophe)
+    add_item(TAB_ITEMS, bhvMceExclamationBox, E_MODEL_EXCLAMATION_BOX, exclamation_box_offset, 0, { scale = 2 }, 1, SLOT_EXCLAMATION_BOX_WING)
+    add_item(TAB_ITEMS, bhvMceExclamationBox, E_MODEL_EXCLAMATION_BOX, exclamation_box_offset, 1, { scale = 2 }, 2, SLOT_EXCLAMATION_BOX_METAL)
+    add_item(TAB_ITEMS, bhvMceExclamationBox, E_MODEL_EXCLAMATION_BOX, exclamation_box_offset, 2, { scale = 2 }, 3, SLOT_EXCLAMATION_BOX_VANISH)
+    add_item(TAB_ITEMS, bhvMceExclamationBox, E_MODEL_EXCLAMATION_BOX, exclamation_box_offset, 3, { scale = 2 }, 4, SLOT_EXCLAMATION_BOX_NORMAL)
+    add_item(TAB_ITEMS, bhvMceExclamationBox, E_MODEL_EXCLAMATION_BOX, exclamation_box_offset, 3, { scale = 2 }, 99, SLOT_EXCLAMATION_BOX_NORMAL)
 
     local offset = 0
-    add_item(TAB_ENEMIES, id_bhvGoomba, E_MODEL_GOOMBA, offset, 0, {}, 0, gTextures.lakitu)
-    add_item(TAB_ENEMIES, id_bhvBobomb, E_MODEL_BLACK_BOBOMB, offset, 0, {}, 0, gTextures.lakitu)
-    add_item(TAB_ENEMIES, id_bhvChuckya, E_MODEL_CHUCKYA, offset, 0, {}, 0, gTextures.lakitu)
+    add_item(TAB_ENEMIES, id_bhvGoomba, E_MODEL_GOOMBA, offset, 0, {}, 0, SLOT_GOOMBA_TEX)
+    add_item(TAB_ENEMIES, id_bhvBobomb, E_MODEL_BLACK_BOBOMB, offset, 0, {}, 0, SLOT_BOBOMB_TEX)
+    add_item(TAB_ENEMIES, id_bhvChuckya, E_MODEL_CHUCKYA, offset, 0, {}, 0, SLOT_CHUCKYA_TEX)
 end)
 
 ------------------------------------------------------------------------------------------------
@@ -1403,6 +1406,8 @@ local function before_mario_update(m)
         m.freeze = 1
         handle_mouse_input()
         handle_menu_inputs(m)
+    else
+        s_is_holding_item = false
     end
 
     camera_romhack_allow_dpad_usage(0)
