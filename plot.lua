@@ -10,7 +10,7 @@ local LEVEL_PLOT = level_register("level_plot_entry", COURSE_CAKE_END, "Plot", "
 local function on_chat_command(msg)
     local act = 1
     if tonumber(msg) then
-        act = tonumber(msg)
+        act = tonumber(msg) or 0
     end
     warp_to_warpnode(LEVEL_PLOT, 1, act, 0xA)
     return true
