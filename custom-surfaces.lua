@@ -510,12 +510,6 @@ local function custom_surface_override_geometry_inputs(m)
     return s_special_surface_handlers.water(m)
 end
 
-local function reset_block(m, block)
-    if m.action == ACT_FREE_MOVE and block.oAction ~= MCE_BLOCK_ACT_RESET then
-        block.oAction = MCE_BLOCK_ACT_RESET
-    end
-end
-
 local function custom_surface_block_update()
     local block = obj_get_first_with_behavior_id(bhvMceBlock)
     ---@type MarioState
@@ -550,7 +544,6 @@ local function custom_surface_block_update()
                     block.collisionData = nil
                 end
             end
-            reset_block(m, block)
         elseif surface_properties & MCE_BLOCK_PROPERTY_SHRINKING ~= 0 then
             if block.oAction == 1 then
                 block.header.gfx.scale.x = block.header.gfx.scale.x - (0.01 * block.oScaleX)
@@ -560,10 +553,8 @@ local function custom_surface_block_update()
                     block.oAction = 2
                 end
             end
-            reset_block(m, block)
         elseif surface_properties & MCE_BLOCK_PROPERTY_BREAKABLE ~= 0 then
             -- Behavior is handled in the block behavior itself to have good particles
-            reset_block(m, block)
         end
         block = obj_get_next_with_same_behavior_id(block)
     end

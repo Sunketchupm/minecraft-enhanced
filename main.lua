@@ -138,14 +138,24 @@ function bhv_outline_loop(obj)
 	s_outline.oPosX = posX
 	s_outline.oPosY = posY
 	s_outline.oPosZ = posZ
-	obj_scale_xyz(obj, current_item.size.x, current_item.size.y, current_item.size.z)
-	if current_item.rotation then
-		s_outline.oFaceAnglePitch = current_item.rotation.x
-		s_outline.oFaceAngleYaw = current_item.rotation.y
-		s_outline.oFaceAngleRoll = current_item.rotation.z
-		s_outline.oMoveAnglePitch = current_item.rotation.x
-		s_outline.oMoveAngleYaw = current_item.rotation.y
-		s_outline.oMoveAngleRoll = current_item.rotation.z
+	local item_params = current_item.params
+	if not item_params then return end
+
+	local item_size = item_params.size
+	if item_size then
+		obj_scale_xyz(obj, item_size.x, item_size.y, item_size.z)
+	end
+
+	if item_params.rotation then
+		local item_rotation = current_item.params.rotation
+		if not item_rotation then return end
+
+		s_outline.oFaceAnglePitch = item_rotation.x
+		s_outline.oFaceAngleYaw = item_rotation.y
+		s_outline.oFaceAngleRoll = item_rotation.z
+		s_outline.oMoveAnglePitch = item_rotation.x
+		s_outline.oMoveAngleYaw = item_rotation.y
+		s_outline.oMoveAngleRoll = item_rotation.z
 	end
 end
 
@@ -157,16 +167,18 @@ end
 function bhv_mock_item_loop(obj)
 	local current_item = gCurrentItem
 	if s_outline and obj_get_first_with_behavior_id(bhvOutline) and current_item and current_item.model then
+		local item_params = current_item.params
 		obj.oPosX = s_outline.oPosX
-		obj.oPosY = s_outline.oPosY - (current_item.spawnYOffset * current_item.size.y)
+		obj.oPosY = s_outline.oPosY - (item_params.spawnYOffset * item_params.size.y)
 		obj.oPosZ = s_outline.oPosZ
 		obj.header.gfx.node.flags = obj.header.gfx.node.flags & ~GRAPH_RENDER_BILLBOARD
-		obj.oItemParams = current_item.params
+		obj.oItemParams = item_params.params
 		local outline_scale = s_outline.header.gfx.scale
 		obj_scale_xyz(obj, outline_scale.x, outline_scale.y, outline_scale.z)
 		obj_set_model_extended(obj, current_item.model)
 
-		local mock_settings = current_item.mock
+		local mock_settings = item_params.mock
+		if not mock_settings then return end
 
 		if mock_settings.billboard then
 			obj_set_billboard(obj)
@@ -176,26 +188,33 @@ function bhv_mock_item_loop(obj)
 			obj_scale_mult_to(obj, mock_settings.scale)
 		end
 
-		if mock_settings.animateAnimState then
-			if mock_settings.animateFrame then
-				obj.oAnimState = obj.oAnimState + (1 % mock_settings.animateFrame)
-			else
-				obj.oAnimState = obj.oAnimState + 1
+		obj.oFaceAnglePitch = s_outline.oFaceAnglePitch
+		--obj.oFaceAngleYaw = s_outline.oFaceAngleYaw
+		obj.oFaceAngleRoll = s_outline.oFaceAngleRoll
+
+		local animate_settings = mock_settings.animate
+		if animate_settings then
+			if animate_settings.animation then
+				obj.oAnimations = animate_settings.animation
+				cur_obj_init_animation(animate_settings.animIndex or 0)
 			end
-			if obj.oAnimState >= 255 then
-				obj.oAnimState = 0
+
+			if animate_settings.animState then
+				if obj.oTimer >= animate_settings.animState then
+					obj.oAnimState = obj.oAnimState + 1
+					obj.oTimer = 0
+				end
+			end
+
+			if animate_settings.faceAngleYaw then
+				obj.oFaceAngleYaw = convert_s16(obj.oFaceAngleYaw + animate_settings.faceAngleYaw)
+			else
+				obj.oFaceAngleYaw = s_outline.oFaceAngleYaw
 			end
 		else
 			obj.oAnimState = current_item.animState
-		end
-
-		if mock_settings.animateFaceAngleYaw then
-			obj.oFaceAngleYaw = convert_s16(obj.oFaceAngleYaw + mock_settings.animateFaceAngleYaw)
-		else
 			obj.oFaceAngleYaw = s_outline.oFaceAngleYaw
 		end
-		obj.oFaceAnglePitch = s_outline.oFaceAnglePitch
-		obj.oFaceAngleRoll = s_outline.oFaceAngleRoll
 
 		if current_item.behavior == bhvMceBlock then
 			local transparent_start = mce_block_get_transparent_start_item(current_item)
@@ -226,9 +245,10 @@ local s_show_arrow = true
 function bhv_arrow_loop(obj)
 	local current_item = gCurrentItem
 	if s_outline and obj_get_first_with_behavior_id(bhvOutline) and current_item and current_item.model then
+		local item_params = current_item.params
 		outline_scale = s_outline.header.gfx.scale
 		obj.oPosX = s_outline.oPosX + sins(s_outline.oFaceAngleYaw) * GRID_SIZE_DEFAULT * outline_scale.x
-		obj.oPosY = s_outline.oPosY - (current_item.spawnYOffset * current_item.size.y)
+		obj.oPosY = s_outline.oPosY - (item_params.spawnYOffset * item_params.size.y)
 		obj.oPosZ = s_outline.oPosZ + coss(s_outline.oFaceAngleYaw) * GRID_SIZE_DEFAULT * outline_scale.z
 		obj_scale_xyz(obj, outline_scale.x, outline_scale.y, outline_scale.z)
 		obj.oFaceAngleYaw = s_outline.oFaceAngleYaw - 16384
@@ -252,10 +272,12 @@ end)
 local function place_item()
 	local current_item = gCurrentItem
 	if not s_outline or not current_item or not current_item.behavior or not current_item.model then return end
+
+	local current_item_params = current_item.params
 	local item = spawn_sync_object(
 		current_item.behavior,
 		current_item.model,
-		s_outline.oPosX, s_outline.oPosY - (current_item.spawnYOffset * current_item.size.y), s_outline.oPosZ,
+		s_outline.oPosX, s_outline.oPosY - (current_item_params.spawnYOffset * current_item_params.size.y), s_outline.oPosZ,
 		---@param obj Object
 		function (obj)
 			obj.oOpacity = 255
@@ -265,12 +287,12 @@ local function place_item()
 			obj.oMoveAnglePitch = s_outline.oMoveAnglePitch
 			obj.oMoveAngleYaw = s_outline.oMoveAngleYaw
 			obj.oMoveAngleRoll = s_outline.oMoveAngleRoll
-			obj.oItemParams = current_item.params
-			obj.oBlockSurfaceProperties = current_item.blockProperties
-			obj.oScaleX = current_item.size.x
-			obj.oScaleY = current_item.size.y
-			obj.oScaleZ = current_item.size.z
-			obj_scale_xyz(obj, current_item.size.x, current_item.size.y, current_item.size.z)
+			obj.oItemParams = current_item_params.params
+			obj.oBlockSurfaceProperties = current_item_params.blockProperties
+			obj.oScaleX = current_item_params.size.x
+			obj.oScaleY = current_item_params.size.y
+			obj.oScaleZ = current_item_params.size.z
+			obj_scale_xyz(obj, current_item_params.size.x, current_item_params.size.y, current_item_params.size.z)
 			obj.oAnimState = current_item.animState
 			obj.globalPlayerIndex = network_global_index_from_local(0)
 			obj.oOwner = network_global_index_from_local(0) + 1
@@ -285,10 +307,10 @@ local function place_item()
 
 		table.insert(g_load_block_datas, {
 			item, current_item.behavior, current_item.model,
-			s_outline.oPosX, s_outline.oPosY - (current_item.spawnYOffset * current_item.size.y), s_outline.oPosZ,
+			s_outline.oPosX, s_outline.oPosY - (current_item_params.spawnYOffset * current_item_params.size.y), s_outline.oPosZ,
 			s_outline.oFaceAnglePitch, s_outline.oFaceAngleYaw, s_outline.oFaceAngleRoll,
-			current_item.params, current_item.blockProperties,
-			current_item.size.x, current_item.size.y, current_item.size.z,
+			current_item_params.params, current_item_params.blockProperties,
+			current_item_params.size.x, current_item_params.size.y, current_item_params.size.z,
 			current_item.animState, 0
 		})
 	else
@@ -333,7 +355,10 @@ local function set_item_size_control(m)
 	local current_selected = gHotbarItemList[gSelectedHotbarIndex].item
 	if current_selected then
 		local pressed = m.controller.buttonPressed
-		local size = current_selected.size
+		local params = current_selected.params
+		if not params then return end
+		local size = params.size
+		if not size then return end
 
 		local largest_side = size.x
 		if size.x < size.y then
@@ -387,7 +412,10 @@ local function set_item_rotation(m)
 	local current_item = gCurrentItem
 	if not current_item then return end
 	local pressed = m.controller.buttonPressed
-	local item_rotation = current_item.rotation
+	local params = current_item.params
+	if not params then return end
+	local item_rotation = params.rotation
+	if not item_rotation then return end
 
 	if pressed & U_CBUTTONS ~= 0 then
 		item_rotation.x = item_rotation.x + s_rotation_increment
@@ -405,7 +433,7 @@ local function set_item_rotation(m)
 		item_rotation.z = item_rotation.z - s_rotation_increment
 	end
 	if pressed & X_BUTTON ~= 0 then
-		gCurrentItem.rotation = gVec3sZero()
+		gCurrentItem.params.rotation = gVec3sZero()
 	end
 
 	m.controller.buttonPressed = m.controller.buttonPressed & ~(U_CBUTTONS | L_CBUTTONS | D_CBUTTONS | R_CBUTTONS | X_BUTTON)

@@ -1,15 +1,30 @@
----@class Item
+---@class (exact) Item
     ---@field behavior BehaviorId
     ---@field model ModelExtendedId
-    ---@field spawnYOffset number
-    ---@field params integer
-    ---@field blockProperties integer
-    ---@field size Vec3f
-    ---@field rotation Vec3s x = pitch, y = yaw, z = roll
     ---@field animState integer
-    ---@field mock table
+    ---@field params ItemParameters
 
----@class Object
+---@class (exact) ItemParameters
+    ---@field spawnYOffset number?
+    ---@field blockProperties integer?
+    ---@field size Vec3f?
+    ---@field rotation Vec3s? x = pitch, y = yaw, z = roll
+    ---@field forceAnimState integer?
+    ---@field mock MockParameters?
+    ---@field params integer?
+
+---@class (exact) MockParameters
+    ---@field billboard boolean?
+    ---@field scale number?
+    ---@field animate MockAnimations?
+
+---@class (exact) MockAnimations
+    ---@field animation Pointer_ObjectAnimPointer?
+    ---@field animIndex integer?
+    ---@field animState integer?
+    ---@field faceAngleYaw integer?
+
+---@class (exact) Object
     ---@field oScaleX number
     ---@field oScaleY number
     ---@field oScaleZ number
@@ -28,6 +43,21 @@ define_custom_obj_fields({
     oBlockSurfaceProperties = "u32",
 })
 
+---@return ItemParameters
+function get_default_item_params()
+    ---@type ItemParameters
+    local params = {
+        spawnYOffset = 0,
+        blockProperties = 0,
+        size = gVec3fOne(),
+        rotation = gVec3sZero(),
+        forceAnimState = nil,
+        mock = {},
+        params = 0,
+    }
+    return params
+end
+
 gCurrentItem = {behavior = nil, model = E_MODEL_NONE, params = {}}
 g_all_item_behaviors = {}
 local s_level_item_behaviors = {}
@@ -38,26 +68,23 @@ add_first_update(function ()
     gCurrentItem = {
         behavior = bhvMceBlock,
         model = E_MODEL_MCE_BLOCK,
-        spawnYOffset = 0,
-        params = 0,
-        blockProperties = 0,
-        size = gVec3fOne(),
-        rotation = gVec3sZero(),
         animState = 0,
-        mock = {}
+        params = get_default_item_params(),
     }
     ---@type BehaviorId[]
     g_all_item_behaviors = {
         bhvMceBlock,
         bhvMceStar,
         bhvMceCoin,
-        bhvMceExclamationBox
+        bhvMceExclamationBox,
+        bhvMceTree,
     }
     ---@type BehaviorId[]
     s_level_item_behaviors = {
         bhvMceStar,
         bhvMceCoin,
-        bhvMceExclamationBox
+        bhvMceExclamationBox,
+        bhvMceTree,
     }
     ---@type BehaviorId[]
     s_enemy_item_behaviors = {
@@ -633,9 +660,10 @@ end
 -- always be false, so other places where this function gets called can pass a
 -- parameter to disable the free move check
 ---@param override_free_move_check boolean?
-function reset_non_block_items(override_free_move_check)
-    if gMarioStates[0].action == ACT_FREE_MOVE or override_free_move_check then
-            for _, behavior in ipairs(g_all_item_behaviors) do
+function reset_all_items(override_free_move_check)
+    local m = gMarioStates[0]
+    if m.action == ACT_FREE_MOVE or override_free_move_check then
+        for _, behavior in ipairs(g_all_item_behaviors) do
             if behavior ~= bhvMceBlock then
                 local obj = obj_get_first_with_behavior_id(behavior)
                 while obj do
@@ -648,6 +676,20 @@ function reset_non_block_items(override_free_move_check)
                     end
                     obj = obj_get_next_with_same_behavior_id(obj)
                 end
+            else
+                local obj = obj_get_first_with_behavior_id(behavior)
+                while obj do
+                    if obj.oAction ~= MCE_BLOCK_ACT_RESET then
+                        obj.oAction = MCE_BLOCK_ACT_RESET
+                    end
+                    obj = obj_get_next_with_same_behavior_id(obj)
+                end
+            end
+        end
+
+        for _, func in ipairs(gHookedResetItemFunctions) do
+            if func then
+                func()
             end
         end
     end
@@ -661,7 +703,7 @@ if network_is_privileged() then
     Use 'ALL' to remove EVERY object of that criteria \
     Use 'orphaned' to remove all objects of that criteria with no owner")
 end
-hook_event(HOOK_UPDATE, reset_non_block_items)
+hook_event(HOOK_UPDATE, reset_all_items)
 
 ------------------------------------------------------------------------------------------
 
@@ -677,11 +719,11 @@ local function on_set_item_size_chat_command(msg)
 
     local current_selected = gHotbarItemList[gSelectedHotbarIndex].item
     if current_selected then
-            current_selected.size = gVec3fOne()
+        current_selected.params.size = gVec3fOne()
         if sizes_count == 1 then
             local new_size = math.clamp(tonumber(sizes[1]) or 1, 0.01, 25)
             local grid_size = new_size * GRID_SIZE_DEFAULT
-            vec3f_set(current_selected.size, new_size, new_size, new_size)
+            vec3f_set(current_selected.params.size, new_size, new_size, new_size)
 		    vec3f_set(gGridSize, grid_size, grid_size, grid_size)
             djui_chat_message_create("Set item size to " .. new_size)
         elseif sizes_count == 3 then
@@ -692,7 +734,7 @@ local function on_set_item_size_chat_command(msg)
             local grid_size_y = new_size_y * GRID_SIZE_DEFAULT
             local grid_size_z = new_size_z * GRID_SIZE_DEFAULT
             vec3f_set(gGridSize, grid_size_x, grid_size_y, grid_size_z)
-            vec3f_set(current_selected.size, new_size_x, new_size_y, new_size_z)
+            vec3f_set(current_selected.params.size, new_size_x, new_size_y, new_size_z)
             djui_chat_message_create("Set item size to (" .. new_size_x, new_size_y, new_size_z .. ")")
         else
             djui_chat_message_create("Usage: [num] or [x y z] or [on|off]")
@@ -813,12 +855,12 @@ function on_set_surface_chat_command(msg)
     if item and item.behavior == bhvMceBlock then
         local surf = s_block_surface_id_lookup[msg:lower()]
         if surf then
-            gHotbarItemList[gSelectedHotbarIndex].item.params = surf
+            gHotbarItemList[gSelectedHotbarIndex].item.params.params = surf
             djui_chat_message_create("Set the surface type to " .. msg)
         else
             surf = s_block_property_lookup[msg:lower()]
             if surf then
-                local properties = gHotbarItemList[gSelectedHotbarIndex].item.blockProperties
+                local properties = gHotbarItemList[gSelectedHotbarIndex].item.params.blockProperties
                 if properties & surf == 0 then
                     local is_selecting_incompatible = surf & (MCE_BLOCK_PROPERTY_BREAKABLE | MCE_BLOCK_PROPERTY_DISAPPEARING | MCE_BLOCK_PROPERTY_SHRINKING) ~= 0
                     local currently_has_incompatible = properties & (MCE_BLOCK_PROPERTY_BREAKABLE | MCE_BLOCK_PROPERTY_DISAPPEARING | MCE_BLOCK_PROPERTY_SHRINKING) ~= 0
@@ -826,10 +868,10 @@ function on_set_surface_chat_command(msg)
                         properties = properties & ~(MCE_BLOCK_PROPERTY_BREAKABLE | MCE_BLOCK_PROPERTY_DISAPPEARING | MCE_BLOCK_PROPERTY_SHRINKING)
                         djui_chat_message_create("The breakable, disappearing, and shrinking properties are incompatible with each other. Incompatibilities removed")
                     end
-                    gHotbarItemList[gSelectedHotbarIndex].item.blockProperties = properties | surf
+                    gHotbarItemList[gSelectedHotbarIndex].item.params.blockProperties = properties | surf
                     djui_chat_message_create("Added the surface property " .. msg)
                 else
-                    gHotbarItemList[gSelectedHotbarIndex].item.blockProperties = properties & ~surf
+                    gHotbarItemList[gSelectedHotbarIndex].item.params.blockProperties = properties & ~surf
                     djui_chat_message_create("Removed the surface property " .. msg)
                 end
             else
@@ -847,13 +889,14 @@ local function on_transparent_chat_command()
     if item and item.behavior == bhvMceBlock then
         local transparent_start = mce_block_get_transparent_start_item(item)
         local anim_max = mce_block_get_anim_max_item(item)
-        if item.model == E_MODEL_MCE_COLOR_BLOCK and item.animState == anim_max then
+        local current_anim_state = item.animState
+        if item.model == E_MODEL_MCE_COLOR_BLOCK and current_anim_state == anim_max then
             djui_chat_message_create("The barrier block cannot become transparent")
-        elseif item.animState > transparent_start then
-            item.animState = item.animState - transparent_start
+        elseif current_anim_state > transparent_start then
+            item.animState = current_anim_state - transparent_start
             djui_chat_message_create("The current block is no longer transparent")
         else
-            item.animState = item.animState + transparent_start
+            item.animState = current_anim_state + transparent_start
             if item.animState > anim_max then
                 item.animState = anim_max
             end

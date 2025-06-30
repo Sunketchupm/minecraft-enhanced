@@ -11,7 +11,7 @@ local s_item_pages = {}
 
 local TAB_BUILDING_BLOCKS = 1
 local TAB_BUILDING_BLOCKS_COLORS = 2
-local TAB_ITEMS = 3
+local TAB_LEVEL_OBJECTS = 3
 local TAB_ENEMIES = 4
 local TAB_SURFACE_TYPES = 5
 local TAB_MAIN_END = 5
@@ -26,76 +26,64 @@ local s_current_surface_tip_index = 1
 
 local s_invert_scroll = false
 
+local g = get_texture_info
 -------------- TEXTURES --------------
-local A_BUTTON_TEX = get_texture_info("Abutton")
-local B_BUTTON_TEX = get_texture_info("Bbutton")
-local X_BUTTON_TEX = get_texture_info("Xbutton")
-local Y_BUTTON_TEX = get_texture_info("Ybutton")
---local U_JPAD_TEX = get_texture_info("UJpad")
---local L_JPAD_TEX = get_texture_info("LJpad")
---local D_JPAD_TEX = get_texture_info("DJpad")
---local R_JPAD_TEX = get_texture_info("RJpad")
-local UD_JPAD_TEX = get_texture_info("U-Djpad")
-local LR_JPAD_TEX = get_texture_info("L-Rjpad")
-local U_CBUTTON_TEX = get_texture_info("Ucbutton")
-local L_CBUTTON_TEX = get_texture_info("Lcbutton")
-local D_CBUTTON_TEX = get_texture_info("Dcbutton")
-local R_CBUTTON_TEX = get_texture_info("Rcbutton")
-local L_TRIG_TEX = get_texture_info("Ltrig")
-local R_TRIG_TEX =  get_texture_info("Rtrig")
-local Z_TRIG_TEX =  get_texture_info("Ztrig")
-local CONTROL_STICK_TEX = get_texture_info("Ctrlstick")
-local PAGE_UP_TEX = get_texture_info("page_up")
-local PAGE_DOWN_TEX = get_texture_info("page_down")
-local MOUSE_TEX = get_texture_info("mousecursor")
+local A_BUTTON_TEX = g("Abutton")
+local B_BUTTON_TEX = g("Bbutton")
+local X_BUTTON_TEX = g("Xbutton")
+local Y_BUTTON_TEX = g("Ybutton")
+--local U_JPAD_TEX = g("UJpad")
+--local L_JPAD_TEX = g("LJpad")
+--local D_JPAD_TEX = g("DJpad")
+--local R_JPAD_TEX = g("RJpad")
+local UD_JPAD_TEX = g("U-Djpad")
+local LR_JPAD_TEX = g("L-Rjpad")
+local U_CBUTTON_TEX = g("Ucbutton")
+local L_CBUTTON_TEX = g("Lcbutton")
+local D_CBUTTON_TEX = g("Dcbutton")
+local R_CBUTTON_TEX = g("Rcbutton")
+local L_TRIG_TEX = g("Ltrig")
+local R_TRIG_TEX =  g("Rtrig")
+local Z_TRIG_TEX =  g("Ztrig")
+local CONTROL_STICK_TEX = g("Ctrlstick")
+local PAGE_UP_TEX = g("page_up")
+local PAGE_DOWN_TEX = g("page_down")
+local MOUSE_TEX = g("mousecursor")
 ------------------- HELP PAGE IMAGES -------------------
-local DEFAULT_TEX = get_texture_info("nonehelp")
-local NOCOL_TEX = get_texture_info("nocolhelp")
-local NOFALL_TEX = get_texture_info("placeholder")
-local NSLIP_TEX = get_texture_info("nsliphelp")
-local SLIP_TEX = get_texture_info("sliphelp")
-local VSLIP_TEX = get_texture_info("vsliphelp")
-local HANGABLE_TEX = get_texture_info("hangablehelp")
-local VWIND_TEX = get_texture_info("vwindhelp")
-local WATER_TEX = get_texture_info("waterhelp")
-local VANISH_TEX = get_texture_info("vanishhelp")
-local TOXIC_TEX = get_texture_info("toxichelp")
-local SHALLOWSAND_TEX = get_texture_info("shallowsandhelp")
-local QUICKSAND_TEX = get_texture_info("quicksandhelp")
-local LAVA_TEX =get_texture_info("lavahelp")
-local DEATH_TEX = get_texture_info("deathhelp")
-local CHECKPOINT_TEX = get_texture_info("placeholder")
-local BOUNCE_TEX = get_texture_info("placeholder")
-local CONVEYOR_TEX = get_texture_info("conveyorhelp")
-local FIRSTY_TEX = get_texture_info("placeholder")
-local WIDEKICK_TEX = get_texture_info("placeholder")
-local ANYKICK_TEX = get_texture_info("placeholder")
-local WKLESS_TEX = get_texture_info("wklesshelp")
-local DASH_TEX = get_texture_info("placeholder")
-local BOOST_TEX = get_texture_info("placeholder")
-local ABC_TEX = get_texture_info("placeholder")
-local JUMP_TEX = get_texture_info("placeholder")
-local CAPLESS_TEX = get_texture_info("placeholder")
-local BREAK_TEX = get_texture_info("breakhelp")
-local DISAPPEAR_TEX = get_texture_info("placeholder")
-local SHRINK_TEX = get_texture_info("placeholder")
-local SPRINGBOARD_TEX = get_texture_info("placeholder")
-------------------- CUSTOM BLOCK TEXTURES -------------------
-local DPLAT_BLOCK_TEX = get_texture_info("dashpanel")
-local SPLAT_BLOCK_TEX = get_texture_info("shrinkingplatform")
-local CPLAT_BLOCK_TEX = get_texture_info("checkpoint")
-------------------- MENU SLOTS -------------------
-local SLOT_GOOMBA_TEX = get_texture_info("gombaslot")
-local SLOT_BOBOMB_TEX = get_texture_info("bobombslot")
-local SLOT_CHUCKYA_TEX = get_texture_info("chuckyaslot")
-local SLOT_STAR_TEX = get_texture_info("starslot")
-local SLOT_EXCLAMATION_BOX_VANISH = get_texture_info("exclamation_box_seg8_texture_08012E28")
-local SLOT_EXCLAMATION_BOX_METAL = get_texture_info("exclamation_box_seg8_texture_08014628")
-local SLOT_EXCLAMATION_BOX_WING = get_texture_info("exclamation_box_seg8_texture_08015E28")
-local SLOT_EXCLAMATION_BOX_NORMAL = get_texture_info("exclamation_box_seg8_texture_08017628")
+local DEFAULT_TEX = g("nonehelp")
+local NOCOL_TEX = g("nocolhelp")
+local NOFALL_TEX = g("placeholder")
+local NSLIP_TEX = g("nsliphelp")
+local SLIP_TEX = g("sliphelp")
+local VSLIP_TEX = g("vsliphelp")
+local HANGABLE_TEX = g("hangablehelp")
+local VWIND_TEX = g("vwindhelp")
+local WATER_TEX = g("waterhelp")
+local VANISH_TEX = g("vanishhelp")
+local TOXIC_TEX = g("toxichelp")
+local SHALLOWSAND_TEX = g("shallowsandhelp")
+local QUICKSAND_TEX = g("quicksandhelp")
+local LAVA_TEX = g("lavahelp")
+local DEATH_TEX = g("deathhelp")
+local CHECKPOINT_TEX = g("placeholder")
+local BOUNCE_TEX = g("placeholder")
+local CONVEYOR_TEX = g("conveyorhelp")
+local FIRSTY_TEX = g("placeholder")
+local WIDEKICK_TEX = g("placeholder")
+local ANYKICK_TEX = g("placeholder")
+local WKLESS_TEX = g("wklesshelp")
+local DASH_TEX = g("placeholder")
+local BOOST_TEX = g("placeholder")
+local ABC_TEX = g("placeholder")
+local JUMP_TEX = g("placeholder")
+local CAPLESS_TEX = g("placeholder")
+local BREAK_TEX = g("breakhelp")
+local DISAPPEAR_TEX = g("placeholder")
+local SHRINK_TEX = g("placeholder")
+local SPRINGBOARD_TEX = g("placeholder")
 --------------------------------------
 
----@class MenuItemLink
+---@class (exact) MenuItemLink
     ---@field item Item
     ---@field icon TextureInfo | DjuiColor
     ---@field self MenuItemLink?
@@ -104,7 +92,7 @@ local SLOT_EXCLAMATION_BOX_NORMAL = get_texture_info("exclamation_box_seg8_textu
 local sTabItemList = {
     [TAB_BUILDING_BLOCKS] = {},
     [TAB_BUILDING_BLOCKS_COLORS] = {},
-    [TAB_ITEMS] = {},
+    [TAB_LEVEL_OBJECTS] = {},
     [TAB_ENEMIES] = {},
     [TAB_SURFACE_TYPES] = {}
 }
@@ -117,108 +105,48 @@ for i = 1, HOTBAR_SIZE do
     gHotbarItemList[i] = { item = nil, icon = nil } ---@diagnostic disable-line: assign-type-mismatch
 end
 
----@param tab integer
----@param behavior BehaviorId
----@param model ModelExtendedId
----@param offset number
----@param mock_settings table
----@param anim_state integer
----@param behavior_param integer
----@param icon TextureInfo | DjuiColor
-local function add_item(tab, behavior, model, offset, anim_state, mock_settings, behavior_param, icon)
-    ---@type MenuItemLink
-    local item = { item = {
-        behavior = behavior,
-        model = model,
-        spawnYOffset = offset,
-        params = behavior_param,
-        blockProperties = 0,
-        size = gVec3fOne(),
-        rotation = gVec3sZero(),
-        animState = anim_state,
-        mock = mock_settings
-    }, icon = icon }
-
-    item.self = item
-    table.insert(sTabItemList[tab], item)
-end
-
 add_first_update(function ()
-    for i = 1, #gMenuBlockTextureIcons, 1 do
-        ---@type TextureInfo | DjuiColor
-        local texture = gMenuBlockTextureIcons[i] or gTextures.no_camera
-        ---@type MenuItemLink
-        local menu_item = {
-            item = {
-                behavior = bhvMceBlock,
-                model = E_MODEL_MCE_BLOCK,
-                spawnYOffset = 0,
-                params = 0,
-                blockProperties = 0,
-                size = gVec3fOne(),
-                rotation = gVec3sZero(),
-                animState = i,
-                mock = {}
-            },
-            icon = texture
-        }
-        menu_item.self = menu_item
-        sTabItemList[TAB_BUILDING_BLOCKS][i] = menu_item
+    ---@param tab integer
+    ---@param items MenuItemLink[]
+    local function fill_tab(tab, items)
+        for i = 1, #items, 1 do
+            ---@type TextureInfo | DjuiColor
+            local texture = items[i].icon or gTextures.no_camera
+            local behavior = items[i].item.behavior
+            local model = items[i].item.model
+            local params = items[i].item.params
+            local anim_state = items[i].item.params.forceAnimState or i
+            ---@type MenuItemLink
+            local menu_item = {
+                item = {
+                    behavior = behavior,
+                    model = model,
+                    animState = anim_state,
+                    params = params
+                },
+                icon = texture
+            }
+            menu_item.self = menu_item
+            sTabItemList[tab][i] = menu_item
+        end
     end
 
-    for i = 1, #gMenuBlockColorIcons, 1 do
-        ---@type TextureInfo | DjuiColor
-        local texture = gMenuBlockColorIcons[i] or gTextures.no_camera
-        ---@type MenuItemLink
-        local menu_item = {
-            item = {
-                behavior = bhvMceBlock,
-                model = E_MODEL_MCE_COLOR_BLOCK,
-                spawnYOffset = 0,
-                params = 0,
-                blockProperties = 0,
-                size = gVec3fOne(),
-                rotation = gVec3sZero(),
-                animState = i,
-                mock = {}
-            },
-            icon = texture
-        }
-        menu_item.self = menu_item
-        sTabItemList[TAB_BUILDING_BLOCKS_COLORS][i] = menu_item
-    end
+    fill_item_lists()
+
+    fill_tab(TAB_BUILDING_BLOCKS, gMenuBlockTextureIcons)
+    fill_tab(TAB_BUILDING_BLOCKS_COLORS, gMenuBlockColorIcons)
+    fill_tab(TAB_LEVEL_OBJECTS, gMenuLevelObjectsIcons)
+    fill_tab(TAB_ENEMIES, gMenuEnemyIcons)
+
     table.insert(sTabItemList[TAB_BUILDING_BLOCKS_COLORS], {
         item = {
             behavior = bhvMceBlock,
             model = E_MODEL_MCE_COLOR_BLOCK,
-            spawnYOffset = 0,
-            params = 0,
-            size = gVec3fOne(),
-            rotation = gVec3sZero(),
             animState = MCE_COLOR_BLOCK_BARRIER_ANIM,
-            mock = {}
+            params = get_default_item_params(),
         },
-        icon = get_texture_info("barrier")
+        icon = g("barrier")
     })
-
-    local star_offset = 0--6
-    add_item(TAB_ITEMS, bhvMceStar, E_MODEL_STAR, star_offset, 0, { animateFaceAngleYaw = 0x800 }, 0, gTextures.star)
-    add_item(TAB_ITEMS, bhvMceStar, E_MODEL_TRANSPARENT_STAR, star_offset, 0, { animateFaceAngleYaw = 0x800 }, 0, gTextures.star)
-    local coin_offset = 0--32
-    add_item(TAB_ITEMS, bhvMceCoin, E_MODEL_YELLOW_COIN, coin_offset, 0, { animateAnimState = true, animateFrame = 2, billboard = true }, 1, gTextures.coin)
-    add_item(TAB_ITEMS, bhvMceCoin, E_MODEL_RED_COIN, coin_offset--[[+ 3]], 0, { animateAnimState = true, animateFrame = 2, billboard = true }, 2, gTextures.coin)
-    add_item(TAB_ITEMS, bhvMceCoin, E_MODEL_BLUE_COIN, coin_offset--[[ + 26]], 0, { animateAnimState = true, animateFrame = 2, billboard = true, scale = 1.25 }, 5, gTextures.coin)
-    local exclamation_box_offset = 0--50
-    add_item(TAB_ITEMS, bhvMceExclamationBox, E_MODEL_EXCLAMATION_BOX, exclamation_box_offset, 0, { scale = 2 }, 1, SLOT_EXCLAMATION_BOX_WING)
-    add_item(TAB_ITEMS, bhvMceExclamationBox, E_MODEL_EXCLAMATION_BOX, exclamation_box_offset, 1, { scale = 2 }, 2, SLOT_EXCLAMATION_BOX_METAL)
-    add_item(TAB_ITEMS, bhvMceExclamationBox, E_MODEL_EXCLAMATION_BOX, exclamation_box_offset, 2, { scale = 2 }, 3, SLOT_EXCLAMATION_BOX_VANISH)
-    add_item(TAB_ITEMS, bhvMceExclamationBox, E_MODEL_EXCLAMATION_BOX, exclamation_box_offset, 3, { scale = 2 }, 4, SLOT_EXCLAMATION_BOX_NORMAL)
-    add_item(TAB_ITEMS, bhvMceExclamationBox, E_MODEL_EXCLAMATION_BOX, exclamation_box_offset, 3, { scale = 2 }, 99, SLOT_EXCLAMATION_BOX_NORMAL)
-
-    local offset = 0
-    add_item(TAB_ENEMIES, id_bhvGoomba, E_MODEL_GOOMBA, offset, 0, {}, 0, SLOT_GOOMBA_TEX)
-    add_item(TAB_ENEMIES, id_bhvBobomb, E_MODEL_BLACK_BOBOMB, offset, 0, {}, 0, SLOT_BOBOMB_TEX)
-    add_item(TAB_ENEMIES, id_bhvChuckya, E_MODEL_CHUCKYA, offset, 0, {}, 0, SLOT_CHUCKYA_TEX)
 end)
 
 ------------------------------------------------------------------------------------------------
@@ -418,9 +346,6 @@ local function mouse_is_within(start_x, start_y, end_x, end_y)
 end
 
 local function handle_mouse_input()
-    if djui_hud_get_raw_mouse_x() > 0 or djui_hud_get_raw_mouse_y() > 0 then
-        s_moved_mouse = true
-    end
     s_mouse_has_clicked = djui_hud_get_mouse_buttons_pressed() == 1
     s_mouse_has_right_clicked = djui_hud_get_mouse_buttons_pressed() == 4
     s_mouse_has_scrolled = djui_hud_get_mouse_scroll_y()
@@ -433,6 +358,12 @@ local function handle_mouse_input()
         mouse_hold_timer = 0
     end
     ]]
+
+    if s_mouse_has_clicked or s_mouse_has_right_clicked or s_mouse_has_scrolled ~= 0 or s_mouse_hold_released or
+        djui_hud_get_raw_mouse_x() > 0 or djui_hud_get_raw_mouse_y() > 0 then
+
+        s_moved_mouse = true
+    end
 end
 
 ------------------------------------------------------------------------------------------------
@@ -633,7 +564,7 @@ end
 
 ---------------------------
 
----@class Description
+---@class (exact) Description
     ---@field title string
     ---@field details {alias: string, type: string}
     ---@field lines {[1]: string, [2]: string, [3]: string, [4]: string}
@@ -1025,7 +956,13 @@ end
 ------------------------------------------------------------------------------------------------
 
 local function on_set_hotbar_item()
-    vec3f_copy(gGridSize, gHotbarItemList[gSelectedHotbarIndex].item.size)
+    local item = gHotbarItemList[gSelectedHotbarIndex].item
+    if not item then return end
+    local params = item.params
+    if not params then return end
+    local size = params.size
+    if not size then return end
+    vec3f_copy(gGridSize, size)
     vec3f_mul(gGridSize, GRID_SIZE_DEFAULT)
     g_outline_grid_y_offset = 0
 end
@@ -1192,6 +1129,7 @@ local function handle_item_selection_inputs(m)
 end
 
 local function on_confirm_item_input()
+    if not sTabItemList[s_active_tab][s_selected_item_index] then return end
     ---@type MenuItemLink
     local hotbar_item = table.deepcopy(sTabItemList[s_active_tab][s_selected_item_index])
     gHotbarItemList[gSelectedHotbarIndex] = hotbar_item

@@ -126,12 +126,7 @@ local function on_death(m)
     m.squishTimer = 1
     m.faceAngle.y = g_respawn_angle
 
-    reset_non_block_items(true)
-    local block = obj_get_first_with_behavior_id(bhvMceBlock)
-    while block do
-        block.oAction = MCE_BLOCK_ACT_RESET
-        block = obj_get_next_with_same_behavior_id(block)
-    end
+    reset_all_items()
     return false
 end
 
@@ -317,8 +312,10 @@ local function act_dash(m)
     return false
 end
 
+---@diagnostic disable: missing-fields
 hook_mario_action(ACT_CUSTOM_VERTICAL_WIND, { every_frame = act_custom_vertical_wind })
 hook_mario_action(ACT_DASH, { every_frame = act_dash })
+---@diagnostic enable: missing-fields
 
 -----------------------------------------------------------------------------------------------------------
 

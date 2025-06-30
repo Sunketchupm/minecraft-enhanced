@@ -205,7 +205,7 @@ local s_reload_items = false
 local function on_load_part_2()
     if s_load_state == 1 then
         for _, texture in ipairs(gMenuBlockTextureIcons) do
-            djui_hud_render_texture(texture, 0, 0, 1, 1)
+            djui_hud_render_texture(texture.icon --[[@as TextureInfo]], 0, 0, 1, 1)
         end
         s_load_state = 2
     elseif s_load_state == 2 then
