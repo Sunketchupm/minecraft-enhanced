@@ -59,7 +59,7 @@ function get_default_item_params()
 end
 
 gCurrentItem = { behavior = nil, model = E_MODEL_NONE, params = {} }
-gAllItemBehaviors = {}
+gItemBhvIds = {}
 local sLevelItemBehaviors = {}
 local sEnemyItemBehaviors = {}
 local sVanillaClearImmune = {}
@@ -72,7 +72,7 @@ add_first_update(function ()
         params = get_default_item_params(),
     }
     ---@type BehaviorId[]
-    gAllItemBehaviors = {
+    gItemBhvIds = {
         bhvMceBlock,
         bhvMceStar,
         bhvMceCoin,
@@ -138,7 +138,7 @@ end
 function obj_get_any_nearest_item(obj)
     local nearest_item = nil
     local nearest_dist = 0xFFFF
-    for _, item_behavior in ipairs(gAllItemBehaviors) do
+    for _, item_behavior in ipairs(gItemBhvIds) do
         local item = obj_get_nearest_object_with_behavior_id(obj, item_behavior)
         if item then
             local dist = dist_between_objects(item, obj)
@@ -589,7 +589,7 @@ function on_clear_chat_command(msg)
     local args = string.split(msg, " ")
     local command = args[1] and args[1]:lower() or ""
     if command == "all" or command == "" then
-        for _, behavior in ipairs(gAllItemBehaviors) do
+        for _, behavior in ipairs(gItemBhvIds) do
             local obj = obj_get_first_with_behavior_id(behavior)
             while obj do
                 if object_removal_criteria(obj, args[2]) then
@@ -659,7 +659,7 @@ end
 function reset_all_items(override_free_move_check)
     local m = gMarioStates[0]
     if m.action == ACT_FREE_MOVE or override_free_move_check then
-        for _, behavior in ipairs(gAllItemBehaviors) do
+        for _, behavior in ipairs(gItemBhvIds) do
             if behavior ~= bhvMceBlock then
                 local obj = obj_get_first_with_behavior_id(behavior)
                 while obj do

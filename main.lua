@@ -304,17 +304,40 @@ local function place_item()
 		if item.oPosX < -0x8000 or item.oPosX > 0x7FFF or item.oPosY < -0x8000 or item.oPosY > 0x7FFF or item.oPosZ < -0x8000 or item.oPosZ > 0x7FFF then
 			djui_chat_message_create("Warning! Item placed in a PU! Some behaviors may not work as intended")
 		end
-
-		table.insert(g_load_block_datas, {
-			item, current_item.behavior, current_item.model,
-			sOutlineObject.oPosX, sOutlineObject.oPosY - (current_item_params.spawnYOffset * current_item_params.size.y), sOutlineObject.oPosZ,
-			sOutlineObject.oFaceAnglePitch, sOutlineObject.oFaceAngleYaw, sOutlineObject.oFaceAngleRoll,
-			current_item_params.params, current_item_params.blockProperties,
-			current_item_params.size.x, current_item_params.size.y, current_item_params.size.z,
-			current_item.animState, 0
-		})
 	else
 		play_sound(SOUND_MENU_CAMERA_BUZZ, gMarioStates[0].marioObj.header.gfx.cameraToObject)
+		djui_chat_message_create("Item failed to place. Perhaps the object limit was reached?")
+	end
+end
+
+-- Used by load_command in save.lua
+function place_item_with_params(item)
+	local spawned_item = spawn_sync_object(
+		item.id,
+		item.model,
+		item.x, item.y, item.z,
+		---@param obj Object
+		function (obj)
+			obj.oOpacity = 255
+			obj.oFaceAnglePitch = item.pitch
+			obj.oFaceAngleYaw = item.yaw
+			obj.oFaceAngleRoll = item.roll
+			obj.oMoveAnglePitch = item.pitch
+			obj.oMoveAngleYaw = item.yaw
+			obj.oMoveAngleRoll = item.roll
+			obj.oItemParams = item.params
+			obj.oBlockSurfaceProperties = item.properties
+			obj.oScaleX = item.scaleX
+			obj.oScaleY = item.scaleY
+			obj.oScaleZ = item.scaleZ
+			obj_scale_xyz(obj, item.scaleX, item.scaleY, item.scaleZ)
+			obj.oAnimState = item.animState
+			obj.globalPlayerIndex = network_global_index_from_local(0)
+			obj.oOwner = network_global_index_from_local(0) + 1
+		end
+	)
+
+	if not spawned_item then
 		djui_chat_message_create("Item failed to place. Perhaps the object limit was reached?")
 	end
 end
