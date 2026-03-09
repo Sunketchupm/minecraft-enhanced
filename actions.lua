@@ -3,9 +3,8 @@ local mario_set_forward_vel,perform_air_step,set_character_animation,queue_rumbl
 
 ACT_FREE_MOVE = allocate_mario_action(ACT_GROUP_AUTOMATIC | ACT_FLAG_INTANGIBLE | ACT_FLAG_INVULNERABLE)
 
-local s_saved_mario_yaw = 0
-local s_mario_yaw_timer = 0
-local s_prev_romhack_cam_state = camera_get_romhack_override()
+local sSavedMarioYaw = 0
+local sPrevRomhackCamState = camera_get_romhack_override()
 ---@param m MarioState
 local function act_free_move(m)
     if gMenuOpen or is_game_paused() then return false end
@@ -54,14 +53,9 @@ local function act_free_move(m)
     end
 
     if m.controller.buttonPressed & L_TRIG ~= 0 then
-        s_mario_yaw_timer = s_mario_yaw_timer + 1
-        if s_mario_yaw_timer == 1 then
-            s_saved_mario_yaw = m.faceAngle.y
-        end
-    else
-        s_mario_yaw_timer = 0
+        sSavedMarioYaw = m.faceAngle.y
     end
-    m.faceAngle.y = lHeld and s_saved_mario_yaw or m.intendedYaw
+    m.faceAngle.y = lHeld and sSavedMarioYaw or m.intendedYaw
 
     if m.controller.stickMag > 0 then
         if bHeld then
@@ -108,9 +102,9 @@ local function allow_interact(m)
     end
 end
 
-local s_default_respawn_location = gVec3fZero()
-g_respawn_location = gVec3fZero()
-g_respawn_angle = 0
+local sDefaultRespawnLocation = gVec3fZero()
+gRespawnLocation = gVec3fZero()
+gRespawnAngle = 0
 
 ---@param m MarioState
 local function on_death(m)
@@ -118,13 +112,14 @@ local function on_death(m)
         m.marioBodyState.modelState = m.marioBodyState.modelState | MODEL_STATE_NOISE_ALPHA
         return false
     end
-    vec3f_copy(m.pos, g_respawn_location)
+
+    vec3f_copy(m.pos, gRespawnLocation)
     mario_pop_bubble(m)
     set_mario_action(m, ACT_FREEFALL, 0)
     m.invincTimer = 1
     m.capTimer = 1
     m.squishTimer = 1
-    m.faceAngle.y = g_respawn_angle
+    m.faceAngle.y = gRespawnAngle
 
     reset_all_items()
     return false
@@ -133,9 +128,9 @@ end
 local function on_warp()
     ---@type MarioState
     local m = gMarioStates[0]
-    vec3f_copy(s_default_respawn_location, m.pos)
-    vec3f_copy(g_respawn_location, m.pos)
-    g_respawn_angle = m.faceAngle.y
+    vec3f_copy(sDefaultRespawnLocation, m.pos)
+    vec3f_copy(gRespawnLocation, m.pos)
+    gRespawnAngle = m.faceAngle.y
 end
 
 ---@param m MarioState
@@ -150,36 +145,36 @@ end
 
 ---@param m MarioState
 local function override_geometry_inputs(m)
-    if m.action == ACT_FREE_MOVE then
-        m.floor = collision_find_floor(m.pos.x, m.pos.y, m.pos.z)
-        m.floorHeight = find_floor_height(m.pos.x, m.pos.y, m.pos.z)
-        if not m.floor then
-            vec3f_copy(m.pos, m.marioObj.header.gfx.pos)
-            m.floorHeight = find_floor_height(m.pos.x, m.pos.y, m.pos.z)
-        end
+    if m.action ~= ACT_FREE_MOVE then return end
 
-        m.ceil = collision_find_ceil(m.pos.x, m.floorHeight, m.pos.z)
-        m.ceilHeight = find_ceil_height(m.pos.x, m.floorHeight, m.pos.z)
-        return false
+    m.floor = collision_find_floor(m.pos.x, m.pos.y, m.pos.z)
+    m.floorHeight = find_floor_height(m.pos.x, m.pos.y, m.pos.z)
+    if not m.floor then
+        vec3f_copy(m.pos, m.marioObj.header.gfx.pos)
+        m.floorHeight = find_floor_height(m.pos.x, m.pos.y, m.pos.z)
     end
+
+    m.ceil = collision_find_ceil(m.pos.x, m.floorHeight, m.pos.z)
+    m.ceilHeight = find_ceil_height(m.pos.x, m.floorHeight, m.pos.z)
+    return false
 end
 
-local timer = 0
-local start_timer = false
+local sFlyingWindow = 0
+local sStartFlyingWindow = false
 ---@param m MarioState
 local function mario_update(m)
     if m.playerIndex ~= 0 then return end
-    if start_timer then
-        timer = timer + 1
-        if timer > 15 then
-            start_timer = false
-            timer = 0
+    if sStartFlyingWindow then
+        sFlyingWindow = sFlyingWindow + 1
+        if sFlyingWindow > 15 then
+            sStartFlyingWindow = false
+            sFlyingWindow = 0
         end
     end
     if m.controller.buttonPressed & L_TRIG ~= 0 then
-        if start_timer then
-            start_timer = false
-            timer = 0
+        if sStartFlyingWindow then
+            sStartFlyingWindow = false
+            sFlyingWindow = 0
 
             if m.action == ACT_SQUISHED then
                 m.pos.y = m.pos.y + m.marioObj.hitboxHeight
@@ -187,22 +182,22 @@ local function mario_update(m)
             end
 
             if m.action ~= ACT_FREE_MOVE then
-                s_prev_romhack_cam_state = camera_get_romhack_override()
+                sPrevRomhackCamState = camera_get_romhack_override()
             end
             local next_action = m.action == ACT_FREE_MOVE and ACT_FREEFALL or ACT_FREE_MOVE
             if next_action == ACT_FREE_MOVE then
                 camera_set_romhack_override(RCO_ALL_INCLUDING_VANILLA)
             else
-                if s_prev_romhack_cam_state == RCO_NONE or
-                    (level_is_vanilla_level(gNetworkPlayers[0].currLevelNum) and s_prev_romhack_cam_state == RCO_ALL or s_prev_romhack_cam_state == RCO_ALL_EXCEPT_BOWSER) then
+                if sPrevRomhackCamState == RCO_NONE or
+                    (level_is_vanilla_level(gNetworkPlayers[0].currLevelNum) and sPrevRomhackCamState == RCO_ALL or sPrevRomhackCamState == RCO_ALL_EXCEPT_BOWSER) then
                     camera_set_romhack_override(RCO_DISABLE)
                 else
-                    camera_set_romhack_override(s_prev_romhack_cam_state)
+                    camera_set_romhack_override(sPrevRomhackCamState)
                 end
             end
             drop_and_set_mario_action(m, next_action, 0)
         else
-            start_timer = true
+            sStartFlyingWindow = true
         end
     end
 end
@@ -218,8 +213,8 @@ hook_event(HOOK_MARIO_UPDATE, mario_update)
 
 hook_chat_command("restart", "[<nothing>|reset] Restarts you to your current checkpoint, or use \"reset\" to respawn at spawn", function (msg)
     if msg:lower() == "reset" then
-        vec3f_copy(g_respawn_location, s_default_respawn_location)
-        g_respawn_angle = 0
+        vec3f_copy(gRespawnLocation, sDefaultRespawnLocation)
+        gRespawnAngle = 0
     end
     on_death(gMarioStates[0])
     return true
@@ -232,7 +227,7 @@ ACT_DASH = allocate_mario_action(ACT_GROUP_MOVING | ACT_FLAG_MOVING)
 
 ---@param m MarioState
 local function act_custom_vertical_wind(m)
-    local intendedDYaw = -convert_s16(m.intendedYaw - m.faceAngle.y)
+    local intendedDYaw = -math.s16(m.intendedYaw - m.faceAngle.y)
     local intendedMag = m.intendedMag / 32.0
 
     play_character_sound_if_no_flag(m, CHAR_SOUND_HERE_WE_GO, MARIO_MARIO_SOUND_PLAYED)
@@ -258,7 +253,7 @@ local function act_custom_vertical_wind(m)
         mario_set_forward_vel(m, -16)
     end
 
-    m.marioObj.header.gfx.angle.x = convert_s16(6144 * intendedMag * coss(intendedDYaw))
+    m.marioObj.header.gfx.angle.x = math.s16(6144 * intendedMag * coss(intendedDYaw))
     --m.marioObj.header.gfx.angle.y = convert_s16(-4096 * intendedMag * convert_s16(sins(intendedDYaw)))
     return false
 end
@@ -283,7 +278,7 @@ local function act_dash(m)
     ----- update_walking_speed() ----- (Inlined)
 
     m.faceAngle.y =
-        m.intendedYaw - approach_s32(convert_s16(m.intendedYaw - m.faceAngle.y), 0, 0x800, 0x800)
+        m.intendedYaw - approach_s32(math.s16(m.intendedYaw - m.faceAngle.y), 0, 0x800, 0x800)
     apply_slope_accel(m)
 
     ----------------------------------

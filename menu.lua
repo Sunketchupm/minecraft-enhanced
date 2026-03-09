@@ -1,13 +1,13 @@
 gMenuOpen = false
 
-local s_active_tab = 1
-local s_selected_item_index = 1
-local s_is_holding_item = false
+local sActiveTab = 1
+local sSelectedItemIndex = 1
+local sIsHoldingItem = false
 
-local s_current_page = 1
-local s_pages_count = 1
+local sCurrentPage = 1
+local sPagesCount = 1
 ---@type MenuItemLink[][]
-local s_item_pages = {}
+local sItemPages = {}
 
 local TAB_BUILDING_BLOCKS = 1
 local TAB_BUILDING_BLOCKS_COLORS = 2
@@ -16,15 +16,15 @@ local TAB_ENEMIES = 4
 local TAB_SURFACE_TYPES = 5
 local TAB_MAIN_END = 5
 
-local s_item_list_row_count = 10
-local s_item_list_column_count = 10
+local sItemListRowCount = 10
+local sItemListColumnCount = 10
 
-local s_show_controls = true
-local s_clear_hotbar = 0
+local sShowControls = true
+local sClearHotbar = 0
 
-local s_current_surface_tip_index = 1
+local sCurrentSurfaceTipIndex = 1
 
-local s_invert_scroll = false
+local sInvertScroll = false
 
 local g = get_texture_info
 -------------- TEXTURES --------------
@@ -294,63 +294,62 @@ end
 
 ----------------------------------------------------
 
-local s_moved_mouse = false
-local s_prev_mouse_x = 0
-local s_prev_mouse_y = 0
-local s_mouse_x = 0
-local s_mouse_y = 0
-local s_mouse_has_clicked = false
-local s_mouse_has_right_clicked = false
---local s_mouse_click_held = false
-local s_mouse_hold_released = false
---local mouse_hold_timer = 0
-local s_mouse_prev_item_index = 1
-local s_mouse_tab_was_clicked_on = 0
-local s_mouse_has_scrolled = 0
-
-local s_mouse_hovering_over_surface_tip = false
+local sMouse = {
+    moved = false,
+    prev = { x = 0, y = 0 },
+    pos = { x = 0, y = 0 },
+    pressed = { left = false, right = false, middle = false },
+    --held = { left = false, right = false, middle = false },
+    released = { left = false, right = false, middle = false },
+    scroll = 0,
+    menu = {
+        prevItemIndex = 1,
+        clickedTabIndex = 0,
+        hoveringSurfaceTip = false,
+    }
+}
 
 local function render_mouse()
-    if s_moved_mouse then
-        s_prev_mouse_x = s_mouse_x
-        s_prev_mouse_y = s_mouse_y
-        s_mouse_x = djui_hud_get_mouse_x()
-        s_mouse_y = djui_hud_get_mouse_y()
-        djui_hud_render_texture_interpolated(MOUSE_TEX,
-            s_prev_mouse_x - MOUSE_TEX.width * 0.5, s_prev_mouse_y- MOUSE_TEX.height * 0.5, 1, 1,
-            s_mouse_x - MOUSE_TEX.width * 0.5, s_mouse_y - MOUSE_TEX.height * 0.5, 1, 1)
-        --djui_hud_render_texture(gTextures.camera, mouse_x, mouse_y, 1, 1)
-    end
+    if not sMouse.moved then return end
+
+    sMouse.prev.x = sMouse.pos.x
+    sMouse.prev.y = sMouse.pos.y
+    sMouse.pos.x = djui_hud_get_mouse_x()
+    sMouse.pos.y = djui_hud_get_mouse_y()
+    djui_hud_render_texture_interpolated(MOUSE_TEX,
+        sMouse.prev.x - MOUSE_TEX.width * 0.5, sMouse.prev.y- MOUSE_TEX.height * 0.5, 1, 1,
+        sMouse.pos.x - MOUSE_TEX.width * 0.5, sMouse.pos.y - MOUSE_TEX.height * 0.5, 1, 1)
+    --djui_hud_render_texture(gTextures.camera, mouse_x, mouse_y, 1, 1)
 end
 
 local function render_dragging_icon()
-    if s_moved_mouse then
-        local menu_item = sTabItemList[s_active_tab][s_mouse_prev_item_index]
-        if menu_item then
-            local icon = menu_item.icon
-            if icon.texture then
-                ---@cast icon TextureInfo
-                local scale_x, scale_y = rescale_icon(icon)
-                djui_hud_render_texture_interpolated(icon, s_prev_mouse_x, s_prev_mouse_y, scale_x, scale_y, s_mouse_x, s_mouse_y, scale_x, scale_y)
-            else
-                ---@cast icon DjuiColor
-                djui_hud_set_color(icon.r, icon.g, icon.b, icon.a)
-                djui_hud_render_rect_interpolated(s_prev_mouse_x, s_prev_mouse_y, 30, 30, s_mouse_x, s_mouse_y, 30, 30)
-            end
+    if not sMouse.moved then return end
+
+    local menu_item = sTabItemList[sActiveTab][sMouse.menu.prevItemIndex]
+    if menu_item then
+        local icon = menu_item.icon
+        if icon.texture then
+            ---@cast icon TextureInfo
+            local scale_x, scale_y = rescale_icon(icon)
+            djui_hud_render_texture_interpolated(icon, sMouse.prev.x, sMouse.prev.y, scale_x, scale_y, sMouse.pos.x, sMouse.pos.y, scale_x, scale_y)
+        else
+            ---@cast icon DjuiColor
+            djui_hud_set_color(icon.r, icon.g, icon.b, icon.a)
+            djui_hud_render_rect_interpolated(sMouse.prev.x, sMouse.prev.y, 30, 30, sMouse.pos.x, sMouse.pos.y, 30, 30)
         end
     end
 end
 
 local function mouse_is_within(start_x, start_y, end_x, end_y)
-    return s_mouse_x > start_x and s_mouse_y > start_y and s_mouse_x < end_x and s_mouse_y < end_y
+    return sMouse.pos.x > start_x and sMouse.pos.y > start_y and sMouse.pos.x < end_x and sMouse.pos.y < end_y
 end
 
 local function handle_mouse_input()
-    s_mouse_has_clicked = djui_hud_get_mouse_buttons_pressed() == 1
-    s_mouse_has_right_clicked = djui_hud_get_mouse_buttons_pressed() == 4
-    s_mouse_has_scrolled = djui_hud_get_mouse_scroll_y()
+    sMouse.pressed.left = djui_hud_get_mouse_buttons_pressed() == 1
+    sMouse.pressed.right = djui_hud_get_mouse_buttons_pressed() == 4
+    sMouse.scroll = djui_hud_get_mouse_scroll_y()
     --s_mouse_click_held = djui_hud_get_mouse_buttons_down() == 1
-    s_mouse_hold_released = djui_hud_get_mouse_buttons_released() == 1
+    sMouse.released.left = djui_hud_get_mouse_buttons_released() == 1
     --[[
     if mouse_click_held then
         mouse_hold_timer = mouse_hold_timer + 1
@@ -359,10 +358,10 @@ local function handle_mouse_input()
     end
     ]]
 
-    if s_mouse_has_clicked or s_mouse_has_right_clicked or s_mouse_has_scrolled ~= 0 or s_mouse_hold_released or
+    if sMouse.pressed.left or sMouse.pressed.right or sMouse.scroll ~= 0 or sMouse.released.left or
         djui_hud_get_raw_mouse_x() > 0 or djui_hud_get_raw_mouse_y() > 0 then
 
-        s_moved_mouse = true
+        sMouse.moved = true
     end
 end
 
@@ -375,10 +374,10 @@ end
 local function determine_slot_width(base_slot_width, width)
     local column_count = width / base_slot_width
     local whole_column_count = math.floor(column_count)
-    s_item_list_column_count = whole_column_count
+    sItemListColumnCount = whole_column_count
     if column_count ~= whole_column_count then
         local div_decimal = column_count - whole_column_count
-        base_slot_width = base_slot_width + (base_slot_width * (div_decimal / s_item_list_column_count))
+        base_slot_width = base_slot_width + (base_slot_width * (div_decimal / sItemListColumnCount))
     end
     return base_slot_width, whole_column_count
 end
@@ -390,10 +389,10 @@ end
 local function determine_slot_height(base_slot_height, height)
     local row_count = height / base_slot_height
     local whole_row_count = math.floor(row_count)
-    s_item_list_row_count = whole_row_count
+    sItemListRowCount = whole_row_count
     if row_count ~= whole_row_count then
         local div_decimal = row_count - whole_row_count
-        base_slot_height = base_slot_height + (base_slot_height * (div_decimal / s_item_list_row_count))
+        base_slot_height = base_slot_height + (base_slot_height * (div_decimal / sItemListRowCount))
     end
     return base_slot_height, whole_row_count
 end
@@ -417,7 +416,7 @@ local function determine_pages(column_count, row_count, items)
         end
         new_item_pages[stored_page][item_in_page_index] = items[i]
     end
-    s_pages_count = stored_page
+    sPagesCount = stored_page
     return new_item_pages
 end
 
@@ -430,18 +429,18 @@ local function render_item_list(x, y, width, height, items)
     local hovering_over_item = false
     local slot_width, column_count = determine_slot_width(65, width)
     local slot_height, row_count = determine_slot_height(65, height)
-    s_item_pages = determine_pages(column_count, row_count, items)
+    sItemPages = determine_pages(column_count, row_count, items)
     local items_per_page = column_count * row_count
 
-    for index, item in ipairs(s_item_pages[s_current_page]) do
-        local slot_x = x + ((slot_width * ((index - 1) % s_item_list_column_count)))
-        local slot_y = y + ((slot_height * ((index - 1) // s_item_list_column_count)))
-        if s_moved_mouse and mouse_is_within(slot_x, slot_y, slot_x + slot_width, slot_y + slot_height) then
-            s_selected_item_index = index + (items_per_page * (s_current_page - 1))
+    for index, item in ipairs(sItemPages[sCurrentPage]) do
+        local slot_x = x + ((slot_width * ((index - 1) % sItemListColumnCount)))
+        local slot_y = y + ((slot_height * ((index - 1) // sItemListColumnCount)))
+        if sMouse.moved and mouse_is_within(slot_x, slot_y, slot_x + slot_width, slot_y + slot_height) then
+            sSelectedItemIndex = index + (items_per_page * (sCurrentPage - 1))
             hovering_over_item = true
         end
 
-        if index + (items_per_page * (s_current_page - 1)) == s_selected_item_index then
+        if index + (items_per_page * (sCurrentPage - 1)) == sSelectedItemIndex then
             djui_hud_set_color(255, 255, 255, 150)
             djui_hud_render_rect(slot_x, slot_y, slot_width, slot_height)
         end
@@ -451,21 +450,21 @@ local function render_item_list(x, y, width, height, items)
         end
     end
 
-    for i = 1, s_item_list_column_count + 1, 1 do
+    for i = 1, sItemListColumnCount + 1, 1 do
         djui_hud_set_color(255, 255, 255, 255)
         djui_hud_render_rect(x + (slot_width * (i - 1) - 1), y, 2, height)
         djui_hud_set_color(96, 96, 96, 255)
         djui_hud_render_rect(x + (slot_width * (i - 1) + 1), y, 2, height)
     end
-    for i = 1, s_item_list_row_count + 1, 1 do
+    for i = 1, sItemListRowCount + 1, 1 do
         djui_hud_set_color(255, 255, 255, 255)
         djui_hud_render_rect(x, y + (slot_height * (i - 1) - 1), width, 2)
         djui_hud_set_color(96, 96, 96, 255)
         djui_hud_render_rect(x, y + (slot_height * (i - 1) + 1), width, 2)
     end
 
-    if s_moved_mouse and not hovering_over_item then
-        s_selected_item_index = 0
+    if sMouse.moved and not hovering_over_item then
+        sSelectedItemIndex = 0
     end
 end
 
@@ -483,13 +482,13 @@ local function render_tab_header(x, y, width, height, text)
     local text_x = x + width * 0.5 - size * 0.5
     local text_y = y + height * 0.04
     djui_hud_print_text(text, text_x, text_y, scale)
-    if s_current_page > 1 then
+    if sCurrentPage > 1 then
         local texture_scale = 3
         local texture_x = (x + width * 0.1) - (L_CBUTTON_TEX.width * 0.5 * texture_scale)
         djui_hud_set_color(255, 255, 255, 255)
         djui_hud_render_texture(L_CBUTTON_TEX, texture_x, text_y, texture_scale, texture_scale)
     end
-    if s_current_page < s_pages_count then
+    if sCurrentPage < sPagesCount then
         local texture_scale = 3
         local texture_x = (x + width * 0.9) - (R_CBUTTON_TEX.width * 0.5 * texture_scale)
         djui_hud_set_color(255, 255, 255, 255)
@@ -509,7 +508,7 @@ local function render_interior_rectangle(x, y, width, height)
     local color = {r = 175, g = 175, b = 175, a = 255}
     djui_hud_set_color_with_table(color)
     djui_hud_render_rect(interior_rect_x, interior_rect_y, interior_rect_width, interior_rect_height)
-    render_item_list(interior_rect_x, interior_rect_y, interior_rect_width, interior_rect_height, sTabItemList[s_active_tab])
+    render_item_list(interior_rect_x, interior_rect_y, interior_rect_width, interior_rect_height, sTabItemList[sActiveTab])
 end
 
 ------------------------------------------------------------------------------------------------
@@ -518,7 +517,7 @@ local function render_standard_tab(x, y, width, height, name)
     render_tab_header(x, y, width, height, name)
     render_interior_rectangle(x, y, width, height)
     local text_scale = 1.25
-    local text = "Clear Hotbar (".. s_clear_hotbar .."/5)"
+    local text = "Clear Hotbar (".. sClearHotbar .."/5)"
     local text_size = djui_hud_measure_text(text) * text_scale
     local text_x = (x + width * 0.55) - (text_size * 0.5)
     local text_y = (y + height) - 55 * text_scale
@@ -573,7 +572,7 @@ end
 -- This is for the stuff in the box on the right side of the menu
 -- {title = "", details = {alias = "Aliases: ", type = "Type: "}, lines = {"", "", "", ""}, image = }
 ---@type Description[]
-local s_surface_descriptions = {
+local sSurfaceDescriptions = {
     {title = "Default", details = {alias = "Aliases: normal", type = "Type: Surface"}, lines = {"The default SM64 surface.", "Can't go wrong with it.", "", ""}, image = DEFAULT_TEX},
     {title = "No Collision", details = {alias = "Aliases: intangible / none", type = "Type: Surface"}, lines = {"Removes all surface collision.", "Best used with ", "transparent blocks.", ""}, image = NOCOL_TEX},
     {title = "No Fall Damage", details = {alias = "Aliases: nofall", type = "Type: Property"}, lines = {"Prevents players from taking", "any fall damage when landing", "on this block.", ""}, image = NOFALL_TEX},
@@ -609,7 +608,7 @@ local s_surface_descriptions = {
 
 -- This is for the names of the buttons on the left side of the menu
 ---@type string[]
-local s_surface_buttons = {
+local sSurfaceButtons = {
     "Default",
     "No Collision",
     "No Fall Damage",
@@ -643,8 +642,8 @@ local s_surface_buttons = {
     "Springboard"
 }
 
-local s_surface_buttons_index_offset = 0
-local s_surface_buttons_rendered = 0
+local sSurfaceButtonsIndexOffset = 0
+local sSurfaceButtonsRendered = 0
 
 ---@param x number
 ---@param y number
@@ -688,7 +687,7 @@ end
 ---@param height number
 local function render_surfaces_tab(x, y, width, height)
     render_tab_header(x, y, width, height, "Surface Types")
-    s_pages_count = 1
+    sPagesCount = 1
 
     local page_arrow_x = x + width * 0.21
     local arrow_scale = 2
@@ -705,29 +704,29 @@ local function render_surfaces_tab(x, y, width, height)
     local y_increm = button_height + 5
     local button_space = ((page_down_arrow_y - 35) - page_up_arrow_y)
     local button_count_div = button_space / y_increm
-    s_surface_buttons_rendered = math.floor(button_count_div)
-    y_increm = button_space / s_surface_buttons_rendered
-    s_mouse_hovering_over_surface_tip = false
-    for i = 1, s_surface_buttons_rendered, 1 do
-        local absolute_index = i + s_surface_buttons_index_offset
-        if s_moved_mouse and mouse_is_within(button_x, button_y + y_increm * (i - 1), button_x + button_width, (button_y + y_increm * (i - 1)) + button_height) then
-            s_current_surface_tip_index = absolute_index
-            s_mouse_hovering_over_surface_tip = true
+    sSurfaceButtonsRendered = math.floor(button_count_div)
+    y_increm = button_space / sSurfaceButtonsRendered
+    sMouse.menu.hoveringSurfaceTip = false
+    for i = 1, sSurfaceButtonsRendered, 1 do
+        local absolute_index = i + sSurfaceButtonsIndexOffset
+        if sMouse.moved and mouse_is_within(button_x, button_y + y_increm * (i - 1), button_x + button_width, (button_y + y_increm * (i - 1)) + button_height) then
+            sCurrentSurfaceTipIndex = absolute_index
+            sMouse.menu.hoveringSurfaceTip = true
         end
 
         local button_colors = {{r = 125, g = 125, b = 125, a = 255}, {r = 175, g = 175, b = 175, a = 255}, {r = 75, g = 75, b = 75, a = 255}}
-        if s_current_surface_tip_index == absolute_index then
+        if sCurrentSurfaceTipIndex == absolute_index then
             button_colors = {{r = 65, g = 65, b = 65, a = 255}, {r = 175, g = 175, b = 175, a = 255}, {r = 75, g = 75, b = 75, a = 255}}
         end
         render_bordered_rectangle(button_x, button_y + y_increm * (i - 1), button_width, button_height, button_colors, 0.01, 0.06)
 
-        if s_surface_buttons[absolute_index] then
-            render_shadowed_text(s_surface_buttons[absolute_index], button_x + 12, button_y + 4.5 + y_increm * (i - 1), 0.8)
+        if sSurfaceButtons[absolute_index] then
+            render_shadowed_text(sSurfaceButtons[absolute_index], button_x + 12, button_y + 4.5 + y_increm * (i - 1), 0.8)
         end
     end
 
-    if s_surface_descriptions[s_current_surface_tip_index] then
-        render_description_box(x, y, width, height, s_surface_descriptions[s_current_surface_tip_index])
+    if sSurfaceDescriptions[sCurrentSurfaceTipIndex] then
+        render_description_box(x, y, width, height, sSurfaceDescriptions[sCurrentSurfaceTipIndex])
     end
 end
 
@@ -748,7 +747,7 @@ local sMenuTabs = {
 ---@param index integer
 local function render_menu_tab(x, y, width, height, index)
     local colors = {{r = 125, g = 125, b = 125, a = 255}, {r = 175, g = 175, b = 175, a = 255}, {r = 75, g = 75, b = 75, a = 255}}
-    if index == s_active_tab then
+    if index == sActiveTab then
         colors = {{r = 200, g = 200, b = 200, a = 255}, {r = 255, g = 255, b = 255, a = 255}, {r = 150, g = 150, b = 150, a = 255}}
     end
     local tab_width = width * 0.1
@@ -766,8 +765,8 @@ local function render_menu_tab(x, y, width, height, index)
             djui_hud_render_texture(icon.texture, texture_x, texture_y, texture_scale, texture_scale)
         end
     end
-    if mouse_is_within(tab_x, tab_y, tab_x + tab_width, tab_y + tab_height) and s_mouse_has_clicked then
-        s_mouse_tab_was_clicked_on = index
+    if mouse_is_within(tab_x, tab_y, tab_x + tab_width, tab_y + tab_height) and sMouse.pressed.left then
+        sMouse.menu.clickedTabIndex = index
     end
 end
 
@@ -798,7 +797,7 @@ local function render_hotbar(screen_width, screen_height)
     local width = screen_width * 0.5
     local height = screen_height * 0.08
     local x = screen_width * 0.25
-    local y = screen_height - ((s_show_controls and height * 1.8) or height) --need space for on-screen controls
+    local y = screen_height - ((sShowControls and height * 1.8) or height) --need space for on-screen controls
     djui_hud_set_color(64, 64, 32, 192)
     djui_hud_render_rect(x, y, width, height)
     for index, item in ipairs(gHotbarItemList) do
@@ -806,13 +805,13 @@ local function render_hotbar(screen_width, screen_height)
         local slot_height = height * 0.95
         local slot_x = x + slot_width * (index - 1)
         local slot_y = y
-        if gMenuOpen and s_moved_mouse and mouse_is_within(slot_x, slot_y, slot_x + slot_width, slot_y + slot_height) then
+        if gMenuOpen and sMouse.moved and mouse_is_within(slot_x, slot_y, slot_x + slot_width, slot_y + slot_height) then
             gSelectedHotbarIndex = index
         end
 
         if index == gSelectedHotbarIndex then
             djui_hud_set_color(255, 255, 255, 150)
-            if s_is_holding_item then
+            if sIsHoldingItem then
                 djui_hud_set_color(255, 255, 127, 150)
             end
             djui_hud_render_rect(slot_x, slot_y, slot_width, slot_height)
@@ -822,8 +821,8 @@ local function render_hotbar(screen_width, screen_height)
             render_icon(slot_x, slot_y, slot_width, slot_height, item.icon)
         end
 
-        if index == gSelectedHotbarIndex and not s_moved_mouse and s_is_holding_item then
-            render_icon(slot_x, slot_y, slot_width, slot_height, sTabItemList[s_active_tab][s_selected_item_index].icon)
+        if index == gSelectedHotbarIndex and not sMouse.moved and sIsHoldingItem then
+            render_icon(slot_x, slot_y, slot_width, slot_height, sTabItemList[sActiveTab][sSelectedItemIndex].icon)
         end
         djui_hud_set_color(128, 128, 128, 255)
         djui_hud_render_rect(slot_x, y, 3, slot_height)
@@ -838,9 +837,9 @@ local function render_menu(screen_width, screen_height)
     render_hotbar(screen_width, screen_height)
     if gMenuOpen then
         local x, y, width, height = render_main_rectangle(screen_width, screen_height)
-        sMenuTabs[s_active_tab].tab(x, y, width, height)
+        sMenuTabs[sActiveTab].tab(x, y, width, height)
         render_mouse()
-        if s_is_holding_item then
+        if sIsHoldingItem then
             render_dragging_icon()
         end
     end
@@ -948,7 +947,7 @@ local function hud_render()
     if gCanBuild then
         render_menu(screen_width, screen_height)
     end
-    if s_show_controls then
+    if sShowControls then
         render_controls(screen_width, screen_height)
     end
 end
@@ -964,7 +963,7 @@ local function on_set_hotbar_item()
     if not size then return end
     vec3f_copy(gGridSize, size)
     vec3f_mul(gGridSize, GRID_SIZE_DEFAULT)
-    g_outline_grid_y_offset = 0
+    gOutlineGridYOffset = 0
 end
 
 ---@param m MarioState
@@ -994,134 +993,134 @@ end
 ----------------------------------------------------
 
 -- Control stick direction
-local s_csd = {up = false, left = false, down = false, right = false}
-local s_used_csd = {up = false, left = false, down = false, right = false}
-local s_hold_timer = 0
-local s_hold_movement_timer = 0
-local s_hold_movement = false
+local sCSD = { up = false, left = false, down = false, right = false }
+local sPrevCSD = { up = false, left = false, down = false, right = false }
+local sControlStickHoldTimer = 0
+local sControlStickMovementTimer = 0
+local sMovementIsHeld = false
 
 ---@param m MarioState
 local function handle_control_stick_inputs(m)
     local controller = m.controller
     if not (controller.stickY <= 30 and controller.stickY >= -30 and controller.stickX >= -30 and controller.stickX <= 30) then
-        s_hold_timer = s_hold_timer + 1
+        sControlStickHoldTimer = sControlStickHoldTimer + 1
     else
-        s_hold_timer = 0
-        s_hold_movement = false
+        sControlStickHoldTimer = 0
+        sMovementIsHeld = false
     end
-    if s_hold_timer >= 10 then
-        if s_hold_movement_timer < 2 then
-            s_hold_movement_timer = s_hold_movement_timer + 1
-            s_hold_movement = false
+    if sControlStickHoldTimer >= 10 then
+        if sControlStickMovementTimer < 2 then
+            sControlStickMovementTimer = sControlStickMovementTimer + 1
+            sMovementIsHeld = false
         else
-            s_hold_movement_timer = 0
-            s_hold_movement = true
+            sControlStickMovementTimer = 0
+            sMovementIsHeld = true
         end
     end
-    if not s_csd.up and controller.stickY <= 30 then s_used_csd.up = false end
-    if not s_csd.down and controller.stickY >= -30 then s_used_csd.down = false end
-    if not s_csd.left and controller.stickX >= -30 then s_used_csd.left = false end
-    if not s_csd.right and controller.stickX <= 30 then s_used_csd.right = false end
-    if (s_hold_movement or not s_used_csd.up) and controller.stickY > 30 then s_csd.up = true s_used_csd.up = true s_moved_mouse = false else s_csd.up = false end
-    if (s_hold_movement or not s_used_csd.down) and controller.stickY < -30 then s_csd.down = true s_used_csd.down = true s_moved_mouse = false else s_csd.down = false end
-    if (s_hold_movement or not s_used_csd.left) and controller.stickX < -30 then s_csd.left = true s_used_csd.left = true s_moved_mouse = false else s_csd.left = false end
-    if (s_hold_movement or not s_used_csd.right) and controller.stickX > 30 then s_csd.right = true s_used_csd.right = true s_moved_mouse = false else s_csd.right = false end
+    if not sCSD.up and controller.stickY <= 30 then sPrevCSD.up = false end
+    if not sCSD.down and controller.stickY >= -30 then sPrevCSD.down = false end
+    if not sCSD.left and controller.stickX >= -30 then sPrevCSD.left = false end
+    if not sCSD.right and controller.stickX <= 30 then sPrevCSD.right = false end
+    if (sMovementIsHeld or not sPrevCSD.up) and controller.stickY > 30 then sCSD.up = true sPrevCSD.up = true sMouse.moved = false else sCSD.up = false end
+    if (sMovementIsHeld or not sPrevCSD.down) and controller.stickY < -30 then sCSD.down = true sPrevCSD.down = true sMouse.moved = false else sCSD.down = false end
+    if (sMovementIsHeld or not sPrevCSD.left) and controller.stickX < -30 then sCSD.left = true sPrevCSD.left = true sMouse.moved = false else sCSD.left = false end
+    if (sMovementIsHeld or not sPrevCSD.right) and controller.stickX > 30 then sCSD.right = true sPrevCSD.right = true sMouse.moved = false else sCSD.right = false end
 end
 
-local s_cbutton_csd = {up = false, left = false, down = false, right = false}
-local s_cbutton_used_csd = {up = false, left = false, down = false, right = false}
-local s_cbutton_hold_timer = 0
-local s_cbutton_hold_movement_timer = 0
-local s_cbutton_hold_movement = false
+local sCButtonCSD = {up = false, left = false, down = false, right = false}
+local sCButtonPrevCSD = {up = false, left = false, down = false, right = false}
+local sCButtonHoldTimer = 0
+local sCButtonMovementTimer = 0
+local sCButtonMovementIsHeld = false
 
 ---@param m MarioState
 local function handle_scrolling_inputs(m)
     local down = m.controller.buttonDown
     if down & C_BUTTONS ~= 0 then
-        s_cbutton_hold_timer = s_cbutton_hold_timer + 1
+        sCButtonHoldTimer = sCButtonHoldTimer + 1
     else
-        s_cbutton_hold_timer = 0
-        s_cbutton_hold_movement = false
+        sCButtonHoldTimer = 0
+        sCButtonMovementIsHeld = false
     end
-    if s_cbutton_hold_timer >= 10 then
-        if s_cbutton_hold_movement_timer < 2 then
-            s_cbutton_hold_movement_timer = s_cbutton_hold_movement_timer + 1
-            s_cbutton_hold_movement = false
+    if sCButtonHoldTimer >= 10 then
+        if sCButtonMovementTimer < 2 then
+            sCButtonMovementTimer = sCButtonMovementTimer + 1
+            sCButtonMovementIsHeld = false
         else
-            s_cbutton_hold_movement_timer = 0
-            s_cbutton_hold_movement = true
+            sCButtonMovementTimer = 0
+            sCButtonMovementIsHeld = true
         end
     end
-    if not s_cbutton_csd.up and down & U_CBUTTONS == 0 then s_cbutton_used_csd.up = false end
-    if not s_cbutton_csd.down and down & D_CBUTTONS == 0 then s_cbutton_used_csd.down = false end
-    if not s_cbutton_csd.left and down & L_CBUTTONS == 0 then s_cbutton_used_csd.left = false end
-    if not s_cbutton_csd.right and down & R_CBUTTONS == 0 then s_cbutton_used_csd.right = false end
-    if (s_cbutton_hold_movement or not s_cbutton_used_csd.up) and down & U_CBUTTONS ~= 0 then s_cbutton_csd.up = true s_cbutton_used_csd.up = true s_moved_mouse = false else s_cbutton_csd.up = false end
-    if (s_cbutton_hold_movement or not s_cbutton_used_csd.down) and down & D_CBUTTONS ~= 0  then s_cbutton_csd.down = true s_cbutton_used_csd.down = true s_moved_mouse = false else s_cbutton_csd.down = false end
-    if (s_cbutton_hold_movement or not s_cbutton_used_csd.left) and down & L_CBUTTONS ~= 0  then s_cbutton_csd.left = true s_cbutton_used_csd.left = true s_moved_mouse = false else s_cbutton_csd.left = false end
-    if (s_cbutton_hold_movement or not s_cbutton_used_csd.right) and down & R_CBUTTONS ~= 0 then s_cbutton_csd.right = true s_cbutton_used_csd.right = true s_moved_mouse = false else s_cbutton_csd.right = false end
+    if not sCButtonCSD.up and down & U_CBUTTONS == 0 then sCButtonPrevCSD.up = false end
+    if not sCButtonCSD.down and down & D_CBUTTONS == 0 then sCButtonPrevCSD.down = false end
+    if not sCButtonCSD.left and down & L_CBUTTONS == 0 then sCButtonPrevCSD.left = false end
+    if not sCButtonCSD.right and down & R_CBUTTONS == 0 then sCButtonPrevCSD.right = false end
+    if (sCButtonMovementIsHeld or not sCButtonPrevCSD.up) and down & U_CBUTTONS ~= 0 then sCButtonCSD.up = true sCButtonPrevCSD.up = true sMouse.moved = false else sCButtonCSD.up = false end
+    if (sCButtonMovementIsHeld or not sCButtonPrevCSD.down) and down & D_CBUTTONS ~= 0  then sCButtonCSD.down = true sCButtonPrevCSD.down = true sMouse.moved = false else sCButtonCSD.down = false end
+    if (sCButtonMovementIsHeld or not sCButtonPrevCSD.left) and down & L_CBUTTONS ~= 0  then sCButtonCSD.left = true sCButtonPrevCSD.left = true sMouse.moved = false else sCButtonCSD.left = false end
+    if (sCButtonMovementIsHeld or not sCButtonPrevCSD.right) and down & R_CBUTTONS ~= 0 then sCButtonCSD.right = true sCButtonPrevCSD.right = true sMouse.moved = false else sCButtonCSD.right = false end
 end
 
 ----------------------------------------------------
 
 local function on_change_tab_input()
-    s_mouse_tab_was_clicked_on = 0
-    s_selected_item_index = 0
-    s_current_page = 1
-    s_current_surface_tip_index = 1
-    s_surface_buttons_index_offset = 0
-    s_mouse_prev_item_index = 0
+    sMouse.menu.clickedTabIndex = 0
+    sSelectedItemIndex = 0
+    sCurrentPage = 1
+    sCurrentSurfaceTipIndex = 1
+    sSurfaceButtonsIndexOffset = 0
+    sMouse.menu.prevItemIndex = 0
     play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
 end
 
 ---@param pressed integer
 local function handle_change_tab_inputs(pressed)
     if pressed & L_TRIG ~= 0 then
-        s_active_tab = s_active_tab - 1
-        if s_active_tab < 1 then
-            s_active_tab = TAB_MAIN_END
+        sActiveTab = sActiveTab - 1
+        if sActiveTab < 1 then
+            sActiveTab = TAB_MAIN_END
         end
         on_change_tab_input()
     elseif pressed & R_TRIG ~= 0 then
-        s_active_tab = s_active_tab + 1
-        if s_active_tab > TAB_MAIN_END then
-            s_active_tab = 1
+        sActiveTab = sActiveTab + 1
+        if sActiveTab > TAB_MAIN_END then
+            sActiveTab = 1
         end
         on_change_tab_input()
-    elseif s_mouse_tab_was_clicked_on > 0 then
-        s_active_tab = s_mouse_tab_was_clicked_on
+    elseif sMouse.menu.clickedTabIndex > 0 then
+        sActiveTab = sMouse.menu.clickedTabIndex
         on_change_tab_input()
     end
 end
 
 ---@param m MarioState
 local function handle_item_selection_inputs(m)
-    local current_item_set_count = #s_item_pages[s_current_page]
+    local current_item_set_count = #sItemPages[sCurrentPage]
     if current_item_set_count == 0 then return end
     handle_control_stick_inputs(m)
-    local items_per_page = s_item_list_row_count * s_item_list_column_count
-    local selected_item_offset = items_per_page * (s_current_page - 1)
-    local relative_item_index = s_selected_item_index - selected_item_offset
+    local items_per_page = sItemListRowCount * sItemListColumnCount
+    local selected_item_offset = items_per_page * (sCurrentPage - 1)
+    local relative_item_index = sSelectedItemIndex - selected_item_offset
 
-    if s_csd.up or s_csd.left or s_csd.down or s_csd.right then
-        if s_selected_item_index == 0 then
-            s_selected_item_index = selected_item_offset + 1
+    if sCSD.up or sCSD.left or sCSD.down or sCSD.right then
+        if sSelectedItemIndex == 0 then
+            sSelectedItemIndex = selected_item_offset + 1
             relative_item_index = 1
             play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource)
             return
         end
 
-        if s_csd.up and relative_item_index > 1 then
-            local remaining = relative_item_index - (relative_item_index - s_item_list_column_count)
-            s_selected_item_index = math.max(s_selected_item_index - remaining, selected_item_offset + 1)
-        elseif s_csd.down and relative_item_index < current_item_set_count then
-            local remaining = math.min(current_item_set_count - relative_item_index, s_item_list_column_count)
-            s_selected_item_index = s_selected_item_index + remaining
+        if sCSD.up and relative_item_index > 1 then
+            local remaining = relative_item_index - (relative_item_index - sItemListColumnCount)
+            sSelectedItemIndex = math.max(sSelectedItemIndex - remaining, selected_item_offset + 1)
+        elseif sCSD.down and relative_item_index < current_item_set_count then
+            local remaining = math.min(current_item_set_count - relative_item_index, sItemListColumnCount)
+            sSelectedItemIndex = sSelectedItemIndex + remaining
         end
-        if s_csd.left and relative_item_index > 1 then
-            s_selected_item_index = s_selected_item_index - 1
-        elseif s_csd.right and relative_item_index < current_item_set_count then
-            s_selected_item_index = s_selected_item_index + 1
+        if sCSD.left and relative_item_index > 1 then
+            sSelectedItemIndex = sSelectedItemIndex - 1
+        elseif sCSD.right and relative_item_index < current_item_set_count then
+            sSelectedItemIndex = sSelectedItemIndex + 1
         end
 
         play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource)
@@ -1129,9 +1128,9 @@ local function handle_item_selection_inputs(m)
 end
 
 local function on_confirm_item_input()
-    if not sTabItemList[s_active_tab][s_selected_item_index] then return end
+    if not sTabItemList[sActiveTab][sSelectedItemIndex] then return end
     ---@type MenuItemLink
-    local hotbar_item = table.deepcopy(sTabItemList[s_active_tab][s_selected_item_index])
+    local hotbar_item = table.deepcopy(sTabItemList[sActiveTab][sSelectedItemIndex])
     gHotbarItemList[gSelectedHotbarIndex] = hotbar_item
     vec3f_set(gGridSize, GRID_SIZE_DEFAULT, GRID_SIZE_DEFAULT, GRID_SIZE_DEFAULT)
     play_sound(SOUND_MENU_CLICK_FILE_SELECT, gGlobalSoundSource)
@@ -1139,26 +1138,26 @@ end
 
 ---@param m MarioState
 local function handle_holding_item_inputs(m)
-    if not sTabItemList[s_active_tab] then return end
+    if not sTabItemList[sActiveTab] then return end
 
-    if s_moved_mouse then
-        if s_mouse_hold_released then
-            s_is_holding_item = false
-            s_selected_item_index = s_mouse_prev_item_index
+    if sMouse.moved then
+        if sMouse.released.left then
+            sIsHoldingItem = false
+            sSelectedItemIndex = sMouse.menu.prevItemIndex
             on_confirm_item_input()
         end
     else
         handle_control_stick_inputs(m)
-        if s_csd.left and gSelectedHotbarIndex > 1 then
+        if sCSD.left and gSelectedHotbarIndex > 1 then
             gSelectedHotbarIndex = gSelectedHotbarIndex - 1
             play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource)
-        elseif s_csd.right and gSelectedHotbarIndex < #gHotbarItemList then
+        elseif sCSD.right and gSelectedHotbarIndex < #gHotbarItemList then
             gSelectedHotbarIndex = gSelectedHotbarIndex + 1
             play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource)
         end
 
         if m.controller.buttonReleased & A_BUTTON ~= 0 then
-            s_is_holding_item = false
+            sIsHoldingItem = false
             on_confirm_item_input()
         end
     end
@@ -1166,42 +1165,42 @@ end
 
 ---@param pressed integer
 local function handle_pick_item_inputs(pressed)
-    if not sTabItemList[s_active_tab] or not sTabItemList[s_active_tab][s_selected_item_index] then return end
-    if s_moved_mouse then
-        if s_mouse_prev_item_index ~= s_selected_item_index then
+    if not sTabItemList[sActiveTab] or not sTabItemList[sActiveTab][sSelectedItemIndex] then return end
+    if sMouse.moved then
+        if sMouse.menu.prevItemIndex ~= sSelectedItemIndex then
             play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource)
         end
-        s_mouse_prev_item_index = s_selected_item_index
-        if s_mouse_has_clicked then
-            s_is_holding_item = true
+        sMouse.menu.prevItemIndex = sSelectedItemIndex
+        if sMouse.pressed.left then
+            sIsHoldingItem = true
         end
     elseif pressed & A_BUTTON ~= 0 then
-        s_is_holding_item = true
+        sIsHoldingItem = true
     end
 end
 
 ---@param m MarioState
 local function handle_paging_inputs(m)
-    local invert_multiplier = s_invert_scroll and -1 or 1
-    if s_moved_mouse then
-        if s_mouse_has_scrolled * invert_multiplier > 0 and s_current_page > 1 then
-            s_current_page = s_current_page - 1
-            s_selected_item_index = 0
+    local invert_multiplier = sInvertScroll and -1 or 1
+    if sMouse.moved then
+        if sMouse.scroll * invert_multiplier > 0 and sCurrentPage > 1 then
+            sCurrentPage = sCurrentPage - 1
+            sSelectedItemIndex = 0
             play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
-        elseif s_mouse_has_scrolled * invert_multiplier < 0 and s_current_page < s_pages_count then
-            s_current_page = s_current_page + 1
-            s_selected_item_index = 0
+        elseif sMouse.scroll * invert_multiplier < 0 and sCurrentPage < sPagesCount then
+            sCurrentPage = sCurrentPage + 1
+            sSelectedItemIndex = 0
             play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
         end
     else
         handle_scrolling_inputs(m)
-        if s_cbutton_csd.left and s_current_page > 1 then
-            s_current_page = s_current_page - 1
-            s_selected_item_index = 0
+        if sCButtonCSD.left and sCurrentPage > 1 then
+            sCurrentPage = sCurrentPage - 1
+            sSelectedItemIndex = 0
             play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
-        elseif s_cbutton_csd.right and s_current_page < s_pages_count then
-            s_current_page = s_current_page + 1
-            s_selected_item_index = 0
+        elseif sCButtonCSD.right and sCurrentPage < sPagesCount then
+            sCurrentPage = sCurrentPage + 1
+            sSelectedItemIndex = 0
             play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
         end
     end
@@ -1210,28 +1209,28 @@ end
 ---@param pressed integer
 local function handle_extra_inputs(pressed)
     if pressed & Y_BUTTON ~= 0 then
-        s_clear_hotbar = s_clear_hotbar + 1
+        sClearHotbar = sClearHotbar + 1
         play_sound(SOUND_MENU_CLICK_FILE_SELECT, gGlobalSoundSource)
-         if s_clear_hotbar >= 5 then
+         if sClearHotbar >= 5 then
              for i = 1, HOTBAR_SIZE, 1 do
                 gHotbarItemList[i] = { item = nil, icon = nil } ---@diagnostic disable-line: assign-type-mismatch
             end
             play_sound(SOUND_MENU_LET_GO_MARIO_FACE, gGlobalSoundSource)
-            s_clear_hotbar = 0
+            sClearHotbar = 0
         end
     end
 end
 
 local function handle_close_menu_inputs(pressed)
-    if s_moved_mouse and pressed ~= 0 and not s_mouse_has_clicked and not s_mouse_has_right_clicked then
-        s_moved_mouse = false
+    if sMouse.moved and pressed ~= 0 and not sMouse.pressed.left and not sMouse.pressed.right then
+        sMouse.moved = false
     end
-    if (pressed & START_BUTTON ~= 0) or (not s_moved_mouse and pressed & X_BUTTON ~= 0) or (s_moved_mouse and s_mouse_has_right_clicked) then
+    if (pressed & START_BUTTON ~= 0) or (not sMouse.moved and pressed & X_BUTTON ~= 0) or (sMouse.moved and sMouse.pressed.right) then
         gMenuOpen = false
-        s_clear_hotbar = 0
-        s_current_surface_tip_index = 1
-        s_surface_buttons_index_offset = 0
-        s_mouse_prev_item_index = 0
+        sClearHotbar = 0
+        sCurrentSurfaceTipIndex = 1
+        sSurfaceButtonsIndexOffset = 0
+        sMouse.menu.prevItemIndex = 0
         return
     end
 end
@@ -1244,11 +1243,11 @@ local function handle_standard_inputs(m)
 
     handle_paging_inputs(m)
     handle_extra_inputs(pressed)
-    if s_is_holding_item then
+    if sIsHoldingItem then
         handle_holding_item_inputs(m)
     else
         handle_item_selection_inputs(m)
-        if s_selected_item_index > 0 then
+        if sSelectedItemIndex > 0 then
             handle_pick_item_inputs(pressed)
         end
     end
@@ -1258,48 +1257,48 @@ end
 local function handle_surface_inputs(m)
     handle_control_stick_inputs(m)
 
-    if s_moved_mouse then
-        if s_mouse_prev_item_index ~= s_current_surface_tip_index then
+    if sMouse.moved then
+        if sMouse.menu.prevItemIndex ~= sCurrentSurfaceTipIndex then
             play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource)
         end
-        s_mouse_prev_item_index = s_current_surface_tip_index
+        sMouse.menu.prevItemIndex = sCurrentSurfaceTipIndex
 
-        local invert_multiplier = s_invert_scroll and -1 or 1
-        if (s_mouse_has_scrolled * invert_multiplier) > 0 and s_surface_buttons_index_offset > 0 then
-            s_surface_buttons_index_offset = s_surface_buttons_index_offset - 1
-        elseif (s_mouse_has_scrolled * invert_multiplier) < 0 and #s_surface_buttons - s_surface_buttons_index_offset > s_surface_buttons_rendered then
-            s_surface_buttons_index_offset = s_surface_buttons_index_offset + 1
+        local invert_multiplier = sInvertScroll and -1 or 1
+        if (sMouse.scroll * invert_multiplier) > 0 and sSurfaceButtonsIndexOffset > 0 then
+            sSurfaceButtonsIndexOffset = sSurfaceButtonsIndexOffset - 1
+        elseif (sMouse.scroll * invert_multiplier) < 0 and #sSurfaceButtons - sSurfaceButtonsIndexOffset > sSurfaceButtonsRendered then
+            sSurfaceButtonsIndexOffset = sSurfaceButtonsIndexOffset + 1
         end
     else
-        local relative_button_index = s_current_surface_tip_index - s_surface_buttons_index_offset
-        if s_cbutton_csd.up then
-            s_current_surface_tip_index = s_current_surface_tip_index - 1
-            if s_current_surface_tip_index <= 0 then
-                s_current_surface_tip_index = #s_surface_buttons
-                s_surface_buttons_index_offset = #s_surface_buttons - s_surface_buttons_rendered
-            elseif relative_button_index < 4 and s_surface_buttons_index_offset > 0 then
-                s_surface_buttons_index_offset = s_surface_buttons_index_offset - 1
+        local relative_button_index = sCurrentSurfaceTipIndex - sSurfaceButtonsIndexOffset
+        if sCButtonCSD.up then
+            sCurrentSurfaceTipIndex = sCurrentSurfaceTipIndex - 1
+            if sCurrentSurfaceTipIndex <= 0 then
+                sCurrentSurfaceTipIndex = #sSurfaceButtons
+                sSurfaceButtonsIndexOffset = #sSurfaceButtons - sSurfaceButtonsRendered
+            elseif relative_button_index < 4 and sSurfaceButtonsIndexOffset > 0 then
+                sSurfaceButtonsIndexOffset = sSurfaceButtonsIndexOffset - 1
             end
             play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource)
-        elseif s_cbutton_csd.down then
-            s_current_surface_tip_index = s_current_surface_tip_index + 1
-            if s_current_surface_tip_index > #s_surface_buttons then
-                s_current_surface_tip_index = 1
-                s_surface_buttons_index_offset = 0
-            elseif relative_button_index > s_surface_buttons_rendered - 3 and s_current_surface_tip_index + 1 < #s_surface_buttons then
-                s_surface_buttons_index_offset = s_surface_buttons_index_offset + 1
+        elseif sCButtonCSD.down then
+            sCurrentSurfaceTipIndex = sCurrentSurfaceTipIndex + 1
+            if sCurrentSurfaceTipIndex > #sSurfaceButtons then
+                sCurrentSurfaceTipIndex = 1
+                sSurfaceButtonsIndexOffset = 0
+            elseif relative_button_index > sSurfaceButtonsRendered - 3 and sCurrentSurfaceTipIndex + 1 < #sSurfaceButtons then
+                sSurfaceButtonsIndexOffset = sSurfaceButtonsIndexOffset + 1
             end
             play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource)
         end
     end
 
-    if (s_moved_mouse and s_mouse_has_clicked and s_mouse_hovering_over_surface_tip) or (not s_moved_mouse and m.controller.buttonPressed & A_BUTTON ~= 0) then
-        on_set_surface_chat_command(s_surface_buttons[s_current_surface_tip_index])
+    if (sMouse.moved and sMouse.pressed.left and sMouse.menu.hoveringSurfaceTip) or (not sMouse.moved and m.controller.buttonPressed & A_BUTTON ~= 0) then
+        on_set_surface_chat_command(sSurfaceButtons[sCurrentSurfaceTipIndex])
         play_sound(SOUND_MENU_CLICK_FILE_SELECT, gGlobalSoundSource)
     end
 end
 
-local s_tabs_with_special_inputs = {
+local sTabsWithSpecialInputs = {
     [TAB_SURFACE_TYPES] = handle_surface_inputs
 }
 
@@ -1307,14 +1306,14 @@ local s_tabs_with_special_inputs = {
 
 ---@param m MarioState
 local function handle_menu_inputs(m)
-    if s_active_tab <= TAB_MAIN_END then
+    if sActiveTab <= TAB_MAIN_END then
         local pressed = m.controller.buttonPressed
         handle_close_menu_inputs(pressed)
         handle_change_tab_inputs(pressed)
-        if not s_tabs_with_special_inputs[s_active_tab] then
+        if not sTabsWithSpecialInputs[sActiveTab] then
             handle_standard_inputs(m)
         else
-            s_tabs_with_special_inputs[s_active_tab](m)
+            sTabsWithSpecialInputs[sActiveTab](m)
         end
         m.controller.buttonPressed = 0
     end
@@ -1345,7 +1344,7 @@ local function before_mario_update(m)
         handle_mouse_input()
         handle_menu_inputs(m)
     else
-        s_is_holding_item = false
+        sIsHoldingItem = false
     end
 
     camera_romhack_allow_dpad_usage(0)
@@ -1363,14 +1362,14 @@ hook_event(HOOK_BEFORE_MARIO_UPDATE, before_mario_update)
 ------------------------------------------------------------------------------------------------
 
 local function on_show_controls_mod_menu(_, show)
-    s_show_controls = show
+    sShowControls = show
     return true
 end
 
 hook_mod_menu_checkbox("Show Controls", true, on_show_controls_mod_menu)
 
-local function s_invert_scrolling_mod_menu(_, value)
-    s_invert_scroll = value
+local function invert_scrolling_mod_menu(_, value)
+    sInvertScroll = value
 end
 
-hook_mod_menu_checkbox("Invert Menu Mouse Scroll", false, s_invert_scrolling_mod_menu)
+hook_mod_menu_checkbox("Invert Menu Mouse Scroll", false, invert_scrolling_mod_menu)

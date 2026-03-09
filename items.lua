@@ -58,11 +58,11 @@ function get_default_item_params()
     return params
 end
 
-gCurrentItem = {behavior = nil, model = E_MODEL_NONE, params = {}}
-g_all_item_behaviors = {}
-local s_level_item_behaviors = {}
-local s_enemy_item_behaviors = {}
-local s_vanilla_clear_immune = {}
+gCurrentItem = { behavior = nil, model = E_MODEL_NONE, params = {} }
+gAllItemBehaviors = {}
+local sLevelItemBehaviors = {}
+local sEnemyItemBehaviors = {}
+local sVanillaClearImmune = {}
 add_first_update(function ()
     ---@type Item
     gCurrentItem = {
@@ -72,7 +72,7 @@ add_first_update(function ()
         params = get_default_item_params(),
     }
     ---@type BehaviorId[]
-    g_all_item_behaviors = {
+    gAllItemBehaviors = {
         bhvMceBlock,
         bhvMceStar,
         bhvMceCoin,
@@ -80,20 +80,20 @@ add_first_update(function ()
         bhvMceTree,
     }
     ---@type BehaviorId[]
-    s_level_item_behaviors = {
+    sLevelItemBehaviors = {
         bhvMceStar,
         bhvMceCoin,
         bhvMceExclamationBox,
         bhvMceTree,
     }
     ---@type BehaviorId[]
-    s_enemy_item_behaviors = {
+    sEnemyItemBehaviors = {
         id_bhvGoomba,
         id_bhvBobomb,
         id_bhvChuckya,
     }
     ---@type BehaviorId[]
-    s_vanilla_clear_immune = {
+    sVanillaClearImmune = {
         [id_bhvSpinAirborneWarp] = true,
         [id_bhvDoorWarp] = true,
         [id_bhvWarp] = true,
@@ -138,7 +138,7 @@ end
 function obj_get_any_nearest_item(obj)
     local nearest_item = nil
     local nearest_dist = 0xFFFF
-    for _, item_behavior in ipairs(g_all_item_behaviors) do
+    for _, item_behavior in ipairs(gAllItemBehaviors) do
         local item = obj_get_nearest_object_with_behavior_id(obj, item_behavior)
         if item then
             local dist = dist_between_objects(item, obj)
@@ -205,7 +205,7 @@ MCE_BLOCK_ANIM_MAX = (MCE_BLOCK_TRANSPARENT_START * 2)
 MCE_COLOR_BLOCK_BARRIER_ANIM = (MCE_COLOR_BLOCK_TRANSPARENT_START * 2) + 1
 MCE_BLOCK_ACT_RESET = 10
 
-local standard_collision_lookup = {
+local sStandardCollisionLookup = {
     [MCE_BLOCK_COL_ID_DEFAULT] = COL_MCE_BLOCK_DEFAULT,
     [MCE_BLOCK_COL_ID_LAVA] = COL_MCE_BLOCK_LAVA,
     [MCE_BLOCK_COL_ID_DEATH] = COL_MCE_BLOCK_DEATH,
@@ -218,7 +218,7 @@ local standard_collision_lookup = {
     [MCE_BLOCK_COL_ID_VANISH] = COL_MCE_BLOCK_VANISH,
 }
 
-local ignore_collision_lookup = {
+local sIgnoreCollisionLookup = {
     [MCE_BLOCK_COL_ID_NO_COLLISION] = true,
     [MCE_BLOCK_COL_ID_VERTICAL_WIND] = true,
     [MCE_BLOCK_COL_ID_WATER] = true,
@@ -229,10 +229,10 @@ local ignore_collision_lookup = {
 ---@param obj Object
 local function block_collision_lookup(obj)
     local surface_id = obj.oItemParams & 0xFF
-    if not ignore_collision_lookup[surface_id] then
+    if not sIgnoreCollisionLookup[surface_id] then
         local collision = COL_MCE_BLOCK_DEFAULT
-        if standard_collision_lookup[surface_id] then
-            collision = standard_collision_lookup[surface_id]
+        if sStandardCollisionLookup[surface_id] then
+            collision = sStandardCollisionLookup[surface_id]
         end
         obj.collisionData = collision
         if surface_id == MCE_BLOCK_PROPERTY_CONVEYOR then
@@ -304,10 +304,10 @@ function bhv_mce_block_loop(obj)
 
     -- Handle breakable surfaces, so that their particles properly spawn
     if obj.oBlockSurfaceProperties & MCE_BLOCK_PROPERTY_BREAKABLE ~= 0 then
-        if g_hit_breakable_block == obj then
+        if gHitBreakableBlock == obj then
             obj.oAction = 1
             obj.oTimer = 0
-            g_hit_breakable_block = nil
+            gHitBreakableBlock = nil
         end
 
         if obj.oAction == 1 then
@@ -333,7 +333,7 @@ end
 
 ------------------------------------------------------------------------------------------
 
-local star_hitbox = {
+local sStarHitbox = {
     interactType = INTERACT_STAR_OR_KEY,
     downOffset = 0,
     damageOrCoinValue = 0,
@@ -349,7 +349,7 @@ local star_hitbox = {
 
 ---@param obj Object
 function bhv_mce_star_init(obj)
-    obj_set_hitbox(obj, star_hitbox)
+    obj_set_hitbox(obj, sStarHitbox)
     network_init_object(obj, false, {
         "activeFlags",
         "oOwner",
@@ -376,7 +376,7 @@ end
 
 ------------------------------------------------------------------------------------------
 
-local coin_hitbox = {
+local sCoinHitbox = {
     interactType = INTERACT_COIN,
     downOffset = 0,
     damageOrCoinValue = 1,
@@ -392,7 +392,7 @@ local coin_hitbox = {
 
 ---@param obj Object
 function bhv_mce_coin_init(obj)
-    obj_set_hitbox(obj, coin_hitbox)
+    obj_set_hitbox(obj, sCoinHitbox)
     local model = obj_get_model_id_extended(obj)
     if model == E_MODEL_YELLOW_COIN then
         obj.oDamageOrCoinValue = 1
@@ -430,7 +430,7 @@ end
 
 ------------------------------------------------------------------------------------------
 
-local exclamation_box_hitbox = {
+local sExclamaitonBoxHitbox = {
     interactType = INTERACT_BREAKABLE,
     downOffset = 5,
     damageOrCoinValue = 0,
@@ -442,11 +442,11 @@ local exclamation_box_hitbox = {
     hurtboxHeight = 30,
 }
 
-local contents = {
-    [1] = {behavior = id_bhvWingCap, model = E_MODEL_MARIOS_WING_CAP},
-    [2] = {behavior = id_bhvMetalCap, model = E_MODEL_MARIOS_METAL_CAP},
-    [3] = {behavior = id_bhvVanishCap, model = E_MODEL_MARIOS_CAP},
-    [4] = {behavior = id_bhvKoopaShell, model = E_MODEL_KOOPA_SHELL}
+local sExclamationBoxContents = {
+    { behavior = id_bhvWingCap, model = E_MODEL_MARIOS_WING_CAP },
+    { behavior = id_bhvMetalCap, model = E_MODEL_MARIOS_METAL_CAP },
+    { behavior = id_bhvVanishCap, model = E_MODEL_MARIOS_CAP },
+    { behavior = id_bhvKoopaShell, model = E_MODEL_KOOPA_SHELL },
 }
 
 --- Called from bhvMceExclamationBox.bhv
@@ -469,7 +469,7 @@ end
 function bhv_mce_exclamation_box_loop(obj)
     obj_scale(obj, 2)
     if obj.oAction == 0 then
-        obj_set_hitbox(obj, exclamation_box_hitbox)
+        obj_set_hitbox(obj, sExclamaitonBoxHitbox)
         if obj.oTimer == 1 then
             cur_obj_unhide()
             cur_obj_become_tangible()
@@ -511,7 +511,7 @@ function bhv_mce_exclamation_box_loop(obj)
         end
     elseif obj.oAction == 2 then
         local index = obj.oItemParams & 0xFF
-        local content = contents[index]
+        local content = sExclamationBoxContents[index]
         if content then
             local behavior_id = content.behavior
             local model = content.model
@@ -562,10 +562,6 @@ local function on_object_count_chat_commmand()
     return true
 end
 
-local function network_is_privileged()
-    return network_is_server() or network_is_moderator()
-end
-
 ---@param obj Object
 ---@param mod_command string?
 ---@return boolean
@@ -590,10 +586,10 @@ end
 
 ---@param msg string
 function on_clear_chat_command(msg)
-    local args = split_string(msg, " ")
+    local args = string.split(msg, " ")
     local command = args[1] and args[1]:lower() or ""
     if command == "all" or command == "" then
-        for _, behavior in ipairs(g_all_item_behaviors) do
+        for _, behavior in ipairs(gAllItemBehaviors) do
             local obj = obj_get_first_with_behavior_id(behavior)
             while obj do
                 if object_removal_criteria(obj, args[2]) then
@@ -608,7 +604,7 @@ function on_clear_chat_command(msg)
             local obj = obj_get_first(i)
             while obj do
                 local behavior_id = get_id_from_behavior(obj.behavior)
-                if not s_vanilla_clear_immune[behavior_id] or behavior_id > 0x7FFF then
+                if not sVanillaClearImmune[behavior_id] or behavior_id > 0x7FFF then
                     obj_mark_for_deletion(obj)
                 end
                 obj = obj_get_next(obj)
@@ -625,7 +621,7 @@ function on_clear_chat_command(msg)
         end
         djui_chat_message_create("Removed all placed blocks")
     elseif command == "items" then
-        for _, behavior in ipairs(s_level_item_behaviors) do
+        for _, behavior in ipairs(sLevelItemBehaviors) do
             local obj = obj_get_first_with_behavior_id(behavior)
             while obj do
                 if object_removal_criteria(obj, args[2]) then
@@ -636,7 +632,7 @@ function on_clear_chat_command(msg)
         end
         djui_chat_message_create("Removed all placed level items")
     elseif command == "enemies" then
-        for _, behavior in ipairs(s_enemy_item_behaviors) do
+        for _, behavior in ipairs(sEnemyItemBehaviors) do
             local obj = obj_get_first_with_behavior_id(behavior)
             while obj  do
                 if object_removal_criteria(obj, args[2]) then
@@ -663,7 +659,7 @@ end
 function reset_all_items(override_free_move_check)
     local m = gMarioStates[0]
     if m.action == ACT_FREE_MOVE or override_free_move_check then
-        for _, behavior in ipairs(g_all_item_behaviors) do
+        for _, behavior in ipairs(gAllItemBehaviors) do
             if behavior ~= bhvMceBlock then
                 local obj = obj_get_first_with_behavior_id(behavior)
                 while obj do
@@ -709,7 +705,7 @@ hook_event(HOOK_UPDATE, reset_all_items)
 
 ---@param msg string
 local function on_set_item_size_chat_command(msg)
-    local sizes = split_string(msg, " ")
+    local sizes = string.split(msg, " ")
 	local sizes_count = #sizes
 
 	if not sizes[1] then
@@ -746,7 +742,7 @@ local function on_set_item_size_chat_command(msg)
     return true
 end
 
-local s_block_surface_id_lookup = {
+local sBlockSurfaceIdLookup = {
     ["default"] = MCE_BLOCK_COL_ID_DEFAULT,
     ["normal"] = MCE_BLOCK_COL_ID_DEFAULT,
     --------
@@ -808,7 +804,7 @@ local s_block_surface_id_lookup = {
     ["jpad"] = MCE_BLOCK_COL_ID_JUMP_PAD,
 }
 
-local s_block_property_lookup = {
+local sBlockPropertyLookup = {
     ["conveyor"] = MCE_BLOCK_PROPERTY_CONVEYOR,
     --------
     ["firsty"] = MCE_BLOCK_PROPERTY_FIRSTY,
@@ -853,12 +849,12 @@ local s_block_property_lookup = {
 function on_set_surface_chat_command(msg)
     local item = gHotbarItemList[gSelectedHotbarIndex].item
     if item and item.behavior == bhvMceBlock then
-        local surf = s_block_surface_id_lookup[msg:lower()]
+        local surf = sBlockSurfaceIdLookup[msg:lower()]
         if surf then
             gHotbarItemList[gSelectedHotbarIndex].item.params.params = surf
             djui_chat_message_create("Set the surface type to " .. msg)
         else
-            surf = s_block_property_lookup[msg:lower()]
+            surf = sBlockPropertyLookup[msg:lower()]
             if surf then
                 local properties = gHotbarItemList[gSelectedHotbarIndex].item.params.blockProperties
                 if properties & surf == 0 then

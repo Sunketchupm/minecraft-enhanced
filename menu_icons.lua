@@ -80,6 +80,7 @@ gMenuEnemyIcons = {}
 
 function fill_item_lists()
 
+-- Autogenned
 ---@type MenuItemLink[]
 gMenuBlockTextureIcons = {
     add_item("amp_seg8_texture_08000F18"),

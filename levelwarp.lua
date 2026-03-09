@@ -75,7 +75,7 @@ local level_to_course = {
 }
 
 local function on_warp_command(msg)
-    msg = split_string(msg, " ")
+    msg = string.split(msg, " ")
 
 	local level = LEVEL_BOB
     local area = 1
