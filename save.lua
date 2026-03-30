@@ -1,88 +1,3 @@
---[[ 
-    !!! REWRITE TO USE NEW MODFS !!!
-]]
-
---[[
----@param msg string
-local function on_save_chat_command(msg)
-    local encoded_string = ""
-    local pad = add_padding
-    local encode = encode_base64
-    for _, item_behavior_ids in ipairs(g_all_item_behaviors) do
-        local obj = obj_get_first_with_behavior_id(item_behavior_ids)
-        ---@type NetworkPlayer
-        local np = gNetworkPlayers[0]
-        while obj do
-            if save_all or obj.oOwner == np.globalIndex + 1 then
-                local scale_decimal_expansion = {
-                    x = math.floor((obj.header.gfx.scale.x - math.floor(obj.header.gfx.scale.x)) * 100),
-                    y = math.floor((obj.header.gfx.scale.y - math.floor(obj.header.gfx.scale.y)) * 100),
-                    z = math.floor((obj.header.gfx.scale.z - math.floor(obj.header.gfx.scale.z)) * 100)
-                }
-                local pos_decimal_expansion = {
-                    x = math.floor((obj.oPosX - math.floor(obj.oPosX)) * 100),
-                    y = math.floor((obj.oPosY - math.floor(obj.oPosY)) * 100),
-                    z = math.floor((obj.oPosZ - math.floor(obj.oPosZ)) * 100)
-                }
-                -- Todo: Force all items to be in range of s16 in a loop rather than just saving
-                local yaw = convert_s16(obj.oFaceAngleYaw) + 32768
-                local pitch = convert_s16(obj.oFaceAnglePitch) + 32768
-                local roll = convert_s16(obj.oFaceAngleRoll) + 32768
-                local addon =
-                    pad(encode(item_behavior_ids), 3) .. -- 3
-                    pad(encode(obj_get_model_id_extended(obj)), 3) .. -- 6
-                    pad(encode((math.floor(obj.oPosX) + 65536)), 3) .. pad(encode(pos_decimal_expansion.x), 2) .. -- 11
-                    pad(encode((math.floor(obj.oPosY) + 65536)), 3) .. pad(encode(pos_decimal_expansion.y), 2) .. -- 16
-                    pad(encode((math.floor(obj.oPosZ) + 65536)), 3) .. pad(encode(pos_decimal_expansion.z), 2) .. -- 21
-                    pad(encode(obj.oAnimState), 2) .. -- 23
-                    pad(encode(obj.oItemParams), 6) .. -- 29
-                    pad(encode(math.floor(obj.header.gfx.scale.x)), 1) .. pad(encode(scale_decimal_expansion.x), 2) .. -- 32
-                    pad(encode(math.floor(obj.header.gfx.scale.y)), 1) .. pad(encode(scale_decimal_expansion.y), 2) .. -- 35
-                    pad(encode(math.floor(obj.header.gfx.scale.z)), 1) .. pad(encode(scale_decimal_expansion.z), 2) .. -- 38
-                    pad(encode(yaw), 3) .. pad(encode(pitch), 3) .. pad(encode(roll), 3) .. -- 47
-                    pad(encode(obj.oBlockSurfaceProperties), 6) -- 53
-
-                encoded_string = encoded_string .. addon
-            end
-            obj = obj_get_next_with_same_behavior_id(obj)
-        end
-    end
-
-    if encoded_string == "" then
-        djui_chat_message_create("Can't save items. You have not placed down any items")
-        return true
-    end
-
-    local lines = {}
-    for i = 1, #encoded_string, MAX_KEY_VALUE_LENGTH - 1 do
-        table.insert(lines, encoded_string:sub(i, math.min(i + MAX_KEY_VALUE_LENGTH - 1, #encoded_string)))
-    end
-    if encoded_string:len() > MAX_KEYS * MAX_KEY_VALUE_LENGTH then
-        djui_chat_message_create("Too many items. Can't save.")
-        return true
-    end
-
-    if mod_storage_exists(msg .. "_1") then
-        djui_chat_message_create("Save slot \"" .. msg .."\" found. It has been overwritten")
-        for i = 1, 500 do
-            if mod_storage_exists(msg .. "_" .. i) then
-                mod_storage_remove(msg .. "_" .. i)
-            else
-                break
-            end
-        end
-    end
-    for index, value in ipairs(lines) do
-        if value ~= "" then
-            mod_storage_save(msg .. "_" .. tostring(index), tostring(value))
-        end
-    end
-
-    djui_chat_message_create("Saved items to slot \"" .. msg .. "\"")
-    return true
-end
-]]
-
 local sStorage = mod_fs_get() or mod_fs_create()
 
 ---@param msg string
@@ -134,6 +49,7 @@ local function save_command(msg)
         local np = gNetworkPlayers[0]
         while obj do
             if save_all or obj.oOwner == np.globalIndex + 1 then
+                file:write_integer(MCE_VERSION, INT_TYPE_U8)
                 file:write_integer(bhv_id, INT_TYPE_U16)
                 file:write_integer(obj_get_model_id_extended(obj), INT_TYPE_U16)
                 file:write_number(obj.oPosX, FLOAT_TYPE_F32)
