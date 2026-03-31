@@ -5,10 +5,9 @@
 ---@param name string | DjuiColor | TextureInfo
 ---@param behavior BehaviorId?
 ---@param model ModelExtendedId?
----@param params ItemParameters?
+---@param params ItemPreviewParameters?
 ---@return MenuItemLink
 function add_item(name, behavior, model, params)
-    local is_colored_block = name.r ~= nil
 
     local used_params = get_default_item_params()
     local used_anim_state = 0
@@ -24,6 +23,10 @@ function add_item(name, behavior, model, params)
     end
     ---@cast used_anim_state integer
 
+    local is_colored_block = false
+    if name.texture == nil and name.r ~= nil then
+        is_colored_block = true
+    end
     ---@type Item
     local item = {
         behavior = behavior or bhvMceBlock,
@@ -54,7 +57,7 @@ end
 ---@param name string | DjuiColor | TextureInfo
 ---@param behavior BehaviorId?
 ---@param model ModelExtendedId?
----@param params ItemParameters?
+---@param params ItemPreviewParameters?
 ---@param anim integer
 ---@return MenuItemLink
 function add_item_with_anim_state(name, behavior, model, params, anim)
@@ -2179,6 +2182,28 @@ gMenuEnemyIcons = {
     add_item_with_anim_state(SLOT_GOOMBA_TEX, id_bhvGoomba, E_MODEL_GOOMBA, { mock = { animate = { animation = gObjectAnimations.goomba_seg8_anims_0801DA4C, animIndex = 0 } } }, 0),
     add_item_with_anim_state(SLOT_BOBOMB_TEX, id_bhvBobomb, E_MODEL_BLACK_BOBOMB, { mock = { animate = { animation = gObjectAnimations.bobomb_seg8_anims_0802396C, animIndex = 0 } } }, 0),
     add_item_with_anim_state(SLOT_CHUCKYA_TEX, id_bhvChuckya, E_MODEL_CHUCKYA, { mock = { animate = { animation = gObjectAnimations.chuckya_seg8_anims_0800C070, animIndex = 4 } } }, 0),
+    add_item_with_anim_state(gTextures.apostrophe, id_bhvCirclingAmp, E_MODEL_AMP, { mock = { animate = { animation = gObjectAnimations.amp_seg8_anims_08004034, animIndex = 2 } } }, 0),
+    add_item_with_anim_state(gTextures.apostrophe, id_bhvMadPiano, E_MODEL_MAD_PIANO, { mock = { animate = { animation = gObjectAnimations.mad_piano_seg5_anims_05009B14, animIndex = 0 } } }, 0),
+    add_item_with_anim_state(gTextures.apostrophe, id_bhvSmallBully, E_MODEL_BULLY, { mock = { animate = { animation = gObjectAnimations.bully_seg5_anims_0500470C, animIndex = 0 } } }, 0),
+    add_item_with_anim_state(gTextures.apostrophe, id_bhvSmallBully, E_MODEL_CHILL_BULLY, { mock = { animate = { animation = gObjectAnimations.chilly_chief_seg6_anims_06003994, animIndex = 0 } } }, 0),
+    add_item_with_anim_state(gTextures.apostrophe, id_bhv1Up, E_MODEL_1UP, { mock = { animate = { animation = nil, animIndex = 0 } } }, 0),
+    add_item_with_anim_state(gTextures.apostrophe, id_bhvKoopa, E_MODEL_KOOPA_WITH_SHELL, { mock = { animate = { animation = gObjectAnimations.koopa_seg6_anims_06011364, animIndex = 1 } } }, 0),
+    add_item_with_anim_state(gTextures.apostrophe, id_bhvFlame, E_MODEL_RED_FLAME, { mock = { animate = { animation = nil, animIndex = 4 } } }, 0),
+    add_item_with_anim_state(gTextures.apostrophe, id_bhvEnemyLakitu, E_MODEL_ENEMY_LAKITU, { mock = { animate = { animation = gObjectAnimations.lakitu_enemy_seg5_anims_050144D4, animIndex = 0 } } }, 0),
+    add_item_with_anim_state(gTextures.apostrophe, id_bhvSpiny, E_MODEL_SPINY, { mock = { animate = { animation = gObjectAnimations.spiny_seg5_anims_05016EAC, animIndex = 0 } } }, 0),
+    add_item_with_anim_state(gTextures.apostrophe, id_bhvHeaveHo, E_MODEL_HEAVE_HO, { mock = { animate = { animation = gObjectAnimations.heave_ho_seg5_anims_0501534C, animIndex = 0 } } }, 0),
+    add_item_with_anim_state(gTextures.apostrophe, id_bhvSmallWhomp, E_MODEL_WHOMP, { mock = { animate = { animation = gObjectAnimations.whomp_seg6_anims_06020A04, animIndex = 0 } } }, 0),
+    add_item_with_anim_state(gTextures.apostrophe, id_bhvThwomp, E_MODEL_THWOMP, { mock = { animate = { animation = nil, animIndex = 0 } } }, 0),
+    add_item_with_anim_state(gTextures.apostrophe, id_bhvSpindrift, E_MODEL_SPINDRIFT, { mock = { animate = { animation = gObjectAnimations.spindrift_seg5_anims_05002D68, animIndex = 0 } } }, 0),
+    add_item_with_anim_state(gTextures.apostrophe, id_bhvFlyGuy, E_MODEL_FLYGUY, { mock = { animate = { animation = gObjectAnimations.flyguy_seg8_anims_08011A64, animIndex = 0 } } }, 0),
+    add_item_with_anim_state(gTextures.apostrophe, id_bhvBoo, E_MODEL_BOO, { mock = { animate = { animation = nil, animIndex = 0 } } }, 0),
+    add_item_with_anim_state(gTextures.apostrophe, id_bhvPokey, E_MODEL_POKEY_HEAD, { mock = { animate = { animation = nil, animIndex = 0 } } }, 0),
+    add_item_with_anim_state(gTextures.apostrophe, id_bhvScuttlebug, E_MODEL_SCUTTLEBUG, { mock = { animate = { animation = gObjectAnimations.scuttlebug_seg6_anims_06015064, animIndex = 0 } } }, 0),
+    add_item_with_anim_state(gTextures.apostrophe, id_bhvSwoop, E_MODEL_SWOOP, { mock = { animate = { animation = gObjectAnimations.swoop_seg6_anims_060070D0, animIndex = 0 } } }, 0),
+    add_item_with_anim_state(gTextures.apostrophe, id_bhvSnufit, E_MODEL_SNUFIT, { mock = { animate = { animation = nil, animIndex = 0 } } }, 0),
+    add_item_with_anim_state(gTextures.apostrophe, id_bhvMrBlizzard, E_MODEL_MR_BLIZZARD, { mock = { animate = { animation = gObjectAnimations.snowman_seg5_anims_0500D118, animIndex = 0 } } }, 0),
+    add_item_with_anim_state(gTextures.apostrophe, id_bhvBulletBill, E_MODEL_BULLET_BILL, { mock = { animate = { animation = nil, animIndex = 0 } } }, 0),
+    add_item_with_anim_state(gTextures.apostrophe, id_bhvMrI, E_MODEL_MR_I, { mock = { animate = { animation = nil, animIndex = 0 } } }, 0),
 }
 
 end

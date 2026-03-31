@@ -25,6 +25,7 @@ gMenu = {
         index = 1,
         is_held = false
     },
+    clear_hotbar = 0
 }
 
 ---@return MenuTab
@@ -188,7 +189,6 @@ end
 add_first_update(fill_menu)
 
 local sShowControls = true
-local sClearHotbar = 0
 
 -------------- TEXTURES --------------
 local t = get_texture_info
@@ -586,7 +586,7 @@ local function render_standard_tab(x, y, width, height, name)
     render_interior_rectangle(x, y, width, height)
     render_tab_header(x, y, width, height, name)
     local text_scale = 1.25
-    local text = "Clear Hotbar (".. sClearHotbar .."/5)"
+    local text = "Clear Hotbar (".. gMenu.clear_hotbar .."/5)"
     local text_size = djui_hud_measure_text(text) * text_scale
     local text_x = (x + width * 0.55) - (text_size * 0.5)
     local text_y = (y + height) - 55 * text_scale
@@ -596,6 +596,11 @@ local function render_standard_tab(x, y, width, height, name)
     djui_hud_set_color(255, 255, 255, 255)
     djui_hud_render_texture(Y_BUTTON_TEX, texture_x, texture_y, texture_scale, texture_scale)
     render_shadowed_text(text, text_x, text_y, text_scale)
+
+    if mouse_is_within(text_x, text_y, text_x + text_size, text_y + 54) and gMouse.pressed.left then
+        gMenu.clear_hotbar = gMenu.clear_hotbar + 1
+        play_sound(SOUND_MENU_CLICK_FILE_SELECT, gGlobalSoundSource)
+    end
 end
 
 ---@param x number

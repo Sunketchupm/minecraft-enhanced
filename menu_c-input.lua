@@ -292,22 +292,23 @@ end
 ---@param pressed integer
 local function handle_extra_inputs(pressed)
     if pressed & Y_BUTTON ~= 0 then
-        sClearHotbar = sClearHotbar + 1
+        gMenu.clear_hotbar = gMenu.clear_hotbar + 1
         play_sound(SOUND_MENU_CLICK_FILE_SELECT, gGlobalSoundSource)
-         if sClearHotbar >= 5 then
-             for i = 1, HOTBAR_SIZE, 1 do
-                gMenu.hotbar.items[i] = { item = nil, icon = nil } ---@diagnostic disable-line: assign-type-mismatch
-            end
-            play_sound(SOUND_MENU_LET_GO_MARIO_FACE, gGlobalSoundSource)
-            sClearHotbar = 0
+    end
+
+    if gMenu.clear_hotbar >= 5 then
+        for i = 1, HOTBAR_SIZE, 1 do
+            gMenu.hotbar.items[i] = { item = nil, icon = nil } ---@diagnostic disable-line: assign-type-mismatch
         end
+        play_sound(SOUND_MENU_LET_GO_MARIO_FACE, gGlobalSoundSource)
+        gMenu.clear_hotbar = 0
     end
 end
 
 local function handle_close_menu_inputs(pressed)
     if pressed & START_BUTTON ~= 0 or not gMouse.moved and pressed & X_BUTTON ~= 0 or gMouse.moved and gMouse.pressed.right then
         gMenu.open = false
-        sClearHotbar = 0
+        gMenu.clear_hotbar = 0
         gMenu.tabs[TAB_SURFACE_TYPES].misc.index = 1
         gMenu.tabs[TAB_SURFACE_TYPES].misc.index_offset = 0
         gMouse.menu.prevItemIndex = 0

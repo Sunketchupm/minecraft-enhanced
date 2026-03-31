@@ -3,7 +3,7 @@ gBlockListsLoaded = {}
 gHookedResetItemFunctions = {}
 
 _G.MinecraftEnhanced = {
-    ---@param item_list {icon: TextureInfo, behavior: BehaviorId, model: ModelExtendedId, params: ItemParameters}
+    ---@param item_list {icon: TextureInfo, behavior: BehaviorId, model: ModelExtendedId, params: ItemPreviewParameters}
     add_item_list = function (item_list)
         -- Take in a list of items and put them onto a custom item tab
     end,

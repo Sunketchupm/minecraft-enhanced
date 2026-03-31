@@ -344,11 +344,10 @@ function place_item_with_params(item)
 	end
 end
 
----@param allow_build_delete {build: boolean, delete: boolean}?
+---@param allow_build_delete {build: boolean, delete: boolean}
 ---@return boolean
 local function determine_place_or_delete(allow_build_delete)
 	if not sOutlineObject then return false end
-	if allow_build_delete == nil then allow_build_delete = {build = true, delete = true} end
 	local nearest = obj_get_any_nearest_item(sOutlineObject)
 
 	if nearest then
@@ -482,6 +481,7 @@ end
 ---------------------------------------
 
 local sAutoBuild = true
+local sAutoBuildTimer = 0
 local sBuiltOrDeleted = false
 
 ---@param m MarioState
@@ -503,10 +503,25 @@ local function builder_mario_update(m)
 	set_outline_offset(m)
 	set_item_rotation(m)
 	if m.controller.buttonPressed & Y_BUTTON ~= 0 then
-		sBuiltOrDeleted = determine_place_or_delete()
+		sBuiltOrDeleted = determine_place_or_delete({build = true, delete = true})
     end
 	if sAutoBuild and m.controller.buttonDown & Y_BUTTON ~= 0 then
-		determine_place_or_delete({build = sBuiltOrDeleted, delete = not sBuiltOrDeleted})
+		local do_build = sBuiltOrDeleted
+		local restrict_auto_build = true
+		for _, id in ipairs(gItemBhvIds) do
+			if gCurrentItem.behavior == id then
+				restrict_auto_build = false
+			end
+		end
+		if restrict_auto_build then
+			if sAutoBuildTimer < 15 then
+				sAutoBuildTimer = sAutoBuildTimer + 1
+				return
+			else
+				sAutoBuildTimer = 0
+			end
+		end
+		determine_place_or_delete({build = do_build, delete = not do_build})
 	end
 end
 

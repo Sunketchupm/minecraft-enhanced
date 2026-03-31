@@ -2,9 +2,9 @@
     ---@field behavior BehaviorId
     ---@field model ModelExtendedId
     ---@field animState integer
-    ---@field params ItemParameters
+    ---@field params ItemPreviewParameters
 
----@class (exact) ItemParameters
+---@class (exact) ItemPreviewParameters
     ---@field spawnYOffset number?
     ---@field blockProperties integer?
     ---@field size Vec3f?
@@ -43,9 +43,9 @@ define_custom_obj_fields({
     oBlockSurfaceProperties = "u32",
 })
 
----@return ItemParameters
+---@return ItemPreviewParameters
 function get_default_item_params()
-    ---@type ItemParameters
+    ---@type ItemPreviewParameters
     local params = {
         spawnYOffset = 0,
         blockProperties = 0,
@@ -60,6 +60,7 @@ end
 
 gCurrentItem = { behavior = nil, model = E_MODEL_NONE, params = {} }
 gItemBhvIds = {}
+
 local sLevelItemBehaviors = {}
 local sEnemyItemBehaviors = {}
 local sVanillaClearImmune = {}
@@ -70,6 +71,7 @@ add_first_update(function ()
         model = E_MODEL_MCE_BLOCK,
         animState = 0,
         params = get_default_item_params(),
+        group = ITEM_GROUP_BLOCKS
     }
     ---@type BehaviorId[]
     gItemBhvIds = {
@@ -91,6 +93,27 @@ add_first_update(function ()
         id_bhvGoomba,
         id_bhvBobomb,
         id_bhvChuckya,
+        id_bhvCirclingAmp,
+        id_bhvMadPiano,
+        id_bhvSmallBully,
+        id_bhv1Up,
+        id_bhvKoopa,
+        id_bhvFlame,
+        id_bhvEnemyLakitu,
+        id_bhvSpiny,
+        id_bhvHeaveHo,
+        id_bhvSmallWhomp,
+        id_bhvThwomp,
+        id_bhvSpindrift,
+        id_bhvFlyGuy,
+        id_bhvBoo,
+        id_bhvPokey,
+        id_bhvScuttlebug,
+        id_bhvSwoop,
+        id_bhvSnufit,
+        id_bhvMrBlizzard,
+        id_bhvBulletBill,
+        id_bhvMrI,
     }
     ---@type BehaviorId[]
     sVanillaClearImmune = {

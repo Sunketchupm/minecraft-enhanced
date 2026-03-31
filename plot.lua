@@ -20,7 +20,7 @@ local function on_lvl_init()
 end
 
 local function on_pause_exit(exit_to_castle)
-    if gNetworkPlayers[0].currLevelNum == LEVEL_PLOT then
+    if gNetworkPlayers[0].currLevelNum == LEVEL_PLOT and not exit_to_castle then
         trigger_on_death()
     end
 end
