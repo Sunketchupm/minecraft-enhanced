@@ -110,7 +110,7 @@ local sSpecialSurfaceTypes = {
 }
 
 ---@type table<string, fun(m: MarioState):boolean?>
-local s_special_surface_handlers = {
+local sSpecialSurfaceHandlers = {
     verticalWind = function (m)
         if m.action ~= ACT_CUSTOM_VERTICAL_WIND and m.action & ACT_FLAG_ALLOW_VERTICAL_WIND_ACTION ~= 0 then
             drop_and_set_mario_action(m, ACT_CUSTOM_VERTICAL_WIND, 0)
@@ -327,10 +327,10 @@ local function custom_surface_mario_update(m)
     end
     ------------------ MISC -------------------
     if #sSpecialSurfaceTypes.verticalWind > 0 then
-        s_special_surface_handlers.verticalWind(m)
+        sSpecialSurfaceHandlers.verticalWind(m)
     end
     if #sSpecialSurfaceTypes.toxicGas > 0 then
-        s_special_surface_handlers.toxicGas(m)
+        sSpecialSurfaceHandlers.toxicGas(m)
     end
 
     if m.action == ACT_FLYING then
@@ -383,7 +383,7 @@ local function custom_surface_before_phys_step(m)
     end
 
     if #sSpecialSurfaceTypes.booster > 0 then
-        s_special_surface_handlers.booster(m)
+        sSpecialSurfaceHandlers.booster(m)
     end
 end
 
@@ -507,7 +507,7 @@ end
 local function custom_surface_override_geometry_inputs(m)
     if m.playerIndex ~= 0 then return end
     ------------------ WATER -------------------
-    return s_special_surface_handlers.water(m)
+    return sSpecialSurfaceHandlers.water(m)
 end
 
 local function custom_surface_block_update()

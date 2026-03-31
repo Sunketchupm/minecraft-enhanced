@@ -7,7 +7,7 @@ local sSavedMarioYaw = 0
 local sPrevRomhackCamState = camera_get_romhack_override()
 ---@param m MarioState
 local function act_free_move(m)
-    if gMenuOpen or is_game_paused() then return false end
+    if gMenu.open or is_game_paused() then return false end
 
     m.peakHeight = m.pos.y
     m.health = 0x880
@@ -123,6 +123,10 @@ local function on_death(m)
 
     reset_all_items()
     return false
+end
+
+function trigger_on_death()
+    on_death(gMarioStates[0])
 end
 
 local function on_warp()

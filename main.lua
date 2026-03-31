@@ -377,7 +377,7 @@ end
 local function set_item_size_control(m)
 	if not sOutlineObject or m.controller.buttonDown & L_TRIG == 0 then return end
 
-	local current_selected = gHotbarItemList[gSelectedHotbarIndex].item
+	local current_selected = gMenu.hotbar.items[gMenu.hotbar.index].item
 	if current_selected then
 		local pressed = m.controller.buttonPressed
 		local params = current_selected.params
@@ -524,7 +524,7 @@ end
 local function mario_update(m)
 	if m.playerIndex ~= 0 then return end
 	if gCanBuild then
-		if not gMenuOpen then
+		if not gMenu.open then
 			builder_mario_update(m)
 		end
 	else

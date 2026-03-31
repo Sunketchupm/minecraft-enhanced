@@ -713,7 +713,7 @@ local function on_set_item_size_chat_command(msg)
 		return true
 	end
 
-    local current_selected = gHotbarItemList[gSelectedHotbarIndex].item
+    local current_selected = gMenu.hotbar.items[gMenu.hotbar.index].item
     if current_selected then
         current_selected.params.size = gVec3fOne()
         if sizes_count == 1 then
@@ -847,16 +847,16 @@ local sBlockPropertyLookup = {
 
 ---@param msg string
 function on_set_surface_chat_command(msg)
-    local item = gHotbarItemList[gSelectedHotbarIndex].item
+    local item = gMenu.hotbar.items[gMenu.hotbar.index].item
     if item and item.behavior == bhvMceBlock then
         local surf = sBlockSurfaceIdLookup[msg:lower()]
         if surf then
-            gHotbarItemList[gSelectedHotbarIndex].item.params.params = surf
+            gMenu.hotbar.items[gMenu.hotbar.index].item.params.params = surf
             djui_chat_message_create("Set the surface type to " .. msg)
         else
             surf = sBlockPropertyLookup[msg:lower()]
             if surf then
-                local properties = gHotbarItemList[gSelectedHotbarIndex].item.params.blockProperties
+                local properties = gMenu.hotbar.items[gMenu.hotbar.index].item.params.blockProperties
                 if properties & surf == 0 then
                     local is_selecting_incompatible = surf & (MCE_BLOCK_PROPERTY_BREAKABLE | MCE_BLOCK_PROPERTY_DISAPPEARING | MCE_BLOCK_PROPERTY_SHRINKING) ~= 0
                     local currently_has_incompatible = properties & (MCE_BLOCK_PROPERTY_BREAKABLE | MCE_BLOCK_PROPERTY_DISAPPEARING | MCE_BLOCK_PROPERTY_SHRINKING) ~= 0
@@ -864,10 +864,10 @@ function on_set_surface_chat_command(msg)
                         properties = properties & ~(MCE_BLOCK_PROPERTY_BREAKABLE | MCE_BLOCK_PROPERTY_DISAPPEARING | MCE_BLOCK_PROPERTY_SHRINKING)
                         djui_chat_message_create("The breakable, disappearing, and shrinking properties are incompatible with each other. Incompatibilities removed")
                     end
-                    gHotbarItemList[gSelectedHotbarIndex].item.params.blockProperties = properties | surf
+                    gMenu.hotbar.items[gMenu.hotbar.index].item.params.blockProperties = properties | surf
                     djui_chat_message_create("Added the surface property " .. msg)
                 else
-                    gHotbarItemList[gSelectedHotbarIndex].item.params.blockProperties = properties & ~surf
+                    gMenu.hotbar.items[gMenu.hotbar.index].item.params.blockProperties = properties & ~surf
                     djui_chat_message_create("Removed the surface property " .. msg)
                 end
             else
@@ -881,7 +881,7 @@ function on_set_surface_chat_command(msg)
 end
 
 local function on_transparent_chat_command()
-    local item = gHotbarItemList[gSelectedHotbarIndex].item
+    local item = gMenu.hotbar.items[gMenu.hotbar.index].item
     if item and item.behavior == bhvMceBlock then
         local transparent_start = mce_block_get_transparent_start_item(item)
         local anim_max = mce_block_get_anim_max_item(item)

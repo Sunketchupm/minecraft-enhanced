@@ -19,5 +19,12 @@ local function on_lvl_init()
     end
 end
 
+local function on_pause_exit(exit_to_castle)
+    if gNetworkPlayers[0].currLevelNum == LEVEL_PLOT then
+        trigger_on_death()
+    end
+end
+
 hook_chat_command("plot", "| Warp to a level with no textures or objects. Pass an argument to go to a specific act.", on_chat_command)
 hook_event(HOOK_ON_LEVEL_INIT, on_lvl_init)
+hook_event(HOOK_ON_PAUSE_EXIT, on_pause_exit)

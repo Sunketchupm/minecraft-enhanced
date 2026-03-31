@@ -15,7 +15,7 @@ _G.MinecraftEnhanced = {
     end,
 
     get_menu_open = function ()
-        return gMenuOpen
+        return gMenu.open
     end,
 
     hook_on_reset_items = function (func)

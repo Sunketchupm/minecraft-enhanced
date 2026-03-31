@@ -33,15 +33,21 @@ function add_item(name, behavior, model, params)
     }
 
     local texture = nil
+    local color = { r = 255, g = 255, b = 255, a = 255 }
     if name.texture then
         ---@cast name TextureInfo
         texture = name
     else
-        ---@type DjuiColor | TextureInfo
-        texture = is_colored_block and name --[[@as DjuiColor]] or get_texture_info(name --[[@as string]])
+        if is_colored_block then
+            ---@cast name DjuiColor
+            color = name
+        else
+            ---@cast name string
+            texture = get_texture_info(name)
+        end
     end
     ---@type MenuItemLink
-    local link = {item = item, icon = texture}
+    local link = { item = item, icon = { texture = texture, color = color } }
     return link
 end
 
