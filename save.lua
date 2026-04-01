@@ -1,3 +1,5 @@
+local MCE_MAGIC = 0x4E81A0CE
+local MCE_SAVE_VERSION = 1
 local sStorage = mod_fs_get() or mod_fs_create()
 
 ---@param msg string
@@ -49,7 +51,8 @@ local function save_command(msg)
         local np = gNetworkPlayers[0]
         while obj do
             if save_all or obj.oOwner == np.globalIndex + 1 then
-                file:write_integer(MCE_VERSION, INT_TYPE_U8)
+                file:write_integer(MCE_MAGIC, INT_TYPE_U32)
+                file:write_integer(MCE_SAVE_VERSION, INT_TYPE_U8)
                 file:write_integer(bhv_id, INT_TYPE_U16)
                 file:write_integer(obj_get_model_id_extended(obj), INT_TYPE_U16)
                 file:write_number(obj.oPosX, FLOAT_TYPE_F32)
@@ -92,6 +95,15 @@ local function load_command(msg)
     end
 
     djui_chat_message_create("Will attempt to load file: \"" .. save_name .. "\"")
+    local magic = file:read_integer(INT_TYPE_U32)
+    local version = file:read_integer(INT_TYPE_U8)
+    if magic ~= MCE_MAGIC then
+        -- Old save file, before the magic/version were added
+        -- Eventually, just error instead
+        file:seek(0, FILE_SEEK_SET)
+    end
+    -- Handle version mismatches (for the future)
+
     while not file:is_eof() do
         local item = {}
         item.id = file:read_integer(INT_TYPE_U16)

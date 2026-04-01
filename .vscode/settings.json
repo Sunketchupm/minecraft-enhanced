@@ -2,11 +2,12 @@
     "Lua.diagnostics.globals": [
         "bhvMceBlock",
         "bhvOutline",
-        "bhvMockItem",
+        "bhvPreviewItem",
         "bhvMceStar",
         "bhvMceCoin",
         "bhvMceExclamationBox",
         "bhvArrow",
-        "bhvMceTree"
+        "bhvMceTree",
+        "bhvMceDoor"
     ]
 }

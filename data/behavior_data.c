@@ -8,12 +8,12 @@ const BehaviorScript bhvOutline[] = {
     END_LOOP(),
 };
 
-const BehaviorScript bhvMockItem[] = {
+const BehaviorScript bhvPreviewItem[] = {
     BEGIN(OBJ_LIST_UNIMPORTANT),
     ID(id_bhvNewId),
     OR_INT(oFlags, OBJ_FLAG_UPDATE_GFX_POS_AND_ANGLE),
     BEGIN_LOOP(),
-        CALL_NATIVE(bhv_mock_item_loop),
+        CALL_NATIVE(bhv_preview_item_loop),
     END_LOOP(),
 };
 
@@ -89,6 +89,25 @@ const BehaviorScript bhvMceTree[] = {
     BILLBOARD(),
     BEGIN_LOOP(),
         CALL_NATIVE(bhv_pole_base_loop),
+    END_LOOP(),
+};
+
+const BehaviorScript bhvMceDoor[] = {
+    BEGIN(OBJ_LIST_SURFACE),
+    ID(id_bhvDoor),
+    SET_INT(oInteractType, INTERACT_DOOR),
+    // Door - common:
+    OR_INT(oFlags, (OBJ_FLAG_ACTIVE_FROM_AFAR | OBJ_FLAG_COMPUTE_DIST_TO_MARIO | OBJ_FLAG_SET_FACE_YAW_TO_MOVE_YAW | OBJ_FLAG_UPDATE_GFX_POS_AND_ANGLE)),
+    LOAD_ANIMATIONS(oAnimations, &door_seg3_anims_030156C0),
+    ANIMATE(0),
+    LOAD_COLLISION_DATA(door_seg3_collision_0301CE78),
+    SET_HITBOX(/*Radius*/ 80, /*Height*/ 100),
+    SET_INT(oIntangibleTimer, 0),
+    SET_FLOAT(oCollisionDistance, 1000),
+    SET_HOME(),
+    CALL_NATIVE(bhv_door_init),
+    BEGIN_LOOP(),
+        CALL_NATIVE(bhv_door_loop),
     END_LOOP(),
 };
 

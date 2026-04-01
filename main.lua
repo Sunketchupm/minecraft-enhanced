@@ -1,7 +1,5 @@
 -- name: \\#31db02\\Minecraft \\#1dcff2\\Enhanced \\[WIP]\\
--- description: An improved version of the Minecraft mod, originally by zKevin.\n\nModification by Sunk. Texture help by Sherbie. Minecraft+ made by Bene360 (which isn't used in this mod, but their effort shouldn't be wasted).
-
-MCE_VERSION = 1
+-- description: An improved version of the Minecraft mod, originally by zKevin.\n\nTexture help by Sherbie. Minecraft+ made by Bene360 (which isn't used in this mod, but their effort shouldn't be wasted).
 
 gLevelValues.fixCollisionBugs = true
 gLevelValues.fixCollisionBugsFalseLedgeGrab = false
@@ -115,7 +113,7 @@ function bhv_outline_init(obj)
 	obj.oFaceAnglePitch = 0
 	obj.oFaceAngleYaw = 0
 	obj.oFaceAngleRoll = 0
-	spawn_non_sync_object(bhvMockItem, E_MODEL_NONE, obj.oPosX, obj.oPosY, obj.oPosZ, nil)
+	spawn_non_sync_object(bhvPreviewItem, E_MODEL_NONE, obj.oPosX, obj.oPosY, obj.oPosZ, nil)
 	spawn_non_sync_object(bhvArrow, E_MODEL_ARROW, obj.oPosX, obj.oPosY, obj.oPosZ, nil)
 end
 
@@ -163,10 +161,10 @@ end
 
 --------------------------------------
 
---- Called from bhvMockItem.bhv
+--- Called from bhvPreviewItem.bhv
 
 ---@param obj Object
-function bhv_mock_item_loop(obj)
+function bhv_preview_item_loop(obj)
 	local current_item = gCurrentItem
 	if sOutlineObject and obj_get_first_with_behavior_id(bhvOutline) and current_item and current_item.model then
 		local item_params = current_item.params
@@ -175,26 +173,27 @@ function bhv_mock_item_loop(obj)
 		obj.oPosZ = sOutlineObject.oPosZ
 		obj.header.gfx.node.flags = obj.header.gfx.node.flags & ~GRAPH_RENDER_BILLBOARD
 		obj.oItemParams = item_params.params
+		obj.oOpacity = 255
 		local outline_scale = sOutlineObject.header.gfx.scale
 		obj_scale_xyz(obj, outline_scale.x, outline_scale.y, outline_scale.z)
 		obj_set_model_extended(obj, current_item.model)
 
-		local mock_settings = item_params.mock
-		if not mock_settings then return end
+		local settings = item_params.preview
+		if not settings then return end
 
-		if mock_settings.billboard then
+		if settings.billboard then
 			obj_set_billboard(obj)
 		end
 
-		if mock_settings.scale then
-			obj_scale_mult_to(obj, mock_settings.scale)
+		if settings.scale then
+			obj_scale_mult_to(obj, settings.scale)
 		end
 
 		obj.oFaceAnglePitch = sOutlineObject.oFaceAnglePitch
 		--obj.oFaceAngleYaw = s_outline.oFaceAngleYaw
 		obj.oFaceAngleRoll = sOutlineObject.oFaceAngleRoll
 
-		local animate_settings = mock_settings.animate
+		local animate_settings = settings.animate
 		if animate_settings then
 			if animate_settings.animation then
 				obj.oAnimations = animate_settings.animation
@@ -472,16 +471,16 @@ local function delete_outline()
 	if sOutlineObject then
 		obj_mark_for_deletion(sOutlineObject)
 	end
-	local mock = obj_get_first_with_behavior_id(bhvMockItem)
-	if mock then
-		obj_mark_for_deletion(mock)
+	local preview = obj_get_first_with_behavior_id(bhvPreviewItem)
+	if preview then
+		obj_mark_for_deletion(preview)
 	end
 end
 
 ---------------------------------------
 
 local sAutoBuild = true
-local sAutoBuildTimer = 0
+local sAutoBuildTimer = 0 -- TEMPORARY
 local sBuiltOrDeleted = false
 
 ---@param m MarioState
@@ -506,6 +505,7 @@ local function builder_mario_update(m)
 		sBuiltOrDeleted = determine_place_or_delete({build = true, delete = true})
     end
 	if sAutoBuild and m.controller.buttonDown & Y_BUTTON ~= 0 then
+		-- TEMPORARY
 		local do_build = sBuiltOrDeleted
 		local restrict_auto_build = true
 		for _, id in ipairs(gItemBhvIds) do
@@ -522,6 +522,8 @@ local function builder_mario_update(m)
 			end
 		end
 		determine_place_or_delete({build = do_build, delete = not do_build})
+	else
+		sAutoBuildTimer = 0
 	end
 end
 

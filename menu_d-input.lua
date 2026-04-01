@@ -7,7 +7,7 @@ gMouse = {
     prev = { x = 0, y = 0 },
     pos = { x = 0, y = 0 },
     pressed = { left = false, right = false, middle = false },
-    --held = { left = false, right = false, middle = false },
+    held = { left = false, right = false, middle = false },
     released = { left = false, right = false, middle = false },
     scroll = 0,
     menu = {
@@ -17,23 +17,27 @@ gMouse = {
     }
 }
 
+local function mouse_has_moved()
+    return gMouse.pressed.left or gMouse.pressed.middle or gMouse.pressed.right or
+    gMouse.held.left or gMouse.held.middle or gMouse.held.right or
+    gMouse.released.left or gMouse.released.middle or gMouse.released.right or
+    gMouse.scroll ~= 0 or
+    djui_hud_get_raw_mouse_x() > 0 or djui_hud_get_raw_mouse_y() > 0
+end
+
 local function handle_mouse_input()
-    gMouse.pressed.left = djui_hud_get_mouse_buttons_pressed() == 1
-    gMouse.pressed.right = djui_hud_get_mouse_buttons_pressed() == 4
+    gMouse.pressed.left = djui_hud_get_mouse_buttons_pressed() & 1 ~= 0
+    gMouse.pressed.middle = djui_hud_get_mouse_buttons_pressed() & 2 ~= 0
+    gMouse.pressed.right = djui_hud_get_mouse_buttons_pressed() & 4 ~= 0
+    gMouse.held.left = djui_hud_get_mouse_buttons_down() & 1 ~= 0
+    gMouse.held.middle = djui_hud_get_mouse_buttons_down() & 2 ~= 0
+    gMouse.held.right = djui_hud_get_mouse_buttons_down() & 4 ~= 0
+    gMouse.released.left = djui_hud_get_mouse_buttons_released() & 1 ~= 0
+    gMouse.released.middle = djui_hud_get_mouse_buttons_released() & 2 ~= 0
+    gMouse.released.right = djui_hud_get_mouse_buttons_released() & 4 ~= 0
     gMouse.scroll = djui_hud_get_mouse_scroll_y()
-    --s_mouse_click_held = djui_hud_get_mouse_buttons_down() == 1
-    gMouse.released.left = djui_hud_get_mouse_buttons_released() == 1
-    --[[
-    if mouse_click_held then
-        mouse_hold_timer = mouse_hold_timer + 1
-    else
-        mouse_hold_timer = 0
-    end
-    ]]
 
-    if gMouse.pressed.left or gMouse.pressed.right or gMouse.scroll ~= 0 or gMouse.released.left or
-        djui_hud_get_raw_mouse_x() > 0 or djui_hud_get_raw_mouse_y() > 0 then
-
+    if mouse_has_moved() then
         gMouse.moved = true
     end
 end
@@ -74,6 +78,8 @@ local function handle_hotbar_inputs(m)
     m.controller.buttonPressed = m.controller.buttonPressed & ~(L_JPAD | R_JPAD)
 end
 
+----------------------------------------------------
+
 -- Control stick direction
 local sCSD = { up = false, left = false, down = false, right = false }
 local sPrevCSD = { up = false, left = false, down = false, right = false }
@@ -108,8 +114,6 @@ local function handle_control_stick_inputs(m)
     if (sMovementIsHeld or not sPrevCSD.left) and controller.stickX < -30 then sCSD.left = true sPrevCSD.left = true gMouse.moved = false else sCSD.left = false end
     if (sMovementIsHeld or not sPrevCSD.right) and controller.stickX > 30 then sCSD.right = true sPrevCSD.right = true gMouse.moved = false else sCSD.right = false end
 end
-
-----------------------------------------------------
 
 local sCButtonCSD = {up = false, left = false, down = false, right = false}
 local sCButtonPrevCSD = {up = false, left = false, down = false, right = false}
@@ -157,8 +161,9 @@ local function on_change_tab_input()
     play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
 end
 
----@param pressed integer
-local function handle_change_tab_inputs(pressed)
+---@param m MarioState
+local function handle_change_tab_inputs(m)
+    local pressed = m.controller.buttonPressed
     if pressed & L_TRIG ~= 0 then
         gMenu.tabs.current = gMenu.tabs.current - 1
         if gMenu.tabs.current < 1 then
@@ -211,9 +216,34 @@ local function handle_item_selection_inputs(m)
     end
 end
 
+---@param item_link MenuItemLink
+---@return MenuItemLink
+local function handle_item_settings(item_link)
+    local item = item_link.item
+    if gMenu.settings.transparent then
+        if item.behavior == bhvMceBlock then
+            local transparent_start = mce_block_get_transparent_start_item(item)
+            local anim_max = mce_block_get_anim_max_item(item)
+            local current_anim_state = item.animState
+            if current_anim_state > transparent_start then
+                item.animState = current_anim_state - transparent_start
+            else
+                item.animState = current_anim_state + transparent_start
+                if item.animState > anim_max then
+                    item.animState = anim_max
+                end
+            end
+        end
+    end
+    return item_link
+end
+
 local function on_confirm_item_input()
     ---@type MenuItemLink
-    local hotbar_item = table.deepcopy(gMenu.get_current_item() --[[@as table]])
+    local item_link = gMenu.get_current_item()
+    if not item_link then return end
+    handle_item_settings(item_link)
+    local hotbar_item = table.deepcopy(item_link)
     gMenu.hotbar.items[gMenu.hotbar.index] = hotbar_item
     vec3f_set(gGridSize, GRID_SIZE_DEFAULT, GRID_SIZE_DEFAULT, GRID_SIZE_DEFAULT)
     play_sound(SOUND_MENU_CLICK_FILE_SELECT, gGlobalSoundSource)
@@ -244,8 +274,9 @@ local function handle_holding_item_inputs(m)
     end
 end
 
----@param pressed integer
-local function handle_pick_item_inputs(pressed)
+---@param m MarioState
+local function handle_pick_up_item_inputs(m)
+    local pressed = m.controller.buttonPressed
     if gMouse.moved then
         if gMouse.menu.prevItemIndex ~= gMenu.current_item.index then
             play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource)
@@ -289,53 +320,103 @@ local function handle_paging_inputs(m)
     end
 end
 
----@param pressed integer
-local function handle_extra_inputs(pressed)
-    if pressed & Y_BUTTON ~= 0 then
-        gMenu.clear_hotbar = gMenu.clear_hotbar + 1
-        play_sound(SOUND_MENU_CLICK_FILE_SELECT, gGlobalSoundSource)
+---@param m MarioState
+local function handle_reset_inputs(m)
+    if m.controller.buttonDown & Y_BUTTON ~= 0 then
+        gMenu.hotbar.clear = gMenu.hotbar.clear + 1
+        play_sound(SOUND_MENU_COLLECT_SECRET + ((gMenu.hotbar.clear // 12) << 16), gGlobalSoundSource)
+    else
+        if not gMouse.moved then
+            gMenu.hotbar.clear = 0
+        end
     end
 
-    if gMenu.clear_hotbar >= 5 then
+    if gMenu.hotbar.clear >= 60 then
         for i = 1, HOTBAR_SIZE, 1 do
             gMenu.hotbar.items[i] = { item = nil, icon = nil } ---@diagnostic disable-line: assign-type-mismatch
         end
         play_sound(SOUND_MENU_LET_GO_MARIO_FACE, gGlobalSoundSource)
-        gMenu.clear_hotbar = 0
+        gMenu.hotbar.clear = 0
     end
 end
 
-local function handle_close_menu_inputs(pressed)
+-- Used by menu_b-render.lua
+function mouse_handle_reset_inputs()
+    if not gMouse.moved then return false end
+
+    if gMouse.held.left then
+        gMenu.hotbar.clear = gMenu.hotbar.clear + 1
+        play_sound(SOUND_MENU_COLLECT_SECRET + ((gMenu.hotbar.clear // 12) << 16), gGlobalSoundSource)
+        return true
+    else
+        gMenu.hotbar.clear = 0
+    end
+end
+
+---@param m MarioState
+local function handle_close_menu_inputs(m)
+    local pressed = m.controller.buttonPressed
     if pressed & START_BUTTON ~= 0 or not gMouse.moved and pressed & X_BUTTON ~= 0 or gMouse.moved and gMouse.pressed.right then
         gMenu.open = false
-        gMenu.clear_hotbar = 0
+        gMenu.hotbar.clear = 0
         gMenu.tabs[TAB_SURFACE_TYPES].misc.index = 1
         gMenu.tabs[TAB_SURFACE_TYPES].misc.index_offset = 0
         gMouse.menu.prevItemIndex = 0
     end
 end
 
+---@param m MarioState
+local function handle_open_settings_inputs(m)
+    --gMenu.tabs.current = TAB_TO_SETTINGS[gMenu.tabs.current] or gMenu.tabs.current
+    --on_change_tab_input()
+
+    -- TEMPORARY
+    if m.controller.buttonPressed & D_CBUTTONS == 0 then return end
+    gMenu.settings.transparent = not gMenu.settings.transparent
+    if gMenu.settings.transparent then
+        djui_chat_message_create("Transparency active. ONLY WORKS FOR BLOCKS.")
+    else
+        djui_chat_message_create("Transparency disabled.")
+    end
+    return true
+end
+
+-- Used by menu_b-render.lua
+function mouse_handle_open_settings_inputs()
+    --gMenu.tabs.current = TAB_TO_SETTINGS[gMenu.tabs.current] or gMenu.tabs.current
+    --on_change_tab_input()
+
+    -- TEMPORARY
+    if not gMouse.pressed.left then return false end
+    gMenu.settings.transparent = not gMenu.settings.transparent
+    if gMenu.settings.transparent then
+        djui_chat_message_create("Transparency active. ONLY WORKS FOR BLOCKS.")
+    else
+        djui_chat_message_create("Transparency disabled.")
+    end
+    return true
+end
+
 ----------------------------------------------------
 
 ---@param m MarioState
 local function handle_standard_inputs(m)
-    local pressed = m.controller.buttonPressed
-
     handle_paging_inputs(m)
-    handle_extra_inputs(pressed)
+    handle_reset_inputs(m)
     if gMenu.current_item.is_held then
         handle_holding_item_inputs(m)
     else
+        handle_open_settings_inputs(m)
         handle_item_selection_inputs(m)
         if gMenu.current_item.index > 0 then
-            handle_pick_item_inputs(pressed)
+            handle_pick_up_item_inputs(m)
         end
     end
 end
 
 ---@param m MarioState
 local function handle_surface_inputs(m)
-    handle_control_stick_inputs(m)
+    handle_scrolling_inputs(m)
 
     local surface_tab = gMenu.get_current_tab().misc
     if gMouse.moved then
@@ -382,18 +463,19 @@ end
 ----------------------------------------------------
 
 local sTabsWithSpecialInputs = {
-    [TAB_SURFACE_TYPES] = handle_surface_inputs
+    [TAB_SURFACE_TYPES] = handle_surface_inputs,
+    [TAB_BLOCK_SETTINGS] = function () end,
+    [TAB_OBJECT_SETTINGS] = function () end,
 }
 
 ---@param m MarioState
 local function handle_menu_inputs(m)
-    local pressed = m.controller.buttonPressed
-    if gMouse.moved and pressed ~= 0 and not gMouse.pressed.left and not gMouse.pressed.right then
+    if gMouse.moved and m.controller.buttonPressed ~= 0 and not mouse_has_moved() then
         gMouse.moved = false
     end
 
-    handle_close_menu_inputs(pressed)
-    handle_change_tab_inputs(pressed)
+    handle_close_menu_inputs(m)
+    handle_change_tab_inputs(m)
     if not sTabsWithSpecialInputs[gMenu.tabs.current] then
         handle_standard_inputs(m)
     else

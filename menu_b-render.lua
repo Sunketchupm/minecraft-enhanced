@@ -1,121 +1,19 @@
----@class (exact) MenuItemLink
-    ---@field item Item
-    ---@field icon Icon
-    ---@field self MenuItemLink?
-
-gMenu = {
-    open = false,
-    ---@type MenuTabs
-    tabs = {
-        current = 1,
-        slots = {
-            width = 65,
-            height = 65,
-            rows = 10,
-            columns = 10,
-        }
-    },
-    ---@type Hotbar
-    hotbar = {
-        index = 1,
-        items = {},
-    },
-    ---@type CurrentMenuItem
-    current_item = {
-        index = 1,
-        is_held = false
-    },
-    clear_hotbar = 0
+local BASE_SLOT_SIZE = 65
+local MAIN_RECT_COLORS = {
+    { r = 200, g = 200, b = 200, a = 255 },
+    { r = 255, g = 255, b = 255, a = 255 },
+    { r = 90, g = 88, b = 88, a = 255 }
 }
 
----@return MenuTab
-gMenu.get_current_tab = function ()
-    return gMenu.tabs[gMenu.tabs.current]
-end
+local sShowControls = true
 
----@return MenuItemLink[]
-gMenu.get_current_tab_items = function ()
-    return gMenu.tabs[gMenu.tabs.current].items
-end
-
----@return MenuPages
-gMenu.get_current_tab_pages = function ()
-    return gMenu.tabs[gMenu.tabs.current].pages
-end
-
----@return MenuItemLink
-gMenu.get_current_item = function ()
-    return gMenu.tabs[gMenu.tabs.current].items[gMenu.current_item.index]
-end
-
----@return MenuPage
-gMenu.get_current_page = function ()
-    return gMenu.tabs[gMenu.tabs.current].pages[gMenu.tabs[gMenu.tabs.current].pages.current]
-end
-
----@return integer
-gMenu.get_current_page_index = function ()
-    return gMenu.tabs[gMenu.tabs.current].pages.current
-end
-
----@alias Tab integer
-
----@class MenuTabs
-    ---@field current integer
-    ---@field slots ItemSlots
-    ---@field [Tab] MenuTab
-
----@class MenuTab
-    ---@field renderer fun(x: number, y: number, width: number, height: number)
-    ---@field icon Icon
-    ---@field pages MenuPages
-    ---@field items MenuItemLink[]
-    ---@field misc table
-
----@class MenuPages
-    ---@field current integer
-    ---@field count integer
-    ---@field item_count integer
-    ---@field [integer] MenuPage
-
----@class MenuPage
-    ---@field items MenuItemLink[]
-
----@class ItemSlots
-    ---@field width number
-    ---@field height number
-    ---@field columns integer
-    ---@field rows integer
-
----@class Hotbar
-    ---@field index integer
-    ---@field items MenuItemLink[]
-
----@class CurrentMenuItem
-    ---@field index integer
-    ---@field is_held boolean
-
----@class Icon
-    ---@field texture TextureInfo?
-    ---@field color DjuiColor?
-
-TAB_BUILDING_BLOCKS = 1 ---@type Tab
-TAB_BUILDING_BLOCKS_COLORS = 2 ---@type Tab
-TAB_LEVEL_OBJECTS = 3 ---@type Tab
-TAB_ENEMIES = 4 ---@type Tab
-TAB_SURFACE_TYPES = 5 ---@type Tab
-TAB_MAIN_END = 5 ---@type Tab
-
-local WHITE = { r = 255, g = 255, b = 255, a = 255 }
-local BLACK = { r = 0, g = 0, b = 0, a = 255 }
-
-local BASE_SLOT_SIZE = 65
+------------------------------------------------------------------------------------------------
 
 do
-    for i = TAB_BUILDING_BLOCKS, TAB_MAIN_END, 1 do
-        gMenu.tabs[i] = {
+    local function default()
+        return {
             renderer = function () end,
-            icon = {},
+            icon = { color = WHITE },
             pages = {
                 current = 1,
                 count = 1,
@@ -125,9 +23,16 @@ do
             misc = {},
         }
     end
+
+    for i = TAB_BUILDING_BLOCKS, TAB_MAIN_END do
+        gMenu.tabs[i] = default()
+    end
+
+    -- Unlisted tabs
+    gMenu.tabs[TAB_BLOCK_SETTINGS] = default()
+    gMenu.tabs[TAB_OBJECT_SETTINGS] = default()
 end
 
-HOTBAR_SIZE = 10
 for i = 1, HOTBAR_SIZE do
     gMenu.hotbar.items[i] = {} ---@diagnostic disable-line: missing-fields
 end
@@ -172,79 +77,21 @@ local function fill_menu()
             animState = MCE_COLOR_BLOCK_BARRIER_ANIM,
             params = get_default_item_params(),
         },
-        icon = { texture = get_texture_info("barrier") }
+        icon = { texture = get_texture_info("barrier"), color = WHITE }
     })
 
     local tab_icons = {
         { texture = DPLAT_BLOCK_TEX, color = WHITE},
         { texture = DPLAT_BLOCK_TEX, color = WHITE},
-        { texture = SLOT_STAR_TEX, color = WHITE},
-        { texture = SLOT_GOOMBA_TEX, color = WHITE},
+        { texture = get_texture_info("starslot"), color = WHITE},
+        { texture = get_texture_info("goombaslot"), color = WHITE},
         { texture = CPLAT_BLOCK_TEX, color = WHITE},
     }
-    for i = TAB_BUILDING_BLOCKS, TAB_MAIN_END, 1 do
+    for i = TAB_BUILDING_BLOCKS, TAB_MAIN_END do
         gMenu.tabs[i].icon = tab_icons[i]
     end
 end
 add_first_update(fill_menu)
-
-local sShowControls = true
-
--------------- TEXTURES --------------
-local t = get_texture_info
-local A_BUTTON_TEX = t("Abutton")
-local B_BUTTON_TEX = t("Bbutton")
-local X_BUTTON_TEX = t("Xbutton")
-local Y_BUTTON_TEX = t("Ybutton")
---local U_JPAD_TEX = g("UJpad")
---local L_JPAD_TEX = g("LJpad")
---local D_JPAD_TEX = g("DJpad")
---local R_JPAD_TEX = g("RJpad")
-local UD_JPAD_TEX = t("U-Djpad")
-local LR_JPAD_TEX = t("L-Rjpad")
-local U_CBUTTON_TEX = t("Ucbutton")
-local L_CBUTTON_TEX = t("Lcbutton")
-local D_CBUTTON_TEX = t("Dcbutton")
-local R_CBUTTON_TEX = t("Rcbutton")
-local L_TRIG_TEX = t("Ltrig")
-local R_TRIG_TEX =  t("Rtrig")
-local Z_TRIG_TEX =  t("Ztrig")
-local CONTROL_STICK_TEX = t("Ctrlstick")
-local PAGE_UP_TEX = t("page_up")
-local PAGE_DOWN_TEX = t("page_down")
-local MOUSE_TEX = t("mousecursor")
-------------------- HELP PAGE IMAGES -------------------
-local DEFAULT_TEX = t("nonehelp")
-local NOCOL_TEX = t("nocolhelp")
-local NOFALL_TEX = t("placeholder")
-local NSLIP_TEX = t("nsliphelp")
-local SLIP_TEX = t("sliphelp")
-local VSLIP_TEX = t("vsliphelp")
-local HANGABLE_TEX = t("hangablehelp")
-local VWIND_TEX = t("vwindhelp")
-local WATER_TEX = t("waterhelp")
-local VANISH_TEX = t("vanishhelp")
-local TOXIC_TEX = t("toxichelp")
-local SHALLOWSAND_TEX = t("shallowsandhelp")
-local QUICKSAND_TEX = t("quicksandhelp")
-local LAVA_TEX = t("lavahelp")
-local DEATH_TEX = t("deathhelp")
-local CHECKPOINT_TEX = t("placeholder")
-local BOUNCE_TEX = t("placeholder")
-local CONVEYOR_TEX = t("conveyorhelp")
-local FIRSTY_TEX = t("placeholder")
-local WIDEKICK_TEX = t("placeholder")
-local ANYKICK_TEX = t("placeholder")
-local WKLESS_TEX = t("wklesshelp")
-local DASH_TEX = t("placeholder")
-local BOOST_TEX = t("placeholder")
-local ABC_TEX = t("placeholder")
-local JUMP_TEX = t("placeholder")
-local CAPLESS_TEX = t("placeholder")
-local BREAK_TEX = t("breakhelp")
-local DISAPPEAR_TEX = t("placeholder")
-local SHRINK_TEX = t("placeholder")
-local SPRINGBOARD_TEX = t("placeholder")
 
 ------------------------------------------------------------------------------------------------
 
@@ -273,22 +120,14 @@ end
 ---@param y number
 ---@param width number
 ---@param height number
----@param color DjuiColor?
----@param pixel_size number?
+---@param color DjuiColor
+---@param pixel_size number
 local function render_pixel_border(x, y, width, height, color, pixel_size) ---------------------needs to be re-adjusted due to margin overlap
-    local border_color = BLACK
-    local size = 2
-    if color then
-        border_color = color
-    end
-    if pixel_size then
-        size = pixel_size
-    end
-    djui_hud_set_color_with_table(border_color)
-    djui_hud_render_rect(x, y, width, size)
-    djui_hud_render_rect(x, y, size, height)
-    djui_hud_render_rect(x, y + height, width, size)
-    djui_hud_render_rect(x + width, y, size, height + size)
+    djui_hud_set_color_with_table(color)
+    djui_hud_render_rect(x, y, width, pixel_size)
+    djui_hud_render_rect(x, y, pixel_size, height)
+    djui_hud_render_rect(x, y + height, width, pixel_size)
+    djui_hud_render_rect(x + width, y, pixel_size, height + pixel_size)
 end
 
 ---@param x number
@@ -312,30 +151,17 @@ end
 ---@param y number
 ---@param width number
 ---@param height number
----@param colors DjuiColor?
----@param margin_width number
----@param margin_height number
-local function render_colored_rectangle(x, y, width, height, colors, margin_width, margin_height)
-    if colors then
-        djui_hud_set_color_with_table(colors)
-    end
-    djui_hud_render_rect(x + width * margin_width, y + height * margin_height, width - width * margin_width * 2, height - height * margin_height * 2)
-end
-
----@param x number
----@param y number
----@param width number
----@param height number
 ---@param colors DjuiColor[] {base, shine, shade}
 ---@param margin_width number
 ---@param margin_height number
----@param remove_pixel_border boolean?
+---@param remove_pixel_border boolean
 local function render_bordered_rectangle(x, y, width, height, colors, margin_width, margin_height, remove_pixel_border)
     render_rectangle_borders(x, y, width, height, colors[2], colors[3], margin_width, margin_height)
     if not remove_pixel_border then
-        render_pixel_border(x, y, width, height)
+        render_pixel_border(x, y, width, height, BLACK, 2)
     end
-    render_colored_rectangle(x, y, width, height, colors[1], margin_width, margin_height)
+    djui_hud_set_color_with_table(colors[1])
+    djui_hud_render_rect(x + width * margin_width, y + height * margin_height, width - width * margin_width * 2, height - height * margin_height * 2)
 end
 
 ----------------------------------------------------
@@ -377,11 +203,11 @@ local function render_icon(x, y, width, height, icon)
         item_scale_y = item_scale_y * 1.5
         local item_x = (x + width * 0.5) - (texture_width * 0.5 * item_scale_x)
         local item_y = (y + height * 0.5) - (texture_height * 0.5 * item_scale_y)
-        djui_hud_set_color_with_table(WHITE)
+        djui_hud_set_color_with_table(icon.color)
 
         djui_hud_render_texture(texture, item_x, item_y, item_scale_x, item_scale_y)
-    elseif icon.color then
-        local color = icon.color --[[@as DjuiColor]]
+    else
+        local color = icon.color
         djui_hud_set_color_with_table(color)
         local rect_width = 48
         local rect_height = 48
@@ -450,6 +276,7 @@ local function render_item_list(x, y, width, height)
         local slot_y = y + ((slot_height * ((index - 1) // column_count)))
         if gMouse.moved and mouse_is_within(slot_x, slot_y, slot_x + slot_width, slot_y + slot_height) then
             gMenu.current_item.index = index + (items_per_page * page_index)
+            gMenu.current_item.item = item
             hovering_over_item = true
         end
 
@@ -478,6 +305,7 @@ local function render_item_list(x, y, width, height)
 
     if gMouse.moved and not hovering_over_item then
         gMenu.current_item.index = 0
+        gMenu.current_item.item = nil
     end
 end
 
@@ -543,6 +371,81 @@ end
 ---@param width number
 ---@param height number
 ---@param text string
+---@param texture TextureInfo
+---@param input_func function
+local function render_menu_button(x, y, width, height, text, texture, input_func, override_darken)
+    local text_scale = 0.7 * (width/height)
+    local text_size = djui_hud_measure_text(text) * text_scale
+    local texture_scale = 1.3 * (width/height)
+    local texture_x = (x - texture.width * texture_scale) - 12
+    -- Render text and texture later
+
+    local overall_size = x + text_size - texture_x
+
+    local button_x = texture_x - 6
+    local button_y = y - 6
+    local button_width = overall_size + 12
+    local button_height = texture.height * texture_scale + 12
+    local colors = { MAIN_RECT_COLORS[1], MAIN_RECT_COLORS[2], MAIN_RECT_COLORS[3] }
+
+    local darken = false
+    if mouse_is_within(texture_x, y, x + text_size, button_y + button_height) then
+        darken = input_func()
+    end
+    darken = override_darken or darken
+
+    if darken then
+        colors = {
+            { r = 180, g = 180, b = 180, a = 255 },
+            { r = 235, g = 235, b = 235, a = 255 },
+            { r = 68, g = 68, b = 68, a = 255 },
+        }
+    end
+
+    render_bordered_rectangle(button_x, button_y, button_width, button_height, colors, 0.008, 0.05, true)
+
+    -- Render text and texture
+    djui_hud_set_color_with_table(WHITE)
+    djui_hud_render_texture(texture, texture_x, y, texture_scale, texture_scale)
+    render_shadowed_text(text, x, y, text_scale)
+
+    return texture_x, button_y, overall_size, button_height
+end
+
+---@param x number
+---@param y number
+---@param width number
+---@param height number
+local function render_reset_hotbar(x, y, width, height)
+    local text_x = x + width * 0.65
+    local text_y = y + height * 0.9
+    local button_x, button_y, button_width, button_height = render_menu_button(text_x, text_y, width, height, "Reset Hotbar", Y_BUTTON_TEX, mouse_handle_reset_inputs)
+
+    local reset_bar_width = button_width * math.remap(0, 60, 0, 1, gMenu.hotbar.clear)
+    local reset_bar_height = 10
+    local reset_bar_x = button_x - 3
+    local reset_bar_y = button_y + button_height
+    djui_hud_set_color_with_table(GREEN)
+    djui_hud_render_rect(reset_bar_x, reset_bar_y, reset_bar_width, reset_bar_height)
+end
+
+---@param x number
+---@param y number
+---@param width number
+---@param height number
+local function render_settings_button(x, y, width, height)
+    local text_x = x + width * 0.2
+    local text_y = y + height * 0.9
+    -- TEMPORARY
+    local override_darken = gMenu.settings.transparent
+    render_menu_button(text_x, text_y, width, height, "Transparent", D_CBUTTON_TEX, mouse_handle_open_settings_inputs, override_darken)
+end
+
+---@param x number
+---@param y number
+---@param width number
+---@param height number
+---@param text string
 local function render_tab_header(x, y, width, height, text)
     djui_hud_set_color(63, 63, 63, 255)
     local scale = 1.5
@@ -585,22 +488,8 @@ end
 local function render_standard_tab(x, y, width, height, name)
     render_interior_rectangle(x, y, width, height)
     render_tab_header(x, y, width, height, name)
-    local text_scale = 1.25
-    local text = "Clear Hotbar (".. gMenu.clear_hotbar .."/5)"
-    local text_size = djui_hud_measure_text(text) * text_scale
-    local text_x = (x + width * 0.55) - (text_size * 0.5)
-    local text_y = (y + height) - 55 * text_scale
-    local texture_scale = 2.5
-    local texture_x = (x + width * 0.48) - (text_size * 0.5)
-    local texture_y = (y + height) - 27 * texture_scale
-    djui_hud_set_color(255, 255, 255, 255)
-    djui_hud_render_texture(Y_BUTTON_TEX, texture_x, texture_y, texture_scale, texture_scale)
-    render_shadowed_text(text, text_x, text_y, text_scale)
-
-    if mouse_is_within(text_x, text_y, text_x + text_size, text_y + 54) and gMouse.pressed.left then
-        gMenu.clear_hotbar = gMenu.clear_hotbar + 1
-        play_sound(SOUND_MENU_CLICK_FILE_SELECT, gGlobalSoundSource)
-    end
+    render_reset_hotbar(x, y, width, height)
+    render_settings_button(x, y, width, height)
 end
 
 ---@param x number
@@ -736,9 +625,7 @@ local function render_description_box(x, y, width, height, description)
 
     local desc_x = rect_x + width * 0.03
     local desc_y = rect_y + height * 0.03
-    local screen_width = djui_hud_get_screen_width()
-    local screen_height = djui_hud_get_screen_height()
-    local text_scale = (screen_width/screen_height) * 0.5
+    local text_scale = 0.5 * (width/height)
     local lines = description.lines
     render_shadowed_text(description.title, desc_x, desc_y, text_scale * 2)
     djui_hud_set_color(128, 128, 128, 255)
@@ -750,7 +637,7 @@ local function render_description_box(x, y, width, height, description)
     render_shadowed_text(lines[4], desc_x, desc_y + 205, text_scale)
 
     local image = description.image
-    local image_scale = 1.7
+    local image_scale = 0.7 * (width/height)
     local image_x = rect_x + rect_width * 0.5 - (image.width * image_scale) * 0.5
     local image_y = rect_y + rect_height - (image.height * image_scale) - 5
     djui_hud_set_color(255, 255, 255, 255)
@@ -796,7 +683,7 @@ gMenu.tabs[TAB_SURFACE_TYPES].renderer = function (x, y, width, height)
         if surface_tab.index == absolute_index then
             button_colors = {{r = 65, g = 65, b = 65, a = 255}, {r = 175, g = 175, b = 175, a = 255}, {r = 75, g = 75, b = 75, a = 255}}
         end
-        render_bordered_rectangle(button_x, button_y + y_increm * (i - 1), button_width, button_height, button_colors, 0.01, 0.06)
+        render_bordered_rectangle(button_x, button_y + y_increm * (i - 1), button_width, button_height, button_colors, 0.01, 0.06, false)
 
         if surface_tab.buttons[absolute_index] then
             render_shadowed_text(surface_tab.buttons[absolute_index], button_x + 12, button_y + 4.5 + y_increm * (i - 1), 0.8)
@@ -806,6 +693,24 @@ gMenu.tabs[TAB_SURFACE_TYPES].renderer = function (x, y, width, height)
     if surface_tab.descriptions[surface_tab.index] then
         render_description_box(x, y, width, height, surface_tab.descriptions[surface_tab.index])
     end
+end
+
+----------------------------------------------------
+
+---@param x number
+---@param y number
+---@param width number
+---@param height number
+gMenu.tabs[TAB_BLOCK_SETTINGS].renderer = function (x, y, width, height)
+    -- Unimplemented
+end
+
+---@param x number
+---@param y number
+---@param width number
+---@param height number
+gMenu.tabs[TAB_OBJECT_SETTINGS].renderer = function (x, y, width, height)
+    -- Unimplemented
 end
 
 ----------------------------------------------------
@@ -860,13 +765,13 @@ end
 local function render_menu_tab(x, y, width, height, index)
     local colors = {{r = 125, g = 125, b = 125, a = 255}, {r = 175, g = 175, b = 175, a = 255}, {r = 75, g = 75, b = 75, a = 255}}
     if index == gMenu.tabs.current then
-        colors = {{r = 200, g = 200, b = 200, a = 255}, {r = 255, g = 255, b = 255, a = 255}, {r = 150, g = 150, b = 150, a = 255}}
+        colors = MAIN_RECT_COLORS
     end
     local tab_width = width * 0.1
     local tab_height = height * 0.1
     local tab_x = x + (tab_width * (index - 1))
     local tab_y = y - (tab_height - (tab_height * 0.1))
-    render_bordered_rectangle(tab_x, tab_y, tab_width, tab_height, colors, 0.05, 0.07)
+    render_bordered_rectangle(tab_x, tab_y, tab_width, tab_height, colors, 0.05, 0.07, false)
 
     local icon = gMenu.tabs[index].icon
     djui_hud_set_color_with_table(icon.color)
@@ -891,11 +796,11 @@ local function render_main_rectangle(screen_width, screen_height)
     local y = screen_height * 0.2
     local width = screen_width * 0.5
     local height = screen_height * 0.6
-    local colors = { {r = 200, g = 200, b = 200, a = 255}, {r = 255, g = 255, b = 255, a = 255}, {r = 90, g = 88, b = 88, a = 255} }
+    local colors = MAIN_RECT_COLORS
     for i = 1, TAB_MAIN_END do
         render_menu_tab(x, y, width, height, i)
     end
-    render_bordered_rectangle(x, y, width, height, colors, 0.008, 0.01)
+    render_bordered_rectangle(x, y, width, height, colors, 0.008, 0.01, false)
     return x, y, width, height
 end
 

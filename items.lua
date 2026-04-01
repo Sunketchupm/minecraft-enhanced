@@ -2,23 +2,23 @@
     ---@field behavior BehaviorId
     ---@field model ModelExtendedId
     ---@field animState integer
-    ---@field params ItemPreviewParameters
+    ---@field params ItemParameters
 
----@class (exact) ItemPreviewParameters
+---@class (exact) ItemParameters
     ---@field spawnYOffset number?
     ---@field blockProperties integer?
     ---@field size Vec3f?
     ---@field rotation Vec3s? x = pitch, y = yaw, z = roll
     ---@field forceAnimState integer?
-    ---@field mock MockParameters?
+    ---@field preview PreviewParameters?
     ---@field params integer?
 
----@class (exact) MockParameters
+---@class (exact) PreviewParameters
     ---@field billboard boolean?
     ---@field scale number?
-    ---@field animate MockAnimations?
+    ---@field animate PreviewAnimations?
 
----@class (exact) MockAnimations
+---@class (exact) PreviewAnimations
     ---@field animation Pointer_ObjectAnimPointer?
     ---@field animIndex integer?
     ---@field animState integer?
@@ -43,22 +43,22 @@ define_custom_obj_fields({
     oBlockSurfaceProperties = "u32",
 })
 
----@return ItemPreviewParameters
+---@return ItemParameters
 function get_default_item_params()
-    ---@type ItemPreviewParameters
+    ---@type ItemParameters
     local params = {
         spawnYOffset = 0,
         blockProperties = 0,
         size = gVec3fOne(),
         rotation = gVec3sZero(),
         forceAnimState = nil,
-        mock = {},
+        preview = {},
         params = 0,
     }
     return params
 end
 
-gCurrentItem = { behavior = nil, model = E_MODEL_NONE, params = {} }
+gCurrentItem = { behavior = nil, model = E_MODEL_NONE, animState = 0, params = {} }
 gItemBhvIds = {}
 
 local sLevelItemBehaviors = {}
@@ -71,7 +71,6 @@ add_first_update(function ()
         model = E_MODEL_MCE_BLOCK,
         animState = 0,
         params = get_default_item_params(),
-        group = ITEM_GROUP_BLOCKS
     }
     ---@type BehaviorId[]
     gItemBhvIds = {
@@ -80,6 +79,7 @@ add_first_update(function ()
         bhvMceCoin,
         bhvMceExclamationBox,
         bhvMceTree,
+        bhvMceDoor,
     }
     ---@type BehaviorId[]
     sLevelItemBehaviors = {
@@ -87,6 +87,7 @@ add_first_update(function ()
         bhvMceCoin,
         bhvMceExclamationBox,
         bhvMceTree,
+        bhvMceDoor,
     }
     ---@type BehaviorId[]
     sEnemyItemBehaviors = {
@@ -99,7 +100,6 @@ add_first_update(function ()
         id_bhv1Up,
         id_bhvKoopa,
         id_bhvFlame,
-        id_bhvEnemyLakitu,
         id_bhvSpiny,
         id_bhvHeaveHo,
         id_bhvSmallWhomp,
@@ -113,7 +113,6 @@ add_first_update(function ()
         id_bhvSnufit,
         id_bhvMrBlizzard,
         id_bhvBulletBill,
-        id_bhvMrI,
     }
     ---@type BehaviorId[]
     sVanillaClearImmune = {
@@ -904,7 +903,7 @@ function on_set_surface_chat_command(msg)
 end
 
 local function on_transparent_chat_command()
-    local item = gMenu.hotbar.items[gMenu.hotbar.index].item
+    local item = gCurrentItem
     if item and item.behavior == bhvMceBlock then
         local transparent_start = mce_block_get_transparent_start_item(item)
         local anim_max = mce_block_get_anim_max_item(item)
@@ -927,7 +926,35 @@ local function on_transparent_chat_command()
     return true
 end
 
+local function on_replace_chat_command(msg)
+    local commands = string.split(msg, " ")
+    if not commands[1] or not tonumber(commands[1]) then
+        djui_chat_message_create("You need to supply the hotbar index to replace the current block with")
+        return true
+    end
+    if not gCurrentItem then
+        djui_chat_message_create("You need to be holding the block you want to replace")
+        return true
+    end
+
+    local new_hotbar_index = math.floor(tonumber(commands[1]) --[[@as integer]])
+    local item_anim_state = gCurrentItem.animState
+    local owner_index = network_global_index_from_local(0) + 1
+
+    local obj = obj_get_first_with_behavior_id(bhvMceBlock)
+    while obj do
+        if obj_has_model_extended(obj, E_MODEL_MCE_BLOCK) ~= 0 and obj.oOwner == owner_index and obj.oAnimState == item_anim_state then
+            obj.oAnimState = gMenu.hotbar.items[new_hotbar_index].item.animState
+            obj.oPrevAnimState = obj.oAnimState
+        end
+        obj = obj_get_next_with_same_behavior_id(obj)
+    end
+    djui_chat_message_create("Successfully replaced objects")
+    return true
+end
+
 hook_chat_command("size", "[num] or [x y z] | Sets the size scaling of the currently selected item. Clamped between 0.01 and 25", on_set_item_size_chat_command)
 hook_chat_command("surface", "! BLOCK ONLY ! Sets the surface type of a block. Refer to the Surface Types tab for which exist and what they do", on_set_surface_chat_command)
 hook_chat_command("surf", "! SAME AS /surface !", on_set_surface_chat_command)
 hook_chat_command("transparent", "Makes the current selected block transparent", on_transparent_chat_command)
+hook_chat_command("replace", "[hotbar index] | Replaces the placed blocks with the same held model, with the block model of the supplied hotbar index.", on_replace_chat_command)

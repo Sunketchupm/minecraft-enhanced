@@ -2,6 +2,7 @@ gItemListsLoaded = {}
 gBlockListsLoaded = {}
 gHookedResetItemFunctions = {}
 
+--[[
 _G.MinecraftEnhanced = {
     ---@param item_list {icon: TextureInfo, behavior: BehaviorId, model: ModelExtendedId, params: ItemPreviewParameters}
     add_item_list = function (item_list)
@@ -22,3 +23,4 @@ _G.MinecraftEnhanced = {
         table.insert(gHookedResetItemFunctions, func)
     end
 }
+]]
