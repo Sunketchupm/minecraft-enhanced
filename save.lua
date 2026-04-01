@@ -45,14 +45,14 @@ local function save_command(msg)
         save_all = true
     end
 
+    file:write_integer(MCE_MAGIC, INT_TYPE_U32)
+    file:write_integer(MCE_SAVE_VERSION, INT_TYPE_U8)
     for _, bhv_id in ipairs(gItemBhvIds) do
         local obj = obj_get_first_with_behavior_id(bhv_id)
         ---@type NetworkPlayer
         local np = gNetworkPlayers[0]
         while obj do
             if save_all or obj.oOwner == np.globalIndex + 1 then
-                file:write_integer(MCE_MAGIC, INT_TYPE_U32)
-                file:write_integer(MCE_SAVE_VERSION, INT_TYPE_U8)
                 file:write_integer(bhv_id, INT_TYPE_U16)
                 file:write_integer(obj_get_model_id_extended(obj), INT_TYPE_U16)
                 file:write_number(obj.oPosX, FLOAT_TYPE_F32)

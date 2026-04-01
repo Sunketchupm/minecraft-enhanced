@@ -125,6 +125,8 @@ function bhv_outline_loop(obj)
 		sOutlineObject = nil
 		return
 	end
+	obj.parentObj = obj
+
 	sOutlineObject = obj
 
 	local m = gMarioStates[0]

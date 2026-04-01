@@ -100,14 +100,14 @@ add_first_update(function ()
         id_bhv1Up,
         id_bhvKoopa,
         id_bhvFlame,
-        id_bhvSpiny,
+        --id_bhvSpiny,
         id_bhvHeaveHo,
         id_bhvSmallWhomp,
         id_bhvThwomp,
         id_bhvSpindrift,
         id_bhvFlyGuy,
-        id_bhvBoo,
-        id_bhvPokey,
+        --id_bhvBoo,
+        --id_bhvPokey,
         id_bhvScuttlebug,
         id_bhvSwoop,
         id_bhvSnufit,
@@ -298,6 +298,8 @@ end
 
 ---@param obj Object
 function bhv_mce_block_loop(obj)
+    obj.parentObj = obj
+
     if obj.oAction == MCE_BLOCK_ACT_RESET then
         block_collision_lookup(obj)
         if obj.oAnimState > mce_block_get_transparent_start_obj(obj) then
@@ -936,16 +938,31 @@ local function on_replace_chat_command(msg)
         djui_chat_message_create("You need to be holding the block you want to replace")
         return true
     end
+    if gCurrentItem.model ~= E_MODEL_MCE_BLOCK then
+        djui_chat_message_create("Replace only works on non-color blocks")
+        return true
+    end
 
     local new_hotbar_index = math.floor(tonumber(commands[1]) --[[@as integer]])
+    local new_hotbar_item = gMenu.hotbar.items[new_hotbar_index]
+    if not new_hotbar_item then
+        djui_chat_message_create("Can't replace using an empty slot")
+        return true
+    end
+    if new_hotbar_item.item.model ~= E_MODEL_MCE_BLOCK then
+        djui_chat_message_create("Replace only works with non-color blocks")
+        return true
+    end
+
     local item_anim_state = gCurrentItem.animState
     local owner_index = network_global_index_from_local(0) + 1
 
     local obj = obj_get_first_with_behavior_id(bhvMceBlock)
     while obj do
-        if obj_has_model_extended(obj, E_MODEL_MCE_BLOCK) ~= 0 and obj.oOwner == owner_index and obj.oAnimState == item_anim_state then
-            obj.oAnimState = gMenu.hotbar.items[new_hotbar_index].item.animState
+        if obj.oOwner == owner_index and obj.oAnimState == item_anim_state then
+            obj.oAnimState = new_hotbar_item.item.animState
             obj.oPrevAnimState = obj.oAnimState
+            network_send_object(obj, true)
         end
         obj = obj_get_next_with_same_behavior_id(obj)
     end
