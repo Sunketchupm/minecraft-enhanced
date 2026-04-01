@@ -301,6 +301,8 @@ local function place_item()
 			obj.oOwner = network_global_index_from_local(0) + 1
 		end
 	)
+	-- Just to make sure
+	network_send_object(item, true)
 
 	if item then
 		play_sound(SOUND_GENERAL_BOX_LANDING, gMarioStates[0].marioObj.header.gfx.cameraToObject)

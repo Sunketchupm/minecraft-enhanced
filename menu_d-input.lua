@@ -520,8 +520,10 @@ local function before_mario_update(m)
 
     camera_romhack_allow_dpad_usage(0)
     camera_config_enable_dpad(false)
-    if gMenu.hotbar.items[gMenu.hotbar.index] then
-        gCurrentItem = gMenu.hotbar.items[gMenu.hotbar.index].item
+
+    local hotbar_item = gMenu.hotbar.items[gMenu.hotbar.index]
+    if hotbar_item then
+        gCurrentItem = hotbar_item.item
     end
 end
 

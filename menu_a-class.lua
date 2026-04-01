@@ -115,8 +115,8 @@ TAB_ENEMIES = 4 ---@type Tab
 TAB_SURFACE_TYPES = 5 ---@type Tab
 TAB_MAIN_END = 5 ---@type Tab
 
-TAB_BLOCK_SETTINGS = 90
-TAB_OBJECT_SETTINGS = 91
+TAB_BLOCK_SETTINGS = 90 ---@type Tab
+TAB_OBJECT_SETTINGS = 91 ---@type Tab
 
 TAB_TO_SETTINGS = {
     [TAB_BUILDING_BLOCKS] = TAB_BLOCK_SETTINGS,
@@ -125,16 +125,90 @@ TAB_TO_SETTINGS = {
     [TAB_ENEMIES] = TAB_OBJECT_SETTINGS,
 }
 
-WHITE = { r = 255, g = 255, b = 255, a = 255 }
-BLACK = { r = 0, g = 0, b = 0, a = 255 }
-RED = { r = 255, g = 0, b = 0, a = 255 }
-YELLOW = { r = 255, g = 255, b = 0, a = 255 }
-GREEN = { r = 0, g = 255, b = 0, a = 255 }
-CYAN = { r = 0, g = 255, b = 255, a = 255 }
-BLUE = { r = 0, g = 0, b = 255, a = 255 }
-PURPLE = { r = 255, g = 0, b = 255, a = 255 }
+do
+    local function default()
+        return {
+            renderer = function () end,
+            icon = { color = WHITE },
+            pages = {
+                current = 1,
+                count = 1,
+                item_count = 1,
+            },
+            items = {},
+            misc = {},
+        }
+    end
+
+    for i = TAB_BUILDING_BLOCKS, TAB_MAIN_END do
+        gMenu.tabs[i] = default()
+    end
+
+    -- Unlisted tabs
+    gMenu.tabs[TAB_BLOCK_SETTINGS] = default()
+    gMenu.tabs[TAB_OBJECT_SETTINGS] = default()
+end
+
+local function fill_menu()
+    ---@param tab integer
+    ---@param items MenuItemLink[]
+    local function fill_tab(tab, items)
+        for i = 1, #items, 1 do
+            local icon = items[i].icon or { texture = gTextures.no_camera }
+            local behavior = items[i].item.behavior
+            local model = items[i].item.model
+            local params = items[i].item.params
+            local anim_state = items[i].item.params.forceAnimState or i
+            ---@type MenuItemLink
+            local menu_item = {
+                item = {
+                    behavior = behavior,
+                    model = model,
+                    animState = anim_state,
+                    params = params
+                },
+                icon = icon
+            }
+            menu_item.self = menu_item
+            gMenu.tabs[tab].items[i] = menu_item
+        end
+    end
+
+    fill_item_lists()
+
+    fill_tab(TAB_BUILDING_BLOCKS, gMenuBlockTextureIcons)
+    fill_tab(TAB_BUILDING_BLOCKS_COLORS, gMenuBlockColorIcons)
+    fill_tab(TAB_LEVEL_OBJECTS, gMenuLevelObjectsIcons)
+    fill_tab(TAB_ENEMIES, gMenuEnemyIcons)
+
+    -- Insert barrier
+    table.insert(gMenu.tabs[TAB_BUILDING_BLOCKS_COLORS].items, {
+        item = {
+            behavior = bhvMceBlock,
+            model = E_MODEL_MCE_COLOR_BLOCK,
+            animState = MCE_COLOR_BLOCK_BARRIER_ANIM,
+            params = get_default_item_params(),
+        },
+        icon = { texture = get_texture_info("barrier"), color = WHITE }
+    })
+
+    local tab_icons = {
+        { texture = DPLAT_BLOCK_TEX, color = WHITE},
+        { texture = DPLAT_BLOCK_TEX, color = WHITE},
+        { texture = get_texture_info("starslot"), color = WHITE},
+        { texture = get_texture_info("goombaslot"), color = WHITE},
+        { texture = CPLAT_BLOCK_TEX, color = WHITE},
+    }
+    for i = TAB_BUILDING_BLOCKS, TAB_MAIN_END do
+        gMenu.tabs[i].icon = tab_icons[i]
+    end
+end
+add_first_update(fill_menu)
 
 HOTBAR_SIZE = 10
+for i = 1, HOTBAR_SIZE do
+    gMenu.hotbar.items[i] = {} ---@diagnostic disable-line: missing-fields
+end
 
 gMenuBlockTextureIcons = {}
 gMenuBlockColorIcons = {}
@@ -244,3 +318,12 @@ SLOT_WOODEN_DOOR = get_texture_info("door_seg3_texture_0300BD10")
 SLOT_METAL_DOOR = get_texture_info("door_seg3_texture_0300D510")
 SLOT_MURAL_DOOR = get_texture_info("door_seg3_texture_0300ED10")
 SLOT_BBH_DOOR = get_texture_info("door_seg3_texture_03010510")
+
+WHITE = { r = 255, g = 255, b = 255, a = 255 }
+BLACK = { r = 0, g = 0, b = 0, a = 255 }
+RED = { r = 255, g = 0, b = 0, a = 255 }
+YELLOW = { r = 255, g = 255, b = 0, a = 255 }
+GREEN = { r = 0, g = 255, b = 0, a = 255 }
+CYAN = { r = 0, g = 255, b = 255, a = 255 }
+BLUE = { r = 0, g = 0, b = 255, a = 255 }
+PURPLE = { r = 255, g = 0, b = 255, a = 255 }

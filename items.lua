@@ -278,6 +278,7 @@ function bhv_mce_block_init(obj)
         "activeFlags",
         "oOpacity",
         "oAnimState",
+        "oPrevAnimState",
         "oOwner",
         "oFaceAnglePitch",
         "oMoveAnglePitch",
@@ -944,12 +945,12 @@ local function on_replace_chat_command(msg)
     end
 
     local new_hotbar_index = math.floor(tonumber(commands[1]) --[[@as integer]])
-    local new_hotbar_item = gMenu.hotbar.items[new_hotbar_index]
+    local new_hotbar_item = gMenu.hotbar.items[new_hotbar_index].item
     if not new_hotbar_item then
         djui_chat_message_create("Can't replace using an empty slot")
         return true
     end
-    if new_hotbar_item.item.model ~= E_MODEL_MCE_BLOCK then
+    if new_hotbar_item.model ~= E_MODEL_MCE_BLOCK then
         djui_chat_message_create("Replace only works with non-color blocks")
         return true
     end
@@ -960,7 +961,7 @@ local function on_replace_chat_command(msg)
     local obj = obj_get_first_with_behavior_id(bhvMceBlock)
     while obj do
         if obj.oOwner == owner_index and obj.oAnimState == item_anim_state then
-            obj.oAnimState = new_hotbar_item.item.animState
+            obj.oAnimState = new_hotbar_item.animState
             obj.oPrevAnimState = obj.oAnimState
             network_send_object(obj, true)
         end
