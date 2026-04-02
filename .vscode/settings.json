@@ -8,6 +8,8 @@
         "bhvMceExclamationBox",
         "bhvArrow",
         "bhvMceTree",
-        "bhvMceDoor"
+        "bhvMceDoor",
+        "bhvMceFlame",
+        "bhvMce1Up"
     ]
 }

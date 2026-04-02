@@ -94,7 +94,7 @@ const BehaviorScript bhvMceTree[] = {
 
 const BehaviorScript bhvMceDoor[] = {
     BEGIN(OBJ_LIST_SURFACE),
-    ID(id_bhvDoor),
+    ID(id_bhvNewId),
     SET_INT(oInteractType, INTERACT_DOOR),
     // Door - common:
     OR_INT(oFlags, (OBJ_FLAG_ACTIVE_FROM_AFAR | OBJ_FLAG_COMPUTE_DIST_TO_MARIO | OBJ_FLAG_SET_FACE_YAW_TO_MOVE_YAW | OBJ_FLAG_UPDATE_GFX_POS_AND_ANGLE)),
@@ -108,6 +108,37 @@ const BehaviorScript bhvMceDoor[] = {
     CALL_NATIVE(bhv_door_init),
     BEGIN_LOOP(),
         CALL_NATIVE(bhv_door_loop),
+    END_LOOP(),
+};
+
+const BehaviorScript bhvMceFlame[] = {
+    BEGIN(OBJ_LIST_LEVEL),
+    ID(id_bhvNewId),
+    OR_INT(oFlags, OBJ_FLAG_UPDATE_GFX_POS_AND_ANGLE),
+    BILLBOARD(),
+    SET_HOME(),
+    SCALE(/*Unused*/ 0, /*Field*/ 700),
+    SET_INTERACT_TYPE(INTERACT_FLAME),
+    SET_HITBOX_WITH_OFFSET(/*Radius*/ 50, /*Height*/ 25, /*Downwards offset*/ 25),
+    SET_INT(oIntangibleTimer, 0),
+    CALL_NATIVE(bhv_init_room),
+    BEGIN_LOOP(),
+        SET_INT(oInteractStatus, 0),
+        ANIMATE_TEXTURE(oAnimState, 2),
+    END_LOOP(),
+};
+
+const BehaviorScript bhvMce1Up[] = {
+    BEGIN(OBJ_LIST_LEVEL),
+    ID(id_bhvNewId),
+    OR_INT(oFlags, OBJ_FLAG_UPDATE_GFX_POS_AND_ANGLE),
+    BILLBOARD(),
+    SET_HITBOX_WITH_OFFSET(/*Radius*/ 30, /*Height*/ 30, /*Downwards offset*/ 0),
+    SET_FLOAT(oGraphYOffset, 30),
+    CALL_NATIVE(bhv_1up_init),
+    BEGIN_LOOP(),
+        SET_INT(oIntangibleTimer, 0),
+        CALL_NATIVE(bhv_1up_loop),
     END_LOOP(),
 };
 

@@ -2156,6 +2156,9 @@ gMenuLevelObjectsIcons = {
     add_behavior_with_params(SLOT_METAL_DOOR, WHITE, bhvMceDoor, E_MODEL_HMC_METAL_DOOR, {}),
     add_behavior_with_params(SLOT_MURAL_DOOR, WHITE, bhvMceDoor, E_MODEL_HMC_HAZY_MAZE_DOOR, {}),
     add_behavior_with_params(SLOT_BBH_DOOR, WHITE, bhvMceDoor, E_MODEL_BBH_HAUNTED_DOOR, {}),
+    add_behavior_with_params(SLOT_RED_FLAME_TEX, WHITE, bhvMceFlame, E_MODEL_RED_FLAME, { preview = { scale = 7.5, billboard = true, animate = { animState = 2 } } }),
+    add_behavior_with_params(SLOT_BLUE_FLAME_TEX, WHITE, bhvMceFlame, E_MODEL_BLUE_FLAME, { preview = { scale = 7.5, billboard = true, animate = { animState = 2 } } }),
+    add_behavior_with_params(SLOT_1UP_TEX, WHITE, bhvMce1Up, E_MODEL_1UP, { preview = { billboard = true } }),
 }
 
 gMenuEnemyIcons = {
@@ -2166,22 +2169,20 @@ gMenuEnemyIcons = {
     add_behavior_with_params(SLOT_MADPIANO_TEX, WHITE, id_bhvMadPiano, E_MODEL_MAD_PIANO, { preview = { animate = { animation = gObjectAnimations.mad_piano_seg5_anims_05009B14, animIndex = 0 } } }),
     add_behavior_with_params(SLOT_BULLY_TEX, WHITE, id_bhvSmallBully, E_MODEL_BULLY, { preview = { animate = { animation = gObjectAnimations.bully_seg5_anims_0500470C, animIndex = 0 } } }),
     add_behavior_with_params(SLOT_CHILLBULLY_TEX, WHITE, id_bhvSmallBully, E_MODEL_CHILL_BULLY, { preview = { animate = { animation = gObjectAnimations.chilly_chief_seg6_anims_06003994, animIndex = 0 } } }),
-    add_behavior_with_params(SLOT_1UP_TEX, WHITE, id_bhv1Up, E_MODEL_1UP, { preview = { animate = { animation = nil, animIndex = 0 } } }),
     add_behavior_with_params(SLOT_KOOPA_TEX, WHITE, id_bhvKoopa, E_MODEL_KOOPA_WITH_SHELL, { preview = { animate = { animation = gObjectAnimations.koopa_seg6_anims_06011364, animIndex = 1 } } }),
-    add_behavior_with_params(SLOT_FLAME_TEX, WHITE, id_bhvFlame, E_MODEL_RED_FLAME, { preview = { animate = { animation = nil, animIndex = 4 } } }),
     --add_behavior_with_params(SLOT_SPINY_TEX, WHITE, id_bhvSpiny, E_MODEL_SPINY, { preview = { animate = { animation = gObjectAnimations.spiny_seg5_anims_05016EAC, animIndex = 0 } } }),
     add_behavior_with_params(SLOT_HEAVEHO_TEX, WHITE, id_bhvHeaveHo, E_MODEL_HEAVE_HO, { preview = { animate = { animation = gObjectAnimations.heave_ho_seg5_anims_0501534C, animIndex = 0 } } }),
     add_behavior_with_params(SLOT_SMALLWHOMP_TEX, WHITE, id_bhvSmallWhomp, E_MODEL_WHOMP, { preview = { animate = { animation = gObjectAnimations.whomp_seg6_anims_06020A04, animIndex = 0 } } }),
-    add_behavior_with_params(SLOT_THWOMP_TEX, WHITE, id_bhvThwomp, E_MODEL_THWOMP, { preview = { animate = { animation = nil, animIndex = 0 } } }),
+    add_behavior_with_params(SLOT_THWOMP_TEX, WHITE, id_bhvThwomp, E_MODEL_THWOMP, {}),
     add_behavior_with_params(SLOT_SPINDRIFT_TEX, WHITE, id_bhvSpindrift, E_MODEL_SPINDRIFT, { preview = { animate = { animation = gObjectAnimations.spindrift_seg5_anims_05002D68, animIndex = 0 } } }),
     add_behavior_with_params(SLOT_FLYGUY_TEX, WHITE, id_bhvFlyGuy, E_MODEL_FLYGUY, { preview = { animate = { animation = gObjectAnimations.flyguy_seg8_anims_08011A64, animIndex = 0 } } }),
-    --add_behavior_with_params(SLOT_BOO_TEX, WHITE, id_bhvBoo, E_MODEL_BOO, { preview = { animate = { animation = nil, animIndex = 0 } } }),
-    --add_behavior_with_params(SLOT_POKEY_TEX, WHITE, id_bhvPokey, E_MODEL_POKEY_HEAD, { preview = { animate = { animation = nil, animIndex = 0 } } }),
+    --add_behavior_with_params(SLOT_BOO_TEX, WHITE, id_bhvBoo, E_MODEL_BOO, {}),
+    --add_behavior_with_params(SLOT_POKEY_TEX, WHITE, id_bhvPokey, E_MODEL_POKEY_HEAD, {}),
     add_behavior_with_params(SLOT_SCUTTLEBUG_TEX, WHITE, id_bhvScuttlebug, E_MODEL_SCUTTLEBUG, { preview = { animate = { animation = gObjectAnimations.scuttlebug_seg6_anims_06015064, animIndex = 0 } } }),
     add_behavior_with_params(SLOT_SWOOP_TEX, WHITE, id_bhvSwoop, E_MODEL_SWOOP, { preview = { animate = { animation = gObjectAnimations.swoop_seg6_anims_060070D0, animIndex = 0 } } }),
-    add_behavior_with_params(SLOT_SNUFIT_TEX, WHITE, id_bhvSnufit, E_MODEL_SNUFIT, { preview = { animate = { animation = nil, animIndex = 0 } } }),
+    add_behavior_with_params(SLOT_SNUFIT_TEX, WHITE, id_bhvSnufit, E_MODEL_SNUFIT, {}),
     add_behavior_with_params(SLOT_MRBLIZZARD_TEX, WHITE, id_bhvMrBlizzard, E_MODEL_MR_BLIZZARD, { preview = { animate = { animation = gObjectAnimations.snowman_seg5_anims_0500D118, animIndex = 0 } } }),
-    add_behavior_with_params(SLOT_BULLETBILL_TEX, WHITE, id_bhvBulletBill, E_MODEL_BULLET_BILL, { preview = { animate = { animation = nil, animIndex = 0 } } }),
+    add_behavior_with_params(SLOT_BULLETBILL_TEX, WHITE, id_bhvBulletBill, E_MODEL_BULLET_BILL, {}),
     -- Chain chomp
     -- Lakitu
 }

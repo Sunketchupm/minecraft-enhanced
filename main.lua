@@ -163,79 +163,95 @@ end
 
 --------------------------------------
 
+---@param animate_settings PreviewAnimations
+---@param obj Object
+local function preview_animate(animate_settings, obj)
+	if animate_settings.animation then
+		obj.oAnimations = animate_settings.animation
+		cur_obj_init_animation(animate_settings.animIndex or 0)
+	end
+
+	if animate_settings.animState then
+		if obj.oTimer >= animate_settings.animState then
+			obj.oAnimState = obj.oAnimState + 1
+			obj.oTimer = 0
+		end
+	end
+
+	if animate_settings.faceAngleYaw then
+		obj.oFaceAngleYaw = math.s16(obj.oFaceAngleYaw + animate_settings.faceAngleYaw)
+	else
+		---@cast sOutlineObject Object
+		obj.oFaceAngleYaw = sOutlineObject.oFaceAngleYaw
+	end
+end
+
+---@param obj Object
+local function preview_handle_transparency(obj)
+	local current_item = gCurrentItem
+	if current_item.behavior == bhvMceBlock then
+		local transparent_start = mce_block_get_transparent_start_item(current_item)
+		local anim_max = mce_block_get_anim_max_item(current_item)
+		if obj.oAnimState >= transparent_start then
+			obj.oOpacity = 100
+		else
+			obj.oAnimState = current_item.animState + transparent_start
+			obj.oOpacity = 200
+		end
+
+		if obj.oAnimState > anim_max then
+			obj.oAnimState = anim_max
+		end
+	else
+		obj.oOpacity = 255
+	end
+end
+
 --- Called from bhvPreviewItem.bhv
 
 ---@param obj Object
 function bhv_preview_item_loop(obj)
+	if not sOutlineObject or not gCurrentItem then
+		obj_mark_for_deletion(obj)
+		return
+	end
 	local current_item = gCurrentItem
-	if sOutlineObject and obj_get_first_with_behavior_id(bhvOutline) and current_item and current_item.model then
-		local item_params = current_item.params
-		obj.oPosX = sOutlineObject.oPosX
-		obj.oPosY = sOutlineObject.oPosY - (item_params.spawnYOffset * item_params.size.y)
-		obj.oPosZ = sOutlineObject.oPosZ
-		obj.header.gfx.node.flags = obj.header.gfx.node.flags & ~GRAPH_RENDER_BILLBOARD
-		obj.oItemParams = item_params.params
-		obj.oOpacity = 255
-		local outline_scale = sOutlineObject.header.gfx.scale
-		obj_scale_xyz(obj, outline_scale.x, outline_scale.y, outline_scale.z)
-		obj_set_model_extended(obj, current_item.model)
+	obj.parentObj = obj
 
-		local settings = item_params.preview
-		if not settings then return end
+	local item_params = current_item.params
+	obj.oPosX = sOutlineObject.oPosX
+	obj.oPosY = sOutlineObject.oPosY - (item_params.spawnYOffset * item_params.size.y)
+	obj.oPosZ = sOutlineObject.oPosZ
+	obj.header.gfx.node.flags = obj.header.gfx.node.flags & ~GRAPH_RENDER_BILLBOARD
+	obj.oItemParams = item_params.params
+	local outline_scale = sOutlineObject.header.gfx.scale
+	obj_scale_xyz(obj, outline_scale.x, outline_scale.y, outline_scale.z)
+	obj_set_model_extended(obj, current_item.model)
 
-		if settings.billboard then
+	preview_handle_transparency(obj)
+
+	local preview_settings = item_params.preview
+	if current_item.behavior ~= bhvMceBlock and preview_settings then
+		if preview_settings.billboard then
 			obj_set_billboard(obj)
 		end
 
-		if settings.scale then
-			obj_scale_mult_to(obj, settings.scale)
+		if preview_settings.scale then
+			obj_scale_mult_to(obj, preview_settings.scale)
 		end
 
-		obj.oFaceAnglePitch = sOutlineObject.oFaceAnglePitch
-		--obj.oFaceAngleYaw = s_outline.oFaceAngleYaw
-		obj.oFaceAngleRoll = sOutlineObject.oFaceAngleRoll
-
-		local animate_settings = settings.animate
+		local animate_settings = preview_settings.animate
 		if animate_settings then
-			if animate_settings.animation then
-				obj.oAnimations = animate_settings.animation
-				cur_obj_init_animation(animate_settings.animIndex or 0)
-			end
-
-			if animate_settings.animState then
-				if obj.oTimer >= animate_settings.animState then
-					obj.oAnimState = obj.oAnimState + 1
-					obj.oTimer = 0
-				end
-			end
-
-			if animate_settings.faceAngleYaw then
-				obj.oFaceAngleYaw = math.s16(obj.oFaceAngleYaw + animate_settings.faceAngleYaw)
-			else
-				obj.oFaceAngleYaw = sOutlineObject.oFaceAngleYaw
-			end
+			preview_animate(animate_settings, obj)
 		else
 			obj.oAnimState = current_item.animState
 			obj.oFaceAngleYaw = sOutlineObject.oFaceAngleYaw
 		end
-
-		if current_item.behavior == bhvMceBlock then
-			local transparent_start = mce_block_get_transparent_start_item(current_item)
-			local anim_max = mce_block_get_anim_max_item(current_item)
-			if obj.oAnimState >= transparent_start then
-				obj.oOpacity = 100
-			else
-				obj.oAnimState = current_item.animState + transparent_start
-				obj.oOpacity = 200
-			end
-
-			if obj.oAnimState > anim_max then
-				obj.oAnimState = anim_max
-			end
-		end
-	else
-		obj_mark_for_deletion(obj)
 	end
+
+	obj.oFaceAnglePitch = sOutlineObject.oFaceAnglePitch
+	obj.oFaceAngleYaw = sOutlineObject.oFaceAngleYaw
+	obj.oFaceAngleRoll = sOutlineObject.oFaceAngleRoll
 end
 
 --------------------------------------

@@ -61,7 +61,6 @@ end
 gCurrentItem = { behavior = nil, model = E_MODEL_NONE, animState = 0, params = {} }
 gItemBhvIds = {}
 
-local sLevelItemBehaviors = {}
 local sEnemyItemBehaviors = {}
 local sVanillaClearImmune = {}
 add_first_update(function ()
@@ -80,14 +79,8 @@ add_first_update(function ()
         bhvMceExclamationBox,
         bhvMceTree,
         bhvMceDoor,
-    }
-    ---@type BehaviorId[]
-    sLevelItemBehaviors = {
-        bhvMceStar,
-        bhvMceCoin,
-        bhvMceExclamationBox,
-        bhvMceTree,
-        bhvMceDoor,
+        bhvMceFlame,
+        bhvMce1Up,
     }
     ---@type BehaviorId[]
     sEnemyItemBehaviors = {
@@ -97,9 +90,7 @@ add_first_update(function ()
         id_bhvCirclingAmp,
         id_bhvMadPiano,
         id_bhvSmallBully,
-        id_bhv1Up,
         id_bhvKoopa,
-        id_bhvFlame,
         --id_bhvSpiny,
         id_bhvHeaveHo,
         id_bhvSmallWhomp,
@@ -646,13 +637,15 @@ function on_clear_chat_command(msg)
         end
         djui_chat_message_create("Removed all placed blocks")
     elseif command == "items" then
-        for _, behavior in ipairs(sLevelItemBehaviors) do
-            local obj = obj_get_first_with_behavior_id(behavior)
-            while obj do
-                if object_removal_criteria(obj, args[2]) then
-                    obj_mark_for_deletion(obj)
+        for _, behavior in ipairs(gItemBhvIds) do
+            if behavior ~= bhvMceBlock then
+                local obj = obj_get_first_with_behavior_id(behavior)
+                while obj do
+                    if object_removal_criteria(obj, args[2]) then
+                        obj_mark_for_deletion(obj)
+                    end
+                    obj = obj_get_next_with_same_behavior_id(obj)
                 end
-                obj = obj_get_next_with_same_behavior_id(obj)
             end
         end
         djui_chat_message_create("Removed all placed level items")
