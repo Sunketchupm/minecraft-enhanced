@@ -794,7 +794,7 @@ local function render_controls(screen_width, screen_height)
                     render_controls_tip(screen, x, y, {{prefix = "", texture = L_TRIG_TEX}, {postfix = "  Stop Flying", texture = L_TRIG_TEX}})
                     render_controls_tip(screen, x, y * 0.95, {{postfix = "  Open Menu", texture = X_BUTTON_TEX}})
                     render_controls_tip(screen, x, y * 0.90, {{postfix = "  Place/Delete Item", texture = Y_BUTTON_TEX}})
-                    render_controls_tip(screen, x, y * 0.85, {{postfix = "  Item Elevation", texture = UD_JPAD_TEX}})
+                    render_controls_tip(screen, x, y * 0.85, {{postfix = "  Adjust Elevation", texture = UD_JPAD_TEX}})
                     render_controls_tip(screen, x, y * 0.80, {{postfix = "  Cycle Hotbar", texture = LR_JPAD_TEX}})
                     render_controls_tip(screen, x, y * 0.75, {{postfix = "  Lock Face Angle/More", texture = L_TRIG_TEX}})
                 end
