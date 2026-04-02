@@ -190,7 +190,6 @@ local function render_item_list(x, y, width, height)
         local slot_y = y + ((slot_height * ((index - 1) // column_count)))
         if gMouse.moved and mouse_is_within(slot_x, slot_y, slot_x + slot_width, slot_y + slot_height) then
             gMenu.current_item.index = index + (items_per_page * page_index)
-            gMenu.current_item.item = item
             hovering_over_item = true
         end
 
@@ -219,7 +218,6 @@ local function render_item_list(x, y, width, height)
 
     if gMouse.moved and not hovering_over_item then
         gMenu.current_item.index = 0
-        gMenu.current_item.item = nil
     end
 end
 
@@ -661,8 +659,11 @@ local function render_hotbar(screen_width, screen_height)
             render_icon(slot_x, slot_y, slot_width, slot_height, item.icon)
         end
 
-        if index == gMenu.hotbar.index and not gMouse.moved and gMenu.current_item.is_held then
-            render_icon(slot_x, slot_y, slot_width, slot_height, gMenu.get_current_item().icon)
+        if index == gMenu.hotbar.index and not gMouse.moved then
+            local current_item = gMenu.get_current_item()
+            if current_item and gMenu.current_item.is_held then
+                render_icon(slot_x, slot_y, slot_width, slot_height, current_item.icon)
+            end
         end
         djui_hud_set_color(128, 128, 128, 255)
         djui_hud_render_rect(slot_x, y, 3, slot_height)

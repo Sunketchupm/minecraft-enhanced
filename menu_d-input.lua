@@ -49,9 +49,9 @@ local function on_set_hotbar_item()
     local params = item.params
     local size = params.size
     if not item or not params or not size then return end
-    vec3f_copy(gGridSize, size)
-    vec3f_mul(gGridSize, GRID_SIZE_DEFAULT)
-    gOutlineGridYOffset = 0
+    --vec3f_copy(gGridSize, size)
+    --vec3f_mul(gGridSize, GRID_SIZE_DEFAULT)
+    --gOutlineGridYOffset = 0
 end
 
 ---@param m MarioState
@@ -63,7 +63,8 @@ local function handle_hotbar_inputs(m)
         if gMenu.hotbar.index < 1 then
             gMenu.hotbar.index = HOTBAR_SIZE
         end
-        if gMenu.hotbar.items[gMenu.hotbar.index] and gMenu.hotbar.items[gMenu.hotbar.index].item then
+        local item = gMenu.hotbar.items[gMenu.hotbar.index]
+        if item and item.item then
             on_set_hotbar_item()
         end
     elseif m.controller.buttonPressed & R_JPAD ~= 0 then
@@ -71,7 +72,8 @@ local function handle_hotbar_inputs(m)
         if gMenu.hotbar.index > HOTBAR_SIZE then
             gMenu.hotbar.index = 1
         end
-        if gMenu.hotbar.items[gMenu.hotbar.index] and gMenu.hotbar.items[gMenu.hotbar.index].item then
+        local item = gMenu.hotbar.items[gMenu.hotbar.index]
+        if item and item.item then
             on_set_hotbar_item()
         end
     end

@@ -196,14 +196,10 @@ local function preview_handle_transparency(obj)
 	local current_item = gCurrentItem
 	if current_item.behavior == bhvMceBlock then
 		local transparent_start = mce_block_get_transparent_start_item(current_item)
-		local anim_max = mce_block_get_anim_max_item(current_item)
-		if obj.oAnimState >= transparent_start then
-			obj.oOpacity = 100
-		else
-			obj.oAnimState = current_item.animState + transparent_start
-			obj.oOpacity = 200
-		end
+		obj.oAnimState = current_item.animState + transparent_start
+		obj.oOpacity = 100
 
+		local anim_max = mce_block_get_anim_max_item(current_item)
 		if obj.oAnimState > anim_max then
 			obj.oAnimState = anim_max
 		end

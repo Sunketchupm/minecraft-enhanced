@@ -24,8 +24,7 @@ gMenu = {
     ---@type CurrentMenuItem
     current_item = {
         index = 1,
-        is_held = false,
-        item = nil,
+        is_held = false
     },
     settings = {
         transparent = false
@@ -49,7 +48,7 @@ end
 
 ---@return MenuItemLink
 gMenu.get_current_item = function ()
-    return gMenu.current_item.item
+    return gMenu.tabs[gMenu.tabs.current].items[gMenu.current_item.index]
 end
 
 ---@return MenuPage
@@ -99,7 +98,6 @@ end
 ---@class CurrentMenuItem
     ---@field index integer
     ---@field is_held boolean
-    ---@field item MenuItemLink?
 
 ---@class ItemSettings
     ---@field transparent boolean
