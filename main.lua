@@ -28,7 +28,7 @@ hook_event(HOOK_MARIO_UPDATE, model_test) ]]
 -------------------------------------------------------------------------------
 
 local sEnableGrid = true
-local sEnableGridPerm = false
+local sForceDisableGrid = false
 GRID_SIZE_DEFAULT = 200
 gGridSize = { x = GRID_SIZE_DEFAULT, y = GRID_SIZE_DEFAULT, z = GRID_SIZE_DEFAULT }
 
@@ -59,16 +59,16 @@ end
 ---@param msg string
 local function on_grid_size_chat_command(msg)
 	if msg:lower() == "off" then
-		sEnableGridPerm = false
+		sForceDisableGrid = true
 		djui_chat_message_create("Turned off the grid")
 		return true
 	elseif msg:lower() == "on" then
-		sEnableGridPerm = true
+		sForceDisableGrid = false
 		djui_chat_message_create("Turned on the grid")
 		return true
 	elseif msg:lower() == "" then
-		sEnableGridPerm = not sEnableGridPerm
-		djui_chat_message_create("Turned " .. (sEnableGridPerm and "on" or "off") .. " the grid")
+		sForceDisableGrid = not sForceDisableGrid
+		djui_chat_message_create("Turned " .. (sForceDisableGrid and "on" or "off") .. " the grid")
 		return true
 	end
 
@@ -524,7 +524,7 @@ local function builder_mario_update(m)
 		return
 	end
 
-	sEnableGrid = sEnableGridPerm or not (m.controller.buttonDown & L_TRIG ~= 0 and m.controller.buttonDown & R_TRIG ~= 0)
+	sEnableGrid = not sForceDisableGrid and (m.controller.buttonDown & L_TRIG == 0 or m.controller.buttonDown & R_TRIG == 0)
 
 	set_item_size_control(m)
 	set_outline_offset(m)
