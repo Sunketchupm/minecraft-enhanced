@@ -28,7 +28,7 @@ hook_event(HOOK_MARIO_UPDATE, model_test) ]]
 -------------------------------------------------------------------------------
 
 local sEnableGrid = true
-
+local sEnableGridPerm = false
 GRID_SIZE_DEFAULT = 200
 gGridSize = { x = GRID_SIZE_DEFAULT, y = GRID_SIZE_DEFAULT, z = GRID_SIZE_DEFAULT }
 
@@ -59,16 +59,16 @@ end
 ---@param msg string
 local function on_grid_size_chat_command(msg)
 	if msg:lower() == "off" then
-		sEnableGrid = false
+		sEnableGridPerm = false
 		djui_chat_message_create("Turned off the grid")
 		return true
 	elseif msg:lower() == "on" then
-		sEnableGrid = true
+		sEnableGridPerm = true
 		djui_chat_message_create("Turned on the grid")
 		return true
 	elseif msg:lower() == "" then
-		sEnableGrid = not sEnableGrid
-		djui_chat_message_create("Turned " .. (sEnableGrid and "on" or "off") .. " the grid")
+		sEnableGridPerm = not sEnableGridPerm
+		djui_chat_message_create("Turned " .. (sEnableGridPerm and "on" or "off") .. " the grid")
 		return true
 	end
 
@@ -129,9 +129,14 @@ function bhv_outline_loop(obj)
 
 	sOutlineObject = obj
 
+	---@type MarioState
 	local m = gMarioStates[0]
 	local facing_x = sins(m.intendedYaw)
 	local facing_z = coss(m.intendedYaw)
+	if m.controller.buttonDown & L_TRIG ~= 0 then
+		facing_x = sins(m.faceAngle.y)
+		facing_z = coss(m.faceAngle.y)
+	end
 
 	local posX = to_grid_x( m.pos.x + facing_x * math.max(gGridSize.x, GRID_SIZE_DEFAULT) )
 	local posY = to_grid_y( m.pos.y ) + (gGridSize.y * gOutlineGridYOffset)
@@ -452,6 +457,7 @@ local sRotationIncrement = degrees_to_sm64(15)
 ---@param m MarioState
 local function set_item_rotation(m)
 	if not sOutlineObject or m.controller.buttonDown & L_TRIG == 0 then return end
+
 	local current_item = gCurrentItem
 	if not current_item then return end
 	local pressed = m.controller.buttonPressed
@@ -518,6 +524,8 @@ local function builder_mario_update(m)
 		return
 	end
 
+	sEnableGrid = sEnableGridPerm or not (m.controller.buttonDown & L_TRIG ~= 0 and m.controller.buttonDown & R_TRIG ~= 0)
+
 	set_item_size_control(m)
 	set_outline_offset(m)
 	set_item_rotation(m)
@@ -545,6 +553,10 @@ local function builder_mario_update(m)
 	else
 		sAutoBuildTimer = 0
 	end
+
+	if m.controller.buttonDown & L_TRIG ~= 0 and m.controller.buttonPressed & R_TRIG ~= 0 then
+		m.controller.buttonPressed = m.controller.buttonPressed & ~R_TRIG
+	end
 end
 
 hook_mod_menu_checkbox("Autobuild", true, function (_, value)
@@ -558,7 +570,7 @@ local function on_warp()
 end
 
 ---@param m MarioState
-local function mario_update(m)
+local function before_mario_update(m)
 	if m.playerIndex ~= 0 then return end
 	if gCanBuild then
 		if not gMenu.open then
@@ -573,4 +585,4 @@ end
 
 
 hook_event(HOOK_ON_WARP, on_warp)
-hook_event(HOOK_BEFORE_MARIO_UPDATE, mario_update)
+hook_event(HOOK_BEFORE_MARIO_UPDATE, before_mario_update)

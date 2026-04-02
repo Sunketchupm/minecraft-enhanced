@@ -783,45 +783,42 @@ local function render_controls(screen_width, screen_height)
             local l_held_modifier = gMarioStates[0].controller.buttonDown & L_TRIG ~= 0
             if not l_held_modifier then
                 if not gCurrentItem then -- no hold L, no selected item
-                    render_controls_tip(screen, x, y, {{postfix = "  Fly Up", texture = A_BUTTON_TEX}})
-                    render_controls_tip(screen, x * 5.3, y, {{postfix = "  Fly Down", texture = Z_TRIG_TEX}})
-                    render_controls_tip(screen, x * 10.4, y, {{postfix = "  Sprint Fly", texture = B_BUTTON_TEX}})
-                    render_controls_tip(screen, x * 16.2, y, {{postfix = "  Open Menu", texture = X_BUTTON_TEX}})
-                    render_controls_tip(screen, x * 21.7, y, {{postfix = "  Cycle Hotbar", texture = LR_JPAD_TEX}})
-                    render_controls_tip(screen, x * 28.4, y, {{prefix = "", texture = L_TRIG_TEX}, {postfix = "  Stop Flying", texture = L_TRIG_TEX}})
-                    render_controls_tip(screen, x * 35.6, y, {{postfix = "  Lock Face Angle/More", texture = L_TRIG_TEX}})
+                    render_controls_tip(screen, x, y, {{prefix = "", texture = L_TRIG_TEX}, {postfix = "  Stop Flying", texture = L_TRIG_TEX}})
+                    render_controls_tip(screen, x, y * 0.95, {{postfix = "  Open Menu", texture = X_BUTTON_TEX}})
+                    render_controls_tip(screen, x, y * 0.90, {{postfix = "  Fly Up", texture = A_BUTTON_TEX}})
+                    render_controls_tip(screen, x, y * 0.85, {{postfix = "  Fly Down", texture = Z_TRIG_TEX}})
+                    render_controls_tip(screen, x, y * 0.80, {{postfix = "  Sprint Fly", texture = B_BUTTON_TEX}})
+                    render_controls_tip(screen, x, y * 0.75, {{postfix = "  Cycle Hotbar", texture = LR_JPAD_TEX}})
+                    render_controls_tip(screen, x, y * 0.70, {{postfix = "  Lock Face Angle/More", texture = L_TRIG_TEX}})
                 else -- no hold L, item selected
-                    render_controls_tip(screen, x, y, {{postfix = "  Open Menu", texture = X_BUTTON_TEX}})
-                    render_controls_tip(screen, x * 6.4, y, {{postfix = "  Place/Delete Item", texture = Y_BUTTON_TEX}})
-                    render_controls_tip(screen, x * 14.7, y, {{postfix = "  Item Elevation", texture = UD_JPAD_TEX}})
-                    render_controls_tip(screen, x * 22, y, {{postfix = "  Cycle Hotbar", texture = LR_JPAD_TEX}})
-                    render_controls_tip(screen, x * 28.6, y, {{prefix = "", texture = L_TRIG_TEX}, {postfix = "  Stop Flying", texture = L_TRIG_TEX}})
-                    render_controls_tip(screen, x * 35.7, y, {{postfix = "  Lock Face Angle/More", texture = L_TRIG_TEX}})
+                    render_controls_tip(screen, x, y, {{prefix = "", texture = L_TRIG_TEX}, {postfix = "  Stop Flying", texture = L_TRIG_TEX}})
+                    render_controls_tip(screen, x, y * 0.95, {{postfix = "  Open Menu", texture = X_BUTTON_TEX}})
+                    render_controls_tip(screen, x, y * 0.90, {{postfix = "  Place/Delete Item", texture = Y_BUTTON_TEX}})
+                    render_controls_tip(screen, x, y * 0.85, {{postfix = "  Item Elevation", texture = UD_JPAD_TEX}})
+                    render_controls_tip(screen, x, y * 0.80, {{postfix = "  Cycle Hotbar", texture = LR_JPAD_TEX}})
+                    render_controls_tip(screen, x, y * 0.75, {{postfix = "  Lock Face Angle/More", texture = L_TRIG_TEX}})
                 end
             else
                 if not gCurrentItem then -- L held, no selected item
                     render_controls_tip(screen, x, y, {{postfix = "  Slow Fly", texture = B_BUTTON_TEX}})
-                    render_controls_tip(screen, x * 6.1, y, {{prefix = "", texture = U_CBUTTON_TEX}, {postfix = "  Adjust Pitch", texture = D_CBUTTON_TEX}})
-                    render_controls_tip(screen, x * 13.4, y, {{prefix = "", texture = L_CBUTTON_TEX}, {postfix = "  Adjust Yaw", texture = R_CBUTTON_TEX}})
-                    render_controls_tip(screen, x * 20.1, y, {{postfix = "  Adjust Roll", texture = LR_JPAD_TEX}})
-                    render_controls_tip(screen, x * 26.2, y, {{postfix = "  Reset Angle", texture = X_BUTTON_TEX}})
                 else -- L held, item selected
                     render_controls_tip(screen, x, y, {{postfix = "  Slow Fly", texture = B_BUTTON_TEX}})
-                    render_controls_tip(screen, x * 6.1, y, {{postfix = "  Place/Delete Item", texture = Y_BUTTON_TEX}})
-                    render_controls_tip(screen, x * 14.4, y, {{postfix = "  Adjust Size", texture = UD_JPAD_TEX}})
-                    render_controls_tip(screen, x * 20.5, y, {{prefix = "", texture = U_CBUTTON_TEX}, {postfix = "  Adjust Pitch", texture = D_CBUTTON_TEX}})
-                    render_controls_tip(screen, x * 27.8, y, {{prefix = "", texture = L_CBUTTON_TEX}, {postfix = "  Adjust Yaw", texture = R_CBUTTON_TEX}})
-                    render_controls_tip(screen, x * 34.5, y, {{postfix = "  Adjust Roll", texture = LR_JPAD_TEX}})
-                    render_controls_tip(screen, x * 40.6, y, {{postfix = "  Reset Angle", texture = X_BUTTON_TEX}})
+                    render_controls_tip(screen, x, y * 0.95, {{postfix = "  Place/Delete Item", texture = Y_BUTTON_TEX}})
+                    render_controls_tip(screen, x, y * 0.90, {{postfix = "  Adjust Size", texture = UD_JPAD_TEX}})
+                    render_controls_tip(screen, x, y * 0.85, {{prefix = "", texture = U_CBUTTON_TEX}, {postfix = "  Adjust Pitch", texture = D_CBUTTON_TEX}})
+                    render_controls_tip(screen, x, y * 0.80, {{prefix = "", texture = L_CBUTTON_TEX}, {postfix = "  Adjust Yaw", texture = R_CBUTTON_TEX}})
+                    render_controls_tip(screen, x, y * 0.75, {{postfix = "  Adjust Roll", texture = LR_JPAD_TEX}})
+                    render_controls_tip(screen, x, y * 0.70, {{postfix = "  Reset Angle", texture = X_BUTTON_TEX}})
+                    render_controls_tip(screen, x, y * 0.65, {{postfix = "  Disable Grid", texture = R_TRIG_TEX}})
                 end
             end
         else
             render_controls_tip(screen, x, y, {{postfix = "  Move Selection", texture = CONTROL_STICK_TEX}})
-            render_controls_tip(screen, x * 8.3, y, {{postfix = "  Select Item", texture = A_BUTTON_TEX}})
-            render_controls_tip(screen, x * 14.5, y, {{postfix = "  Close Menu", texture = X_BUTTON_TEX}})
-            render_controls_tip(screen, x * 20.3, y , {{prefix = "", texture = L_CBUTTON_TEX}, {postfix = "  Next/Previous Page", texture = R_CBUTTON_TEX}})
-            render_controls_tip(screen, x * 29.9, y, {{prefix = "", texture = L_TRIG_TEX}, {postfix = "  Next/Previous Tab", texture = R_TRIG_TEX}})
-            render_controls_tip(screen, x * 39, y, {{postfix = "  Cycle Hotbar", texture = LR_JPAD_TEX}})
+            render_controls_tip(screen, x, y * 0.95, {{postfix = "  Select Item", texture = A_BUTTON_TEX}})
+            render_controls_tip(screen, x, y * 0.90, {{prefix = "", texture = L_CBUTTON_TEX}, {postfix = "  Next/Previous Page", texture = R_CBUTTON_TEX}})
+            render_controls_tip(screen, x, y * 0.85, {{prefix = "", texture = L_TRIG_TEX}, {postfix = "  Next/Previous Tab", texture = R_TRIG_TEX}})
+            render_controls_tip(screen, x, y * 0.80, {{postfix = "  Cycle Hotbar", texture = LR_JPAD_TEX}})
+            render_controls_tip(screen, x, y * 0.75, {{postfix = "  Close Menu", texture = X_BUTTON_TEX}})
         end
     end
 end
