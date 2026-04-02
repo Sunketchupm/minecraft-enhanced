@@ -322,9 +322,11 @@ local function handle_paging_inputs(m)
     end
 end
 
+local sResetHotbarCooldownTimer = 0
+
 ---@param m MarioState
 local function handle_reset_inputs(m)
-    if m.controller.buttonDown & Y_BUTTON ~= 0 then
+    if m.controller.buttonDown & Y_BUTTON ~= 0 and sResetHotbarCooldownTimer <= 0 then
         gMenu.hotbar.clear = gMenu.hotbar.clear + 1
         play_sound(SOUND_MENU_COLLECT_SECRET + ((gMenu.hotbar.clear // 12) << 16), gGlobalSoundSource)
     else
@@ -339,6 +341,10 @@ local function handle_reset_inputs(m)
         end
         play_sound(SOUND_MENU_LET_GO_MARIO_FACE, gGlobalSoundSource)
         gMenu.hotbar.clear = 0
+        sResetHotbarCooldownTimer = 39
+    end
+    if sResetHotbarCooldownTimer > 0 then
+        sResetHotbarCooldownTimer = sResetHotbarCooldownTimer - 1
     end
 end
 
@@ -346,13 +352,14 @@ end
 function mouse_handle_reset_inputs()
     if not gMouse.moved then return false end
 
-    if gMouse.held.left then
+    if gMouse.held.left and sResetHotbarCooldownTimer <= 0 then
         gMenu.hotbar.clear = gMenu.hotbar.clear + 1
         play_sound(SOUND_MENU_COLLECT_SECRET + ((gMenu.hotbar.clear // 12) << 16), gGlobalSoundSource)
         return true
     else
         gMenu.hotbar.clear = 0
     end
+    return false
 end
 
 ---@param m MarioState
