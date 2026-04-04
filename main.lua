@@ -1,5 +1,5 @@
--- name: \\#31db02\\Minecraft \\#1dcff2\\Enhanced \\[WIP]\\
--- description: An improved version of the Minecraft mod, originally by zKevin.\n\nTexture help by Sherbie. Minecraft+ made by Bene360 (which isn't used in this mod, but their effort shouldn't be wasted).
+-- name: \\#31db02\\Minecraft \\#1dcff2\\Enhanced \\#dcdcdc\\[WIP]
+-- description: An improved version of the Minecraft mod, originally by zKevin.\n\nMod made by Teru. Texture help by Sherbie. Minecraft+ made by Bene360 (which isn't used in this mod, but their effort shouldn't be wasted).
 
 gLevelValues.fixCollisionBugs = true
 gLevelValues.fixCollisionBugsFalseLedgeGrab = false
