@@ -711,12 +711,14 @@ end
 
 hook_chat_command("objects", "Counts the amount of objects in the current area", on_object_count_chat_commmand)
 hook_chat_command("clear", "[all|blocks|items|enemies] | Removes all objects placed by you that fit the specified criteria", on_clear_chat_command)
-if network_is_privileged() then
-    update_chat_command_description("clear", "[all|blocks|items|enemies] | Removes all objects placed by you that fit the specified criteria \
-    MODERATORS: [all|vanilla|blocks|items|enemies] [ALL|orphaned] \
-    Use 'ALL' to remove EVERY object of that criteria \
-    Use 'orphaned' to remove all objects of that criteria with no owner")
-end
+add_first_update(function ()
+    if network_is_privileged() then
+        update_chat_command_description("clear", "[all|blocks|items|enemies] | Removes all objects placed by you that fit the specified criteria \
+        MODERATORS: [all|vanilla|blocks|items|enemies] [ALL|orphaned] \
+        Use 'ALL' to remove EVERY object of that criteria \
+        Use 'orphaned' to remove all objects of that criteria with no owner")
+    end
+end)
 hook_event(HOOK_UPDATE, reset_all_items)
 
 ------------------------------------------------------------------------------------------
