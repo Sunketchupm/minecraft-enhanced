@@ -1,3 +1,5 @@
+local Items = {}
+
 ---@param tex_name string
 ---@return MenuItemLink
 local function add_block(tex_name)
@@ -10,7 +12,7 @@ local function add_block(tex_name)
     }
 
     ---@type MenuItemLink
-    local link = { item = item, icon = { texture = get_texture_info(tex_name), color = WHITE } }
+    local link = { item = item, icon = { texture = get_texture_info(tex_name), color = WHITE }, held = true }
     return link
 end
 
@@ -26,7 +28,7 @@ local function add_color_block(color)
     }
 
     ---@type MenuItemLink
-    local link = { item = item, icon = { color = color } }
+    local link = { item = item, icon = { color = color }, held = true }
     return link
 end
 
@@ -55,15 +57,15 @@ local function add_behavior_with_params(texture, color, behavior, model, params)
     end
 
     ---@type MenuItemLink
-    local link = { item = item, icon = { texture = texture, color = color } }
+    local link = { item = item, icon = { texture = texture, color = color }, held = false }
     return link
 end
 
-function fill_item_lists()
+Items.fill_item_lists = function()
 
 -- Autogenned
 ---@type MenuItemLink[]
-gMenuBlockTextureIcons = {
+Items.block_textured_link = {
     add_block("amp_seg8_texture_08000F18"),
     add_block("amp_seg8_texture_08001318"),
     add_block("amp_seg8_texture_08001B18"),
@@ -2025,7 +2027,7 @@ gMenuBlockTextureIcons = {
     add_block("texture_ia8_up_arrow"),
 }
 
-gMenuBlockColorIcons = {
+Items.block_colored_link = {
     add_color_block({r = 0, g = 0, b = 0, a = 255}),
     add_color_block({r = 10, g = 10, b = 10, a = 255}),
     add_color_block({r = 20, g = 20, b = 20, a = 255}),
@@ -2136,7 +2138,7 @@ gMenuBlockColorIcons = {
     add_color_block({r = 209, g = 255, b = 236, a = 255}),
 }
 
-gMenuLevelObjectsIcons = {
+Items.level_objects_link = {
     add_behavior_with_params(SLOT_STAR_TEX, WHITE, bhvMceStar, E_MODEL_STAR, { preview = { animate = { faceAngleYaw = 0x800 } } }),
     add_behavior_with_params(SLOT_STAR_TEX, BLACK, bhvMceStar, E_MODEL_TRANSPARENT_STAR, { preview = { animate = { faceAngleYaw = 0x800 } } }),
     add_behavior_with_params(SLOT_COIN_TEX, YELLOW, bhvMceCoin, E_MODEL_YELLOW_COIN, { preview = { animate = { animState = 1 }, billboard = true }, params = 1 }),
@@ -2161,7 +2163,7 @@ gMenuLevelObjectsIcons = {
     add_behavior_with_params(SLOT_1UP_TEX, WHITE, bhvMce1Up, E_MODEL_1UP, { preview = { billboard = true } }),
 }
 
-gMenuEnemyIcons = {
+Items.enemies_link = {
     add_behavior_with_params(SLOT_GOOMBA_TEX, WHITE, id_bhvGoomba, E_MODEL_GOOMBA, { preview = { animate = { animation = gObjectAnimations.goomba_seg8_anims_0801DA4C, animIndex = 0 } } }),
     add_behavior_with_params(SLOT_BOBOMB_TEX, WHITE, id_bhvBobomb, E_MODEL_BLACK_BOBOMB, { preview = { animate = { animation = gObjectAnimations.bobomb_seg8_anims_0802396C, animIndex = 0 } } }),
     add_behavior_with_params(SLOT_CHUCKYA_TEX, WHITE, id_bhvChuckya, E_MODEL_CHUCKYA, { preview = { animate = { animation = gObjectAnimations.chuckya_seg8_anims_0800C070, animIndex = 4 } } }),
@@ -2188,3 +2190,59 @@ gMenuEnemyIcons = {
 }
 
 end
+
+------------------------------------------------------------
+
+---@param icon TextureInfo
+Items.rescale_icon = function(icon)
+    local texture_width = icon.width
+    local texture_height = icon.height
+    local item_scale_x = 1
+    local item_scale_y = 1
+    -- Normalize to 32x32
+    if texture_width > 32 then
+        local exponent = 2^(math.log(texture_width, 2) - 5)
+        if exponent ~= 0 then
+            item_scale_x = item_scale_x * (1/exponent)
+        end
+    end
+    if texture_height > 32 then
+        local exponent = 2^(math.log(texture_height, 2) - 5)
+        if exponent ~= 0 then
+            item_scale_y = item_scale_y * (1/exponent)
+        end
+    end
+    return item_scale_x, item_scale_y
+end
+
+---@param rect Rectangle
+---@param icon Icon
+Items.render = function(rect, icon)
+    local x, y, width, height = from_rect(rect)
+    if icon.texture then
+        local texture = icon.texture --[[@as TextureInfo]]
+        local texture_width = texture.width
+        local texture_height = texture.height
+        local texture_scale = 1.5
+        local item_scale_x, item_scale_y = Items.rescale_icon(texture)
+        item_scale_x = item_scale_x * texture_scale
+        item_scale_y = item_scale_y * texture_scale
+        local item_x = (x + width * 0.5) - (texture_width * 0.5 * item_scale_x)
+        local item_y = (y + height * 0.5) - (texture_height * 0.5 * item_scale_y)
+
+        local color = icon.color
+        djui_hud_set_color(color.r, color.g, color.b, color.a)
+        djui_hud_render_texture(texture, item_x, item_y, item_scale_x, item_scale_y)
+    else
+        local rect_width = 48
+        local rect_height = 48
+        local rect_x = (x + width * 0.5) - 24
+        local rect_y = (y + height * 0.5) - 24
+
+        local color = icon.color
+        djui_hud_set_color(color.r, color.g, color.b, color.a)
+        djui_hud_render_rect(rect_x, rect_y, rect_width, rect_height)
+    end
+end
+
+return Items

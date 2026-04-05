@@ -1,3 +1,5 @@
+local Hotbar = require("src/menu/hotbar")
+
 ---@class (exact) Item
     ---@field behavior BehaviorId
     ---@field model ModelExtendedId
@@ -733,7 +735,7 @@ local function on_set_item_size_chat_command(msg)
 		return true
 	end
 
-    local current_selected = gMenu.hotbar.items[gMenu.hotbar.index].item
+    local current_selected = Hotbar.items[Hotbar.index].item
     if current_selected then
         current_selected.params.size = gVec3fOne()
         if sizes_count == 1 then
@@ -867,16 +869,16 @@ local sBlockPropertyLookup = {
 
 ---@param msg string
 function on_set_surface_chat_command(msg)
-    local item = gMenu.hotbar.items[gMenu.hotbar.index].item
+    local item = Hotbar.items[Hotbar.index].item
     if item and item.behavior == bhvMceBlock then
         local surf = sBlockSurfaceIdLookup[msg:lower()]
         if surf then
-            gMenu.hotbar.items[gMenu.hotbar.index].item.params.params = surf
+            Hotbar.items[Hotbar.index].item.params.params = surf
             djui_chat_message_create("Set the surface type to " .. msg)
         else
             surf = sBlockPropertyLookup[msg:lower()]
             if surf then
-                local properties = gMenu.hotbar.items[gMenu.hotbar.index].item.params.blockProperties
+                local properties = Hotbar.items[Hotbar.index].item.params.blockProperties
                 if properties & surf == 0 then
                     local is_selecting_incompatible = surf & (MCE_BLOCK_PROPERTY_BREAKABLE | MCE_BLOCK_PROPERTY_DISAPPEARING | MCE_BLOCK_PROPERTY_SHRINKING) ~= 0
                     local currently_has_incompatible = properties & (MCE_BLOCK_PROPERTY_BREAKABLE | MCE_BLOCK_PROPERTY_DISAPPEARING | MCE_BLOCK_PROPERTY_SHRINKING) ~= 0
@@ -884,10 +886,10 @@ function on_set_surface_chat_command(msg)
                         properties = properties & ~(MCE_BLOCK_PROPERTY_BREAKABLE | MCE_BLOCK_PROPERTY_DISAPPEARING | MCE_BLOCK_PROPERTY_SHRINKING)
                         djui_chat_message_create("The breakable, disappearing, and shrinking properties are incompatible with each other. Incompatibilities removed")
                     end
-                    gMenu.hotbar.items[gMenu.hotbar.index].item.params.blockProperties = properties | surf
+                    Hotbar.items[Hotbar.index].item.params.blockProperties = properties | surf
                     djui_chat_message_create("Added the surface property " .. msg)
                 else
-                    gMenu.hotbar.items[gMenu.hotbar.index].item.params.blockProperties = properties & ~surf
+                    Hotbar.items[Hotbar.index].item.params.blockProperties = properties & ~surf
                     djui_chat_message_create("Removed the surface property " .. msg)
                 end
             else
@@ -940,7 +942,7 @@ local function on_replace_chat_command(msg)
     end
 
     local new_hotbar_index = math.floor(tonumber(commands[1]) --[[@as integer]])
-    local new_hotbar_item = gMenu.hotbar.items[new_hotbar_index].item
+    local new_hotbar_item = Hotbar.items[new_hotbar_index].item
     if not new_hotbar_item then
         djui_chat_message_create("Can't replace using an empty slot")
         return true

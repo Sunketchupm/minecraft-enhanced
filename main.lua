@@ -1,6 +1,8 @@
 -- name: \\#31db02\\Minecraft \\#1dcff2\\Enhanced \\#dcdcdc\\[WIP]
 -- description: An improved version of the Minecraft mod, originally by zKevin.\n\nMod made by Teru. Texture help by Sherbie. Minecraft+ made by Bene360 (which isn't used in this mod, but their effort shouldn't be wasted).
 
+local Hotbar = require("src/menu/hotbar") ---@diagnostic disable-line: different-requires
+
 gLevelValues.fixCollisionBugs = true
 gLevelValues.fixCollisionBugsFalseLedgeGrab = false
 gLevelValues.fixCollisionBugsGroundPoundBonks = false
@@ -396,10 +398,11 @@ end
 local function set_item_size_control(m)
 	if not sOutlineObject or m.controller.buttonDown & L_TRIG == 0 then return end
 
-	local current_selected = gMenu.hotbar.items[gMenu.hotbar.index].item
+	local current_selected = Hotbar.items[Hotbar.index]
 	if current_selected then
+		local current_item = current_selected.item
 		local pressed = m.controller.buttonPressed
-		local params = current_selected.params
+		local params = current_item.params
 		if not params then return end
 		local size = params.size
 		if not size then return end
