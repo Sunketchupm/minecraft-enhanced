@@ -131,7 +131,7 @@ local function musicplot(msg) -- Various music for plots, can be used to add mor
             smlua_audio_utils_replace_sequence(0x64, 0x25, 75, "0E_Seq_ff8machinegun_custom")
             djui_popup_create("Be sure to save and reload your current plot to finalize your selection!", 2)
             return true
-        else 
+        else
             djui_chat_message_create("Input [1-14] for vanilla music. Input [15-26] for custom music")
             return true
         end
