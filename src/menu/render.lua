@@ -10,7 +10,7 @@ local Controls = require("controls")
 ---@param rect Rectangle
 local function render_reset_hotbar(rect)
     local x, y, width, height = from_rect(rect)
-    local text_x = x + width * 0.65
+    local text_x = x + width * 0.5
     local text_y = y + height * 0.9
     local button_rect = into_rect(text_x, text_y, width, height)
     local button_x, button_y, button_width, button_height =
@@ -18,12 +18,13 @@ local function render_reset_hotbar(rect)
 
     local reset_bar_width = button_width * math.remap(0, 60, 0, 1, Hotbar.clear)
     local reset_bar_height = 10
-    local reset_bar_x = button_x - 3
+    local reset_bar_x = button_x
     local reset_bar_y = button_y + button_height
     djui_hud_set_color_with_table(GREEN)
     djui_hud_render_rect(reset_bar_x, reset_bar_y, reset_bar_width, reset_bar_height)
 end
 
+--[[
 ---@param rect Rectangle
 local function render_settings_button(rect)
     local x, y, width, height = from_rect(rect)
@@ -34,6 +35,7 @@ local function render_settings_button(rect)
     local override_darken = gMenu.settings.transparent
     Buttons.render_menu_button(button_rect, "Transparent", D_CBUTTON_TEX, Mouse.handle_open_settings_inputs, override_darken)
 end
+]]
 
 ---@param rect Rectangle
 ---@param tab MenuTab
@@ -89,7 +91,7 @@ local function render_item_list_tab(rect, tab, name)
     render_interior_rectangle(rect, tab)
     render_tab_header(rect, tab, name)
     render_reset_hotbar(rect)
-    render_settings_button(rect)
+    --render_settings_button(rect)
 end
 
 ---@param rect Rectangle

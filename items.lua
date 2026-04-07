@@ -1,4 +1,4 @@
-local Hotbar = require("src/menu/hotbar")
+local Hotbar = require("src/menu/hotbar") ---@diagnostic disable-line: different-requires
 
 ---@class (exact) Item
     ---@field behavior BehaviorId
