@@ -132,7 +132,7 @@ local function musicplot(msg) -- Various music for plots, can be used to add mor
             djui_popup_create("Be sure to save and reload your current plot to finalize your selection!", 2)
             return true
         else
-            djui_chat_message_create("Input [1-14] for vanilla music. Input [15-26] for custom music")
+            djui_chat_message_create("Input [1-14] for vanilla music. Input [15-26] for custom music.")
             return true
         end
     else
