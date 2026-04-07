@@ -45,7 +45,7 @@ local function musicplot(msg) -- Various music for plots, can be used to add mor
         smlua_audio_utils_replace_sequence(0x64, 0x25, 75, "08_Seq_touhoumonprismriver_custom")
         return true
     elseif msg == "7" then djui_chat_message_create("Music: Touhou 16: Hidden Star in Four Seasons - Illusionary White Traveler. Author: DaMemes")
-        smlua_audio_utils_replace_sequence(0x64, 0x25, 75, "09_Seq_th16stage4_custom")
+        smlua_audio_utils_replace_sequence(0x64, 0x25, 75, "09_Seq_th16stage4r_custom")
         return true
     elseif msg == "8" then djui_chat_message_create("Music: Touhou 16: Hidden Star in Four Seasons - Secret God Matara ~ Hidden Star in All Seasons. Author: DaMemes")
         smlua_audio_utils_replace_sequence(0x64, 0x25, 75, "0A_Seq_th16okina2_custom")
