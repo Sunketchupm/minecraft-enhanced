@@ -50,11 +50,23 @@ local function musicplot(msg) -- Various music for plots, can be used to add mor
     elseif msg == "8" then djui_chat_message_create("Music: Touhou 16: Hidden Star in Four Seasons - Secret God Matara ~ Hidden Star in All Seasons. Author: DaMemes")
         smlua_audio_utils_replace_sequence(0x64, 0x25, 75, "0A_Seq_th16okina2_custom")
         return true
+    elseif msg == "9" then djui_chat_message_create("Music: Xenoblade Chronicles - Gaur Plains (Day). Author: Bubby64")
+        smlua_audio_utils_replace_sequence(0x64, 0x25, 75, "0B_Seq_xenogaurday_custom")
+        return true
+    elseif msg == "10" then djui_chat_message_create("Music: Pokémon Mystery Dungeon: Explorers of Time/Darkness/Sky - Dialga's Fight to the Finish! Author: Bubby64")
+        smlua_audio_utils_replace_sequence(0x64, 0x25, 75, "0C_Seq_pmddialgafight_custom")
+        return true
+    elseif msg == "11" then djui_chat_message_create("Music: Castlevania: Dawn of Sorrow - Cursed Clock Tower. Author: Mosky2000")
+        smlua_audio_utils_replace_sequence(0x64, 0x25, 75, "0D_Seq_castlevaniaclocktower_custom")
+        return true
+    elseif msg == "12" then djui_chat_message_create("Music: Final Fantasy 8 - The Man with the Machine Gun. Author: Bubby64")
+        smlua_audio_utils_replace_sequence(0x64, 0x25, 75, "0E_Seq_ff8machinegun_custom")
+        return true
     end
     return false
 end
 
-hook_chat_command("plot-music", "[1-8] Changes music that plays in plots (will display port author as well). Re-enter plot if you have decided to change the song while you're in it.", musicplot)
+hook_chat_command("plot-music", "[1-12] Changes music that plays in plots (will display port author as well). Re-enter plot if you have decided to change the song while you're in it.", musicplot)
 hook_chat_command("plot", "| Warp to a level with no textures or objects. Pass an argument to go to a specific act.", on_chat_command)
 hook_event(HOOK_ON_LEVEL_INIT, on_lvl_init)
 hook_event(HOOK_ON_PAUSE_EXIT, on_pause_exit)
