@@ -245,11 +245,12 @@ gMenu[TAB_SURFACE_TYPES].renderer = function (rect, tab)
         height = rect.height * 0.075
     }
     local offset_y = -(rect.height * 0.08)
-    local hovered_index = Scroll.render(button_dimensions, rect, offset_y, tab.vars --[[@as Scroll]], sSurfaceButtons)
+    local scroll = tab.vars --[[@as Scroll]]
+    Scroll.render(button_dimensions, rect, offset_y, scroll, sSurfaceButtons)
 
-    local current_description = sSurfaceDescriptions[hovered_index]
+    local current_description = sSurfaceDescriptions[scroll.index]
     if current_description then
-        sSurfaceLastDescriptionIndex = hovered_index
+        sSurfaceLastDescriptionIndex = scroll.index
         Mouse.menu.hoveringSurfaceTip = true
     else
         current_description = sSurfaceDescriptions[sSurfaceLastDescriptionIndex]

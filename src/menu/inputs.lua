@@ -83,7 +83,7 @@ end
 local function surface_tab_custom_handler(m, scroll, ret)
     if (Mouse.moved and Mouse.pressed.left and Mouse.menu.hoveringSurfaceTip) or (not Mouse.moved and m.controller.buttonPressed & A_BUTTON ~= 0) then
         local message = scroll.elements[scroll.index]
-        on_set_surface_chat_command(scroll.elements[scroll.index])
+        on_set_surface_chat_command(message)
         play_sound(SOUND_MENU_CLICK_FILE_SELECT, gGlobalSoundSource)
     end
 end

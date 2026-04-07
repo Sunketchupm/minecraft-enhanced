@@ -47,18 +47,23 @@ Scroll.render = function(button, rect, offset_y, scroll, elements)
             hovered_index = absolute_index
         end
 
-        local button_colors = {{r = 125, g = 125, b = 125, a = 255}, {r = 175, g = 175, b = 175, a = 255}, {r = 75, g = 75, b = 75, a = 255}}
+        local button_colors = { { r = 125, g = 125, b = 125, a = 255 }, { r = 175, g = 175, b = 175, a = 255 }, { r = 75, g = 75, b = 75, a = 255 } }
         if scroll.index == absolute_index then
-            button_colors = {{r = 65, g = 65, b = 65, a = 255}, {r = 175, g = 175, b = 175, a = 255}, {r = 75, g = 75, b = 75, a = 255}}
+            button_colors = { { r = 65, g = 65, b = 65, a = 255 }, { r = 175, g = 175, b = 175, a = 255 }, { r = 75, g = 75, b = 75, a = 255 } }
         end
 
         if elements[absolute_index] then
-            local rendered_button_rect = into_rect(button.x, button.y + button_total_height * (i - 1) + offset_y, button.width, button.height)
+            local rendered_button_rect = into_rect(button.x, button.y + button_total_height * (i - 1) + offset_y,
+                button.width, button.height)
             render_bordered_rectangle(rendered_button_rect, button_colors, 0.01, 0.06, false)
-            render_shadowed_text(elements[absolute_index], button.x + 12, button.y + 4.5 + button_total_height * (i - 1) + offset_y, 0.8)
+            render_shadowed_text(elements[absolute_index], button.x + 12,
+                button.y + 4.5 + button_total_height * (i - 1) + offset_y, 0.8)
         end
     end
-    scroll.index = hovered_index
+
+    if hovered_index ~= -1 or Mouse.moved then
+        scroll.index = hovered_index
+    end
     return hovered_index
 end
 

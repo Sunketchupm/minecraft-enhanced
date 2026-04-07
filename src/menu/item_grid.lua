@@ -134,45 +134,43 @@ local function handle_item_selection_inputs(item_grid, stick)
     local current_item_index = item_grid.index
     local current_page_index = item_grid.pages.index
     local relative_item_index = current_item_index % items_per_page
+    local begin_page_index = ((current_page_index + 1) * items_per_page) - items_per_page
 
     if stick.up or stick.left or stick.down or stick.right then
         if current_item_index < 0 then
-            current_item_index = ((current_page_index + 1) * items_per_page) - items_per_page
+            current_item_index = begin_page_index
             play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource)
             item_grid.index = current_item_index
             return
         end
 
         if stick.up and relative_item_index > 0 then
-            local test_index = relative_item_index - item_grid.columns
-            if test_index <= 0 then
-                test_index = 0
-            end
-            current_item_index = test_index - current_page_index * items_per_page
-            if not item_grid.items[current_item_index] then
-                current_item_index = current_page_index * items_per_page
-            end
+            current_item_index = current_item_index - item_grid.columns
+            relative_item_index = relative_item_index - item_grid.columns
         elseif stick.down and relative_item_index < items_per_page then
-            local test_index = relative_item_index + item_grid.columns
-            if test_index >= items_per_page - 1 then
-                test_index = items_per_page - 1
-            end
-            current_item_index = test_index + current_page_index * items_per_page
-            if current_item_index >= #item_grid.items then
-                current_item_index = #item_grid.items - 1
-            end
+            current_item_index = current_item_index + item_grid.columns
+            relative_item_index = relative_item_index + item_grid.columns
         end
 
         if stick.left and relative_item_index > 0 then
             current_item_index = current_item_index - 1
-            if not item_grid.items[current_item_index] then
-                current_item_index = current_page_index * items_per_page
-            end
+            relative_item_index = relative_item_index - 1
         elseif stick.right and relative_item_index < items_per_page - 1 then
             current_item_index = current_item_index + 1
-            if current_item_index >= #item_grid.items then
-                current_item_index = #item_grid.items - 1
-            end
+            relative_item_index = relative_item_index + 1
+        end
+
+        if relative_item_index < 0 then
+            current_item_index = begin_page_index
+        elseif relative_item_index > items_per_page - 1 then
+            current_item_index = begin_page_index + items_per_page - 1
+        end
+
+        if current_item_index >= #item_grid.items then
+            current_item_index = #item_grid.items - 1
+        end
+        if not item_grid.items[current_item_index] then
+            current_item_index = begin_page_index
         end
 
         play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource)
