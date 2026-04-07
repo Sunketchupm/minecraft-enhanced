@@ -437,7 +437,7 @@ end
 function bhv_mce_coin_loop(obj)
     if obj.oAction == 0 then
         if obj.oInteractStatus & INT_STATUS_INTERACTED ~= 0 then
-            spawn_non_sync_object(id_bhvGoldenCoinSparkles, E_MODEL_SPARKLES, obj.oPosX, obj.oPosY, obj.oPosZ, nil)
+            spawn_non_sync_object(id_bhvGoldenCoinSparkles, E_MODEL_SPARKLES, obj.oPosX, obj.oPosY, obj.oPosZ, function () end)
             cur_obj_disable_rendering_and_become_intangible(obj)
             obj.oAction = 1
         end
@@ -533,7 +533,7 @@ function bhv_mce_exclamation_box_loop(obj)
         if content then
             local behavior_id = content.behavior
             local model = content.model
-            local spawned = spawn_non_sync_object(behavior_id, model, obj.oPosX, obj.oPosY, obj.oPosZ, nil)
+            local spawned = spawn_non_sync_object(behavior_id, model, obj.oPosX, obj.oPosY, obj.oPosZ, function () end)
             if spawned then
                 spawned.oVelY = 20.0
                 spawned.oForwardVel = 3.0
