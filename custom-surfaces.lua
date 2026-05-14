@@ -164,43 +164,6 @@ local sSpecialSurfaceHandlers = {
     end
 }
 
---[[ Boilerplate:
-    if m.playerIndex ~= 0 then return end
-
-    local block_wall = m.wall and m.wall.object
-    local block_floor = m.floor and m.floor.object
-    local block_ceiling = m.ceil and m.ceil.object
-
-    ------------------ WALL -------------------
-    if block_wall then
-        local block = block_wall
-        local surface_id = block.oItemParams & 0xFF
-
-        if surface_id == MCE_BLOCK_COL_ID_ then
-            --
-        end
-    end
-    ------------------ FLOOR -------------------
-    if block_floor then
-        local block = block_floor
-        local surface_id = block.oItemParams & 0xFF
-
-        if surface_id == MCE_BLOCK_COL_ID_ then
-            --
-        end
-    end
-    ------------------ CEILING -------------------
-    if block_ceiling then
-        local block = block_ceiling
-        local surface_id = block.oItemParams & 0xFF
-
-        if surface_id == MCE_BLOCK_COL_ID_ then
-            --
-        end
-    end
-    ------------------ MISC -------------------
-]]
-
 ------------------------------------------------------------------------------------------------
 
 ---@param m MarioState
@@ -215,7 +178,7 @@ local function custom_surface_mario_update(m)
     if block_wall then
         local block = block_wall
         local surface_id = block.oItemParams & 0xFF
-        local surface_properties = block.oBlockSurfaceProperties
+        local surface_properties = block.oItemFlags
 
         if surface_id == MCE_BLOCK_COL_ID_BOUNCE then
             local wall = m.wall
@@ -256,7 +219,7 @@ local function custom_surface_mario_update(m)
     if block_floor then
         local block = block_floor
         local surface_id = block.oItemParams & 0xFF
-        local surface_properties = block.oBlockSurfaceProperties
+        local surface_properties = block.oItemFlags
 
         if m.pos.y == m.floorHeight then
             if surface_id == MCE_BLOCK_COL_ID_DASH_PANEL then
@@ -275,7 +238,7 @@ local function custom_surface_mario_update(m)
             end
 
             if surface_properties & MCE_BLOCK_PROPERTY_CHECKPOINT ~= 0 then
-                gRespawnLocation = {x = block.oPosX, y = block.oPosY + block.oScaleY * GRID_SIZE_DEFAULT, z = block.oPosZ}
+                gRespawnLocation = {x = block.oPosX, y = block.oPosY + block.oScaleY * GRID_SIZE_MULTIPLIER, z = block.oPosZ}
                 gRespawnAngle = block.oFaceAngleYaw
             end
             if surface_properties & MCE_BLOCK_PROPERTY_CONVEYOR ~= 0 then
@@ -304,7 +267,7 @@ local function custom_surface_mario_update(m)
     if block_ceiling then
         local block = block_ceiling
         local surface_id = block.oItemParams & 0xFF
-        local surface_properties = block.oBlockSurfaceProperties
+        local surface_properties = block.oItemFlags
         local is_rising_into_block = m.pos.y + m.marioObj.hitboxHeight + m.vel.y >= m.ceilHeight and m.vel.y > 0
 
         if is_rising_into_block then
@@ -359,7 +322,7 @@ local function custom_surface_before_mario_update(m)
     if block_floor then
         local block = block_floor
         local surface_id = block.oItemParams & 0xFF
-        local surface_properties = block.oBlockSurfaceProperties
+        local surface_properties = block.oItemFlags
 
         if surface_id == MCE_BLOCK_COL_ID_JUMP_PAD and m.controller.buttonPressed & A_BUTTON ~= 0 then
             set_mario_action(m, ACT_DOUBLE_JUMP, 0)
@@ -399,7 +362,7 @@ local function custom_surface_set_mario_action(m)
     if block_wall then
         local block = block_wall
         --local surface_id = block.oItemParams & 0xFF
-        local surface_properties = block.oBlockSurfaceProperties
+        local surface_properties = block.oItemFlags
 
         if surface_properties & MCE_BLOCK_PROPERTY_FIRSTY ~= 0 and m.action == ACT_AIR_HIT_WALL then
             sPrevSpeed = m.forwardVel
@@ -424,7 +387,7 @@ local function custom_surface_set_mario_action(m)
     if block_ceiling then
         local block = block_ceiling
         --local surface_id = block.oItemParams & 0xFF
-        local surface_properties = block.oBlockSurfaceProperties
+        local surface_properties = block.oItemFlags
 
         if surface_properties & MCE_BLOCK_PROPERTY_ANY_BONK_WALLKICK ~= 0 then
             local is_within_height = m.ceilHeight - m.pos.y < 200 and m.ceilHeight - m.pos.y > 0
@@ -517,7 +480,7 @@ local function custom_surface_block_update()
     local already_exists = {verticalWind = false, toxicGas = false, booster = false}
     while block do
         local surface_id = block.oItemParams & 0xFF
-        local surface_properties = block.oBlockSurfaceProperties
+        local surface_properties = block.oItemFlags
 
         if not already_exists.verticalWind and surface_id == MCE_BLOCK_COL_ID_VERTICAL_WIND and mario_is_within_block(m, block) then
             table.insert(sSpecialSurfaceTypes.verticalWind, block)
@@ -534,10 +497,6 @@ local function custom_surface_block_update()
 
         if surface_properties & MCE_BLOCK_PROPERTY_DISAPPEARING ~= 0 then
             if block.oAction == 1 then
-                local transparent_start = mce_block_get_transparent_start_obj(block)
-                if block.oAnimState < transparent_start then
-                    block.oAnimState = block.oAnimState + transparent_start
-                end
                 block.oOpacity = math.max(block.oOpacity - 30, 0)
                 if block.oOpacity == 0 then
                     block.oAction = 2

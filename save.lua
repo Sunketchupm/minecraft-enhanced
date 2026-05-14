@@ -1,6 +1,38 @@
 local MCE_MAGIC = 0x4E81A0CE
-local MCE_SAVE_VERSION = 1
+local MCE_SAVE_VERSION = 2
 local sStorage = mod_fs_get() or mod_fs_create()
+
+local function place_item_with_params(load)
+	local spawned_item = spawn_sync_object(
+		load.id,
+		load.model,
+		load.x, load.y, load.z,
+		---@param obj Object
+		function (obj)
+			obj.oFaceAnglePitch = load.pitch
+			obj.oFaceAngleYaw = load.yaw
+			obj.oFaceAngleRoll = load.roll
+			obj.oMoveAnglePitch = load.pitch
+			obj.oMoveAngleYaw = load.yaw
+			obj.oMoveAngleRoll = load.roll
+			obj.oItemParams = load.params
+			obj.oItemFlags = load.flags
+			obj.oScaleX = load.scaleX
+			obj.oScaleY = load.scaleY
+			obj.oScaleZ = load.scaleZ
+			obj_scale_xyz(obj, load.scaleX, load.scaleY, load.scaleZ)
+			obj.oAnimState = load.animState
+			obj.globalPlayerIndex = network_global_index_from_local(0)
+			obj.oOwner = network_global_index_from_local(0) + 1
+            obj.oOpacity = load.opacity
+            obj.oColor = load.color
+		end
+	)
+
+	if not spawned_item then
+		djui_chat_message_create("Item failed to place. Perhaps the object limit was reached?")
+	end
+end
 
 ---@param msg string
 local function save_command(msg)
@@ -66,7 +98,9 @@ local function save_command(msg)
                 file:write_integer(obj.oFaceAnglePitch, INT_TYPE_S16)
                 file:write_integer(obj.oFaceAngleYaw, INT_TYPE_S16)
                 file:write_integer(obj.oFaceAngleRoll, INT_TYPE_S16)
-                file:write_integer(obj.oBlockSurfaceProperties, INT_TYPE_U32)
+                file:write_integer(obj.oItemFlags, INT_TYPE_U32)
+                file:write_integer(obj.oColor, INT_TYPE_U32)
+                file:write_integer(obj.oOpacity, INT_TYPE_S32)
             end
             obj = obj_get_next_with_same_behavior_id(obj)
         end
@@ -98,11 +132,13 @@ local function load_command(msg)
     local magic = file:read_integer(INT_TYPE_U32)
     local version = file:read_integer(INT_TYPE_U8)
     if magic ~= MCE_MAGIC then
-        -- Old save file, before the magic/version were added
-        -- Eventually, just error instead
-        file:seek(0, FILE_SEEK_SET)
+        djui_chat_message_create("Could not validate MCE save")
+        return true
     end
-    -- Handle version mismatches (for the future)
+    if version ~= MCE_SAVE_VERSION then
+        djui_chat_message_create("Incompatible MCE save version")
+        return true
+    end
 
     while not file:is_eof() do
         local item = {}
@@ -119,7 +155,9 @@ local function load_command(msg)
         item.pitch = file:read_integer(INT_TYPE_S16)
         item.yaw = file:read_integer(INT_TYPE_S16)
         item.roll = file:read_integer(INT_TYPE_S16)
-        item.properties = file:read_integer(INT_TYPE_U32)
+        item.flags = file:read_integer(INT_TYPE_U32)
+        item.color = file:read_integer(INT_TYPE_U32)
+        item.opacity = file:read_integer(INT_TYPE_S32)
         place_item_with_params(item)
     end
 

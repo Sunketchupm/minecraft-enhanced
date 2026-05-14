@@ -116,18 +116,20 @@ local function fill_menu()
             local behavior = items[i].item.behavior
             local model = items[i].item.model
             local params = items[i].item.params
-            local anim_state = items[i].item.params.forceAnimState or i
+            local anim_state = 0
+            if tab == TAB_BUILDING_BLOCKS then
+                anim_state = i
+            end
             ---@type MenuItemLink
             local menu_item = {
-                item = {
-                    behavior = behavior,
-                    model = model,
-                    animState = anim_state,
-                    params = params
-                },
+                item = get_default_item(),
                 icon = icon,
                 held = false
             }
+            menu_item.item.behavior = behavior
+            menu_item.item.model = model
+            menu_item.item.animState = anim_state
+            menu_item.item.params = params
             gMenu[tab].vars.items[i] = menu_item
         end
     end
@@ -138,18 +140,6 @@ local function fill_menu()
     fill_item_grid(TAB_BUILDING_BLOCKS_COLORS, Items.block_colored_link)
     fill_item_grid(TAB_LEVEL_OBJECTS, Items.level_objects_link)
     fill_item_grid(TAB_ENEMIES, Items.enemies_link)
-
-    -- Insert barrier
-    table.insert(gMenu[TAB_BUILDING_BLOCKS_COLORS].vars.items, {
-        item = {
-            behavior = bhvMceBlock,
-            model = E_MODEL_MCE_COLOR_BLOCK,
-            animState = MCE_COLOR_BLOCK_BARRIER_ANIM,
-            params = get_default_item_params(),
-        },
-        icon = { texture = get_texture_info("barrier"), color = WHITE },
-        held = false
-    })
 
     local tab_icons = {
         { texture = DPLAT_BLOCK_TEX, color = WHITE},

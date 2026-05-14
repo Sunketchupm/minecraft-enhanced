@@ -184,18 +184,17 @@ local function handle_item_settings(item_link)
     local item = item_link.item
     if gMenu.settings.transparent then
         if item.behavior == bhvMceBlock then
-            local transparent_start = mce_block_get_transparent_start_item(item)
-            local anim_max = mce_block_get_anim_max_item(item)
-            local current_anim_state = item.animState
-            if current_anim_state > transparent_start then
-                item.animState = current_anim_state - transparent_start
+            local alpha = item.params.color.a
+            if alpha < 0 then
+                alpha = 255
             else
-                item.animState = current_anim_state + transparent_start
-                if item.animState > anim_max then
-                    item.animState = anim_max
-                end
+                alpha = 127
             end
+            item.params.color.a = alpha
         end
+    end
+    if gCurrentTab == TAB_BUILDING_BLOCKS_COLORS then
+        mce_block_set_colored(item)
     end
     return item_link
 end
@@ -204,9 +203,9 @@ end
 local function on_confirm_item_input(item)
     sIsHolding = false
     handle_item_settings(item)
+    ---@type MenuItemLink
     local hotbar_item = table.deepcopy(item)
     Hotbar.items[Hotbar.index] = hotbar_item
-    vec3f_set(gGridSize, GRID_SIZE_DEFAULT, GRID_SIZE_DEFAULT, GRID_SIZE_DEFAULT)
     play_sound(SOUND_MENU_CLICK_FILE_SELECT, gGlobalSoundSource)
 end
 

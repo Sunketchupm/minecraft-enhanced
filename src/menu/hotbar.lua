@@ -65,16 +65,6 @@ Hotbar.render = function(screen_width, screen_height)
     render_pixel_border(hotbar_rect, {r = 0, g = 0, b = 0, a = 255}, 2)
 end
 
-local function on_set_hotbar_item()
-    local item = Hotbar.items[Hotbar.index].item
-    local params = item.params
-    local size = params.size
-    if not item or not params or not size then return end
-    vec3f_copy(gGridSize, size)
-    vec3f_mul(gGridSize, GRID_SIZE_DEFAULT)
-    gOutlineGridYOffset = 0
-end
-
 ---@param m MarioState
 Hotbar.inputs = function(m)
     if m.controller.buttonDown & L_TRIG ~= 0 then return end
@@ -85,18 +75,12 @@ Hotbar.inputs = function(m)
             Hotbar.index = HOTBAR_SIZE
         end
         local item = Hotbar.items[Hotbar.index]
-        if item and item.item then
-            on_set_hotbar_item()
-        end
     elseif m.controller.buttonPressed & R_JPAD ~= 0 then
         Hotbar.index = Hotbar.index + 1
         if Hotbar.index > HOTBAR_SIZE then
             Hotbar.index = 1
         end
         local item = Hotbar.items[Hotbar.index]
-        if item and item.item then
-            on_set_hotbar_item()
-        end
     end
     m.controller.buttonPressed = m.controller.buttonPressed & ~(L_JPAD | R_JPAD)
 end

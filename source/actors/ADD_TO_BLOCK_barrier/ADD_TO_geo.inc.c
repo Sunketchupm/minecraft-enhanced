@@ -1,1 +1,0 @@
-GEO_DISPLAY_LIST(LAYER_ALPHA, barrier_Cube_mesh_layer_4),

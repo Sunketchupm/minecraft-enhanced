@@ -4,18 +4,22 @@ local Hotbar = require("src/menu/hotbar") ---@diagnostic disable-line: different
     ---@field behavior BehaviorId
     ---@field model ModelExtendedId
     ---@field animState integer
+    ---@field dimensions ItemDimensions
+    ---@field preview ItemPreview
     ---@field params ItemParameters
 
----@class (exact) ItemParameters
-    ---@field spawnYOffset number?
-    ---@field blockProperties integer?
-    ---@field size Vec3f?
-    ---@field rotation Vec3s? x = pitch, y = yaw, z = roll
-    ---@field forceAnimState integer?
-    ---@field preview PreviewParameters?
-    ---@field params integer?
+---@class (exact) ItemDimensions
+    ---@field size Vec3f
+    ---@field rotation Vec3s x = pitch, y = yaw, z = roll
+    ---@field grid Vec3f
 
----@class (exact) PreviewParameters
+---@class (exact) ItemParameters
+    ---@field yOffset number
+    ---@field color DjuiColor
+    ---@field params integer
+    ---@field flags integer
+
+---@class (exact) ItemPreview
     ---@field billboard boolean?
     ---@field scale number?
     ---@field animate PreviewAnimations?
@@ -30,49 +34,58 @@ local Hotbar = require("src/menu/hotbar") ---@diagnostic disable-line: different
     ---@field oScaleX number
     ---@field oScaleY number
     ---@field oScaleZ number
+    ---@field oOwner number
     ---@field oItemParams integer
-    ---@field oOwner integer
-    ---@field oPrevAnimState integer
-    ---@field oBlockSurfaceProperties integer
+    ---@field oItemFlags integer
+    ---@field oColor integer
+    ---@field _pointer integer
 
 define_custom_obj_fields({
     oScaleX = "f32",
     oScaleY = "f32",
     oScaleZ = "f32",
+    oOwner = "u32",
     oItemParams = "u32",
-    oOwner = "s32",
-    oPrevAnimState = "u32",
-    oBlockSurfaceProperties = "u32",
+    oItemFlags = "u32",
+    oColor = "u32"
 })
 
----@return ItemParameters
-function get_default_item_params()
-    ---@type ItemParameters
-    local params = {
-        spawnYOffset = 0,
-        blockProperties = 0,
-        size = gVec3fOne(),
-        rotation = gVec3sZero(),
-        forceAnimState = nil,
-        preview = {},
-        params = 0,
+---@return Item
+function get_default_item()
+    ---@type Item
+    local item = {
+        behavior = bhvMceBlock,
+        model = E_MODEL_MCE_BLOCK,
+        animState = 0,
+        dimensions = {
+            size = gVec3fOne(),
+            rotation = gVec3sZero(),
+            grid = gVec3fOne(),
+        },
+        preview = {
+            billboard = false,
+            scale = 1,
+            animate = {}
+        },
+        params = {
+            yOffset = 0,
+            color = { r = 255, g = 255, b = 255, a = 255 },
+            params = 0,
+            flags = 0,
+        },
     }
-    return params
+    return item
 end
 
-gCurrentItem = { behavior = nil, model = E_MODEL_NONE, animState = 0, params = {} }
+---@type Item?
+gCurrentItem = nil
 gItemBhvIds = {}
 
 local sEnemyItemBehaviors = {}
 local sVanillaClearImmune = {}
 add_first_update(function ()
     ---@type Item
-    gCurrentItem = {
-        behavior = bhvMceBlock,
-        model = E_MODEL_MCE_BLOCK,
-        animState = 0,
-        params = get_default_item_params(),
-    }
+    gCurrentItem = get_default_item()
     ---@type BehaviorId[]
     gItemBhvIds = {
         bhvMceBlock,
@@ -109,10 +122,27 @@ add_first_update(function ()
     }
     ---@type BehaviorId[]
     sVanillaClearImmune = {
+        [id_bhvMario] = true,
+        [id_bhvInstantActiveWarp] = true,
+        [id_bhvAirborneWarp] = true,
+        [id_bhvHardAirKnockBackWarp] = true,
+        [id_bhvSpinAirborneCircleWarp] = true,
+        [id_bhvDeathWarp] = true,
         [id_bhvSpinAirborneWarp] = true,
-        [id_bhvDoorWarp] = true,
+        [id_bhvFlyingWarp] = true,
+        [id_bhvPaintingStarCollectWarp] = true,
+        [id_bhvPaintingDeathWarp] = true,
+        [id_bhvAirborneDeathWarp] = true,
+        [id_bhvAirborneStarCollectWarp] = true,
+        [id_bhvLaunchStarCollectWarp] = true,
+        [id_bhvLaunchDeathWarp] = true,
+        [id_bhvSwimmingWarp] = true,
+        [id_bhvDoor] = true,
+        [id_bhvStarDoor] = true,
         [id_bhvWarp] = true,
         [id_bhvWarpPipe] = true,
+        [id_bhvDoorWarp] = true,
+        [id_bhvFadingWarp] = true,
     }
 end)
 
@@ -168,6 +198,18 @@ end
 
 ------------------------------------------------------------------------------------------
 
+require("src/block/builder")
+local BlockTextures = require("src/block/textures") ---@diagnostic disable-line: different-requires
+
+--[[ Custom properties:
+    oAnimState:
+        - 1st+2nd byte: texture id
+        - 3rd byte: shape id
+        - 4th byte: flags:
+        - - 1st bit: is colored
+        - - 2nd bit: is shaded
+]]
+
 local COL_MCE_BLOCK_DEFAULT = smlua_collision_util_get("mce_block_col_default")
 local COL_MCE_BLOCK_LAVA = smlua_collision_util_get("mce_block_col_lava")
 local COL_MCE_BLOCK_DEATH = smlua_collision_util_get("mce_block_col_death")
@@ -214,10 +256,6 @@ MCE_BLOCK_PROPERTY_NO_WALLKICKS = (1 << 9)
 MCE_BLOCK_PROPERTY_SHRINKING = (1 << 10)
 MCE_BLOCK_PROPERTY_CHECKPOINT = (1 << 11)
 
-MCE_BLOCK_TRANSPARENT_START = 1959
-MCE_COLOR_BLOCK_TRANSPARENT_START = 108
-MCE_BLOCK_ANIM_MAX = (MCE_BLOCK_TRANSPARENT_START * 2)
-MCE_COLOR_BLOCK_BARRIER_ANIM = (MCE_COLOR_BLOCK_TRANSPARENT_START * 2) + 1
 MCE_BLOCK_ACT_RESET = 10
 
 local sStandardCollisionLookup = {
@@ -261,32 +299,29 @@ end
 ---@param obj Object
 function bhv_mce_block_init(obj)
     block_collision_lookup(obj)
-    if obj.oAnimState > mce_block_get_transparent_start_obj(obj) then
-        obj.oOpacity = 100
-    end
     obj.oCollisionDistance = 500 * vec3f_length({x = obj.oScaleX, y = obj.oScaleY, z = obj.oScaleZ})
     obj.header.gfx.skipInViewCheck = true
-    obj.oPrevAnimState = obj.oAnimState
     network_init_object(obj, false, {
-        "activeFlags",
-        "oOpacity",
-        "oAnimState",
-        "oPrevAnimState",
-        "oOwner",
+        "oPosX",
+        "oPosY",
+        "oPosZ",
+        "oScaleX",
+        "oScaleY",
+        "oScaleZ",
         "oFaceAnglePitch",
         "oMoveAnglePitch",
         "oFaceAngleYaw",
         "oMoveAngleYaw",
         "oFaceAngleRoll",
         "oMoveAngleRoll",
-        "oScaleX",
-        "oScaleY",
-        "oScaleZ",
+        "activeFlags",
+        "oOwner",
+        "oOpacity",
+        "oAnimState",
         "oItemParams",
+        "oItemFlags",
         "oCollisionDistance",
-        "oPosX",
-        "oPosY",
-        "oPosZ",
+        "oColor"
     })
 end
 
@@ -296,24 +331,15 @@ function bhv_mce_block_loop(obj)
 
     if obj.oAction == MCE_BLOCK_ACT_RESET then
         block_collision_lookup(obj)
-        if obj.oAnimState > mce_block_get_transparent_start_obj(obj) then
-            obj.oOpacity = 100
-        else
-            obj.oOpacity = 255
-        end
-        obj.oAnimState = obj.oPrevAnimState
         obj_scale_xyz(obj, obj.oScaleX, obj.oScaleY, obj.oScaleZ)
         obj.oAction = 0
+        if obj.oOpacity == 0 then
+            obj.oOpacity = 255
+        end
     end
 
-    local max_anim = mce_block_get_anim_max_obj(obj)
-    if obj.oAnimState > max_anim then
-        obj.oAnimState = max_anim
-    end
-
-    local current_model = obj_get_model_id_extended(obj)
-    if current_model == E_MODEL_MCE_COLOR_BLOCK then
-        if obj.oAnimState == max_anim and gMarioStates[0].action ~= ACT_FREE_MOVE then
+    if obj.oAnimState & 0xFFFF == #BlockTextures then
+        if gMarioStates[0].action ~= ACT_FREE_MOVE then
             obj.header.gfx.node.flags = obj.header.gfx.node.flags | GRAPH_RENDER_INVISIBLE
         else
             obj.header.gfx.node.flags = obj.header.gfx.node.flags & ~GRAPH_RENDER_INVISIBLE
@@ -321,7 +347,7 @@ function bhv_mce_block_loop(obj)
     end
 
     -- Handle breakable surfaces, so that their particles properly spawn
-    if obj.oBlockSurfaceProperties & MCE_BLOCK_PROPERTY_BREAKABLE ~= 0 then
+    if obj.oItemFlags & MCE_BLOCK_PROPERTY_BREAKABLE ~= 0 then
         if gHitBreakableBlock == obj then
             obj.oAction = 1
             obj.oTimer = 0
@@ -341,7 +367,6 @@ function bhv_mce_block_loop(obj)
             spawn_mist_particles()
             spawn_triangle_break_particles(20, 138, 0.7, 3)
             create_sound_spawner(SOUND_GENERAL_BREAK_BOX)
-            obj.oAnimState = mce_block_get_transparent_start_obj(obj) + 1
             obj.oOpacity = 0
             obj.collisionData = nil
             obj.oAction = 3
@@ -602,21 +627,69 @@ local function object_removal_criteria(obj, mod_command)
     return obj.oOwner == owner_index or remove_all
 end
 
+---@param id_list BehaviorId[]
+local function iterate_id_list(id_list)
+    local current_index = 1
+    local current_obj = nil
+    return function ()
+        if not current_obj then
+            current_obj = obj_get_first_with_behavior_id(id_list[current_index])
+        else
+            current_obj = obj_get_next_with_same_behavior_id(current_obj)
+        end
+
+        if not current_obj then
+            while not current_obj do
+                current_index = current_index + 1
+                if not id_list[current_index] then
+                    return nil
+                end
+                current_obj = obj_get_first_with_behavior_id(id_list[current_index])
+            end
+        end
+
+        return current_obj
+    end
+end
+
 ---@param msg string
 function on_clear_chat_command(msg)
     local args = string.split(msg, " ")
     local command = args[1] and args[1]:lower() or ""
+
     if command == "all" or command == "" then
-        for _, behavior in ipairs(gItemBhvIds) do
-            local obj = obj_get_first_with_behavior_id(behavior)
-            while obj do
-                if object_removal_criteria(obj, args[2]) then
-                    obj_mark_for_deletion(obj)
-                end
-                obj = obj_get_next_with_same_behavior_id(obj)
+        for obj in iterate_id_list(gItemBhvIds) do
+            if object_removal_criteria(obj, args[2]) then
+                obj_mark_for_deletion(obj)
             end
         end
-        djui_chat_message_create("Removed all placed items")
+        for obj in iterate_id_list(sEnemyItemBehaviors) do
+            if object_removal_criteria(obj, args[2]) then
+                obj_mark_for_deletion(obj)
+            end
+        end
+        djui_chat_message_create("Removed all placed objects")
+    elseif command == "blocks" then
+        for obj in iterate_id_list({bhvMceBlock}) do
+            if object_removal_criteria(obj, args[2]) then
+                obj_mark_for_deletion(obj)
+            end
+        end
+        djui_chat_message_create("Removed all placed blocks")
+    elseif command == "items" then
+        for obj in iterate_id_list(gItemBhvIds) do
+            if obj_has_behavior_id(obj, bhvMceBlock) == 0 and object_removal_criteria(obj, args[2]) then
+                obj_mark_for_deletion(obj)
+            end
+        end
+        djui_chat_message_create("Removed all placed level items")
+    elseif command == "enemies" then
+        for obj in iterate_id_list(sEnemyItemBehaviors) do
+            if object_removal_criteria(obj, args[2]) then
+                obj_mark_for_deletion(obj)
+            end
+        end
+        djui_chat_message_create("Removed all placed enemies")
     elseif command == "vanilla" and network_is_privileged() then
         for i = OBJ_LIST_PLAYER + 1, NUM_OBJ_LISTS - 1, 1 do
             local obj = obj_get_first(i)
@@ -629,39 +702,6 @@ function on_clear_chat_command(msg)
             end
         end
         djui_chat_message_create("Removed all non-mce objects")
-    elseif command == "blocks" then
-        local obj = obj_get_first_with_behavior_id(bhvMceBlock)
-        while obj  do
-            if object_removal_criteria(obj, args[2]) then
-                obj_mark_for_deletion(obj)
-            end
-            obj = obj_get_next_with_same_behavior_id(obj)
-        end
-        djui_chat_message_create("Removed all placed blocks")
-    elseif command == "items" then
-        for _, behavior in ipairs(gItemBhvIds) do
-            if behavior ~= bhvMceBlock then
-                local obj = obj_get_first_with_behavior_id(behavior)
-                while obj do
-                    if object_removal_criteria(obj, args[2]) then
-                        obj_mark_for_deletion(obj)
-                    end
-                    obj = obj_get_next_with_same_behavior_id(obj)
-                end
-            end
-        end
-        djui_chat_message_create("Removed all placed level items")
-    elseif command == "enemies" then
-        for _, behavior in ipairs(sEnemyItemBehaviors) do
-            local obj = obj_get_first_with_behavior_id(behavior)
-            while obj  do
-                if object_removal_criteria(obj, args[2]) then
-                    obj_mark_for_deletion(obj)
-                end
-                obj = obj_get_next_with_same_behavior_id(obj)
-            end
-        end
-        djui_chat_message_create("Removed all placed enemies")
     else
         if network_is_privileged() then
             djui_chat_message_create("USAGE: [all|vanilla|blocks|items|enemies] [ALL|orphaned]")
@@ -679,26 +719,18 @@ end
 function reset_all_items(override_free_move_check)
     local m = gMarioStates[0]
     if m.action == ACT_FREE_MOVE or override_free_move_check then
-        for _, behavior in ipairs(gItemBhvIds) do
-            if behavior ~= bhvMceBlock then
-                local obj = obj_get_first_with_behavior_id(behavior)
-                while obj do
-                    local render_flags = obj.header.gfx.node.flags
-                    if render_flags & GRAPH_RENDER_INVISIBLE ~= 0 or render_flags & GRAPH_RENDER_ACTIVE == 0 then
-                        obj.header.gfx.node.flags = obj.header.gfx.node.flags &~ GRAPH_RENDER_INVISIBLE
-                        obj.header.gfx.node.flags = obj.header.gfx.node.flags | GRAPH_RENDER_ACTIVE
-                        obj_become_tangible(obj)
-                        obj.oAction = 0
-                    end
-                    obj = obj_get_next_with_same_behavior_id(obj)
+        for obj in iterate_id_list(gItemBhvIds) do
+            if obj_has_behavior_id(obj, bhvMceBlock) == 0 then
+                local render_flags = obj.header.gfx.node.flags
+                if render_flags & GRAPH_RENDER_INVISIBLE ~= 0 or render_flags & GRAPH_RENDER_ACTIVE == 0 then
+                    obj.header.gfx.node.flags = obj.header.gfx.node.flags &~ GRAPH_RENDER_INVISIBLE
+                    obj.header.gfx.node.flags = obj.header.gfx.node.flags | GRAPH_RENDER_ACTIVE
+                    obj_become_tangible(obj)
+                    obj.oAction = 0
                 end
             else
-                local obj = obj_get_first_with_behavior_id(behavior)
-                while obj do
-                    if obj.oAction ~= MCE_BLOCK_ACT_RESET then
-                        obj.oAction = MCE_BLOCK_ACT_RESET
-                    end
-                    obj = obj_get_next_with_same_behavior_id(obj)
+                if obj.oAction ~= MCE_BLOCK_ACT_RESET then
+                    obj.oAction = MCE_BLOCK_ACT_RESET
                 end
             end
         end
@@ -725,6 +757,31 @@ hook_event(HOOK_UPDATE, reset_all_items)
 
 ------------------------------------------------------------------------------------------
 
+---@param item Item
+---@param size string
+---@param key string
+---@return number
+local __parse_size = function (item, size, key)
+    if size == "_" then
+        return item.dimensions.size[key]
+    end
+
+    local new_size = 0
+    local symbol = size:sub(1, 1)
+    if symbol == "+" or symbol == "-" then
+        local number = size:sub(2)
+        if symbol == "-" then
+            number = "-" .. number
+        end
+        if tonumber(number) then
+            new_size = item.dimensions.size[key] + number
+        end
+        return math.clamp(new_size, 0.01, 25)
+    end
+
+    return math.clamp(tonumber(size) or item.dimensions.size[key], 0.01, 25)
+end
+
 ---@param msg string
 local function on_set_item_size_chat_command(msg)
     local sizes = string.split(msg, " ")
@@ -735,24 +792,21 @@ local function on_set_item_size_chat_command(msg)
 		return true
 	end
 
-    local current_selected = Hotbar.items[Hotbar.index].item
-    if current_selected then
-        current_selected.params.size = gVec3fOne()
+    ---@type Item?
+    local item = Hotbar.items[Hotbar.index].item
+    if item then
         if sizes_count == 1 then
-            local new_size = math.clamp(tonumber(sizes[1]) or 1, 0.01, 25)
-            local grid_size = new_size * GRID_SIZE_DEFAULT
-            vec3f_set(current_selected.params.size, new_size, new_size, new_size)
-		    vec3f_set(gGridSize, grid_size, grid_size, grid_size)
+            local new_size = __parse_size(item, sizes[1], "x")
+            local grid_size = new_size
+            vec3f_set(item.dimensions.size, new_size, new_size, new_size)
+		    vec3f_set(item.dimensions.grid, grid_size, grid_size, grid_size)
             djui_chat_message_create("Set item size to " .. new_size)
         elseif sizes_count == 3 then
-            local new_size_x = math.clamp(tonumber(sizes[1]) or 1, 0.01, 25)
-            local new_size_y = math.clamp(tonumber(sizes[2]) or 1, 0.01, 25)
-            local new_size_z = math.clamp(tonumber(sizes[3]) or 1, 0.01, 25)
-            local grid_size_x = new_size_x * GRID_SIZE_DEFAULT
-            local grid_size_y = new_size_y * GRID_SIZE_DEFAULT
-            local grid_size_z = new_size_z * GRID_SIZE_DEFAULT
-            vec3f_set(gGridSize, grid_size_x, grid_size_y, grid_size_z)
-            vec3f_set(current_selected.params.size, new_size_x, new_size_y, new_size_z)
+            local new_size_x = __parse_size(item, sizes[1], "x")
+            local new_size_y = __parse_size(item, sizes[2], "y")
+            local new_size_z = __parse_size(item, sizes[3], "z")
+            vec3f_set(item.dimensions.size, new_size_x, new_size_y, new_size_z)
+            vec3f_set(item.dimensions.grid, new_size_x, new_size_y, new_size_z)
             djui_chat_message_create("Set item size to (" .. new_size_x, new_size_y, new_size_z .. ")")
         else
             djui_chat_message_create("Usage: [num] or [x y z] or [on|off]")
@@ -869,16 +923,17 @@ local sBlockPropertyLookup = {
 
 ---@param msg string
 function on_set_surface_chat_command(msg)
+    ---@type Item?
     local item = Hotbar.items[Hotbar.index].item
     if item and item.behavior == bhvMceBlock then
         local surf = sBlockSurfaceIdLookup[msg:lower()]
         if surf then
-            Hotbar.items[Hotbar.index].item.params.params = surf
+            item.params.flags = surf
             djui_chat_message_create("Set the surface type to " .. msg)
         else
             surf = sBlockPropertyLookup[msg:lower()]
             if surf then
-                local properties = Hotbar.items[Hotbar.index].item.params.blockProperties
+                local properties = item.params.flags
                 if properties & surf == 0 then
                     local is_selecting_incompatible = surf & (MCE_BLOCK_PROPERTY_BREAKABLE | MCE_BLOCK_PROPERTY_DISAPPEARING | MCE_BLOCK_PROPERTY_SHRINKING) ~= 0
                     local currently_has_incompatible = properties & (MCE_BLOCK_PROPERTY_BREAKABLE | MCE_BLOCK_PROPERTY_DISAPPEARING | MCE_BLOCK_PROPERTY_SHRINKING) ~= 0
@@ -886,10 +941,10 @@ function on_set_surface_chat_command(msg)
                         properties = properties & ~(MCE_BLOCK_PROPERTY_BREAKABLE | MCE_BLOCK_PROPERTY_DISAPPEARING | MCE_BLOCK_PROPERTY_SHRINKING)
                         djui_chat_message_create("The breakable, disappearing, and shrinking properties are incompatible with each other. Incompatibilities removed")
                     end
-                    Hotbar.items[Hotbar.index].item.params.blockProperties = properties | surf
+                    item.params.flags = properties | surf
                     djui_chat_message_create("Added the surface property " .. msg)
                 else
-                    Hotbar.items[Hotbar.index].item.params.blockProperties = properties & ~surf
+                    item.params.flags = properties & ~surf
                     djui_chat_message_create("Removed the surface property " .. msg)
                 end
             else
@@ -902,23 +957,27 @@ function on_set_surface_chat_command(msg)
     return true
 end
 
-local function on_transparent_chat_command()
+---@param msg string
+local function on_transparent_chat_command(msg)
     local item = gCurrentItem
     if item and item.behavior == bhvMceBlock then
-        local transparent_start = mce_block_get_transparent_start_item(item)
-        local anim_max = mce_block_get_anim_max_item(item)
-        local current_anim_state = item.animState
-        if item.model == E_MODEL_MCE_COLOR_BLOCK and current_anim_state == anim_max then
-            djui_chat_message_create("The barrier block cannot become transparent")
-        elseif current_anim_state > transparent_start then
-            item.animState = current_anim_state - transparent_start
-            djui_chat_message_create("The current block is no longer transparent")
+        local number_msg = tonumber(msg)
+        if number_msg then
+            local alpha = math.clamp(number_msg, 32, 255)
+            item.params.color.a = alpha
+
+            djui_chat_message_create("The current block's alpha has been set to " .. alpha)
         else
-            item.animState = current_anim_state + transparent_start
-            if item.animState > anim_max then
-                item.animState = anim_max
+            local alpha = item.params.color.a
+            djui_chat_message_create(tostring(alpha))
+            if alpha < 255 then
+                alpha = 255
+                djui_chat_message_create("The current block is no longer transparent")
+            else
+                alpha = 127
+                djui_chat_message_create("The current block is now transparent")
             end
-            djui_chat_message_create("The current block is now transparent")
+            item.params.color.a = alpha
         end
     else
         djui_chat_message_create("A block must be selected in the hotbar")
@@ -926,6 +985,7 @@ local function on_transparent_chat_command()
     return true
 end
 
+---@param msg string
 local function on_replace_chat_command(msg)
     local commands = string.split(msg, " ")
     if not commands[1] or not tonumber(commands[1]) then
@@ -936,30 +996,23 @@ local function on_replace_chat_command(msg)
         djui_chat_message_create("You need to be holding the block you want to replace")
         return true
     end
-    if gCurrentItem.model ~= E_MODEL_MCE_BLOCK then
-        djui_chat_message_create("Replace only works on non-color blocks")
-        return true
-    end
 
     local new_hotbar_index = math.floor(tonumber(commands[1]) --[[@as integer]])
-    local new_hotbar_item = Hotbar.items[new_hotbar_index].item
+    local new_hotbar_item = Hotbar.items[new_hotbar_index].item --[[@as Item?]]
     if not new_hotbar_item then
         djui_chat_message_create("Can't replace using an empty slot")
         return true
     end
-    if new_hotbar_item.model ~= E_MODEL_MCE_BLOCK then
-        djui_chat_message_create("Replace only works with non-color blocks")
-        return true
-    end
 
-    local item_anim_state = gCurrentItem.animState
     local owner_index = network_global_index_from_local(0) + 1
 
     local obj = obj_get_first_with_behavior_id(bhvMceBlock)
     while obj do
-        if obj.oOwner == owner_index and obj.oAnimState == item_anim_state then
+        if obj.oOwner == owner_index and obj.oAnimState & 0xFFFF == gCurrentItem.animState & 0xFFFF then
             obj.oAnimState = new_hotbar_item.animState
-            obj.oPrevAnimState = obj.oAnimState
+            local color = color_table_to_integer(new_hotbar_item.params.color)
+            obj.oColor = color
+            obj.oOpacity = color & 0xFF
             network_send_object(obj, true)
         end
         obj = obj_get_next_with_same_behavior_id(obj)
@@ -968,8 +1021,75 @@ local function on_replace_chat_command(msg)
     return true
 end
 
+---@param item Item
+---@param color string
+---@param key string
+---@return number
+local __parse_color = function (item, color, key)
+    if color == "_" then
+        return item.params.color[key]
+    end
+
+    local new_color = 0
+    local symbol = color:sub(1, 1)
+    if symbol == "+" or symbol == "-" then
+        local number = color:sub(2)
+        if symbol == "-" then
+            number = "-" .. number
+        end
+        if tonumber(number) then
+            new_color = item.params.color[key] + number
+        end
+        return math.floor(math.clamp(new_color, 0, 255))
+    end
+
+    return math.floor(math.clamp(tonumber(color) or item.params.color[key], 0, 255))
+end
+
+---@param msg string
+local function on_set_color_chat_command(msg)
+    if not gCurrentItem or gCurrentItem.model ~= E_MODEL_MCE_BLOCK or not mce_block_is_colored(gCurrentItem.animState) then
+        djui_chat_message_create("You need to be holding a color block to set its color")
+        return true
+    end
+
+    local commands = string.split(msg, " ")
+    if not commands[1] then
+        djui_chat_message_create("Usage: [<r> <g> <b>]")
+        return true
+    end
+
+    local r = __parse_color(gCurrentItem, commands[1], "r")
+    local g = __parse_color(gCurrentItem, commands[2], "g")
+    local b = __parse_color(gCurrentItem, commands[3], "b")
+    gCurrentItem.params.color.r = r
+    gCurrentItem.params.color.g = g
+    gCurrentItem.params.color.b = b
+
+    return true
+end
+
+
+local function on_set_shade_chat_command()
+    if not gCurrentItem or gCurrentItem.model ~= E_MODEL_MCE_BLOCK then
+        djui_chat_message_create("You need to be holding a block to toggle its shade")
+        return true
+    end
+
+    local is_shaded = mce_block_is_shaded(gCurrentItem.animState)
+    if is_shaded then
+        mce_block_set_unshaded(gCurrentItem)
+    else
+        mce_block_set_shaded(gCurrentItem)
+    end
+
+    return true
+end
+
 hook_chat_command("size", "[num] or [x y z] | Sets the size scaling of the currently selected item. Clamped between 0.01 and 25", on_set_item_size_chat_command)
 hook_chat_command("surface", "! BLOCK ONLY ! Sets the surface type of a block. Refer to the Surface Types tab for which exist and what they do", on_set_surface_chat_command)
 hook_chat_command("surf", "! SAME AS /surface !", on_set_surface_chat_command)
-hook_chat_command("transparent", "Makes the current selected block transparent", on_transparent_chat_command)
+hook_chat_command("transparent", "[<opacity>] | Makes the current selected block transparent", on_transparent_chat_command)
 hook_chat_command("replace", "[hotbar index] | Replaces the placed blocks with the same held model, with the block model of the supplied hotbar index.", on_replace_chat_command)
+hook_chat_command("color", "[<r> <g> <b>] | Sets the color of the currently selected block", on_set_color_chat_command)
+hook_chat_command("shade", "| Toggle shading on the currently selected block", on_set_shade_chat_command)

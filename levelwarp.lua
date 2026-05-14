@@ -74,22 +74,23 @@ local level_to_course = {
     [LEVEL_CASTLE_COURTYARD] = COURSE_NONE,
 }
 
+---@param msg string
 local function on_warp_command(msg)
-    msg = string.split(msg, " ")
+    local commands = string.split(msg, " ")
 
 	local level = LEVEL_BOB
     local area = 1
     local act = 1
     local node = 10
     for _, value in pairs(stages) do
-        if msg[1] == value[1] or msg[1] == value[2] then
+        if commands[1] == value[1] or commands[1] == value[2] then
             level = value[3]
-            area = tonumber(msg[2]) or 1
-            act = tonumber(msg[3]) or (course_is_main_course(level_to_course[level]) and 1 or 0)
-            if msg[4] and string.sub(msg[4], 1, 2) == "0x" then
-                node = tonumber(string.sub(msg[4], 3, #msg[4]), 16) or 10
+            area = tonumber(commands[2]) or 1
+            act = tonumber(commands[3]) or (course_is_main_course(level_to_course[level]) and 1 or 0)
+            if commands[4] and string.sub(commands[4], 1, 2) == "0x" then
+                node = tonumber(string.sub(commands[4], 3, #commands[4]), 16) or 10
             else
-                node = tonumber(msg[4]) or 10
+                node = tonumber(commands[4]) or 10
             end
             break
         end
