@@ -1,5 +1,12 @@
+static const Lights1 mce_block_light = gdSPDefLights1(
+    0x7f, 0x7f, 0x7f,
+    0xff, 0xff, 0xff, 0x49, 0x49, 0x49
+);
+
 Gfx mce_texture_block_dl[] = {
 	gsSPSetGeometryMode(G_SHADING_SMOOTH | G_SHADE | G_LIGHTING | G_ZBUFFER), // 0
+	gsSPLight(&mce_block_light.l, 1),
+    gsSPLight(&mce_block_light.a, 2),
 	gsDPPipeSync(),
 	gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, TEXEL0, 0, ENVIRONMENT, 0, TEXEL0, 0, SHADE, 0, TEXEL0, 0, ENVIRONMENT, 0), // 2
 	gsDPSetAlphaDither(G_AD_NOISE),

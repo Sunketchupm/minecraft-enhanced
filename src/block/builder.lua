@@ -117,7 +117,7 @@ function geo_update_mce_block(node)
         gfx_set_command(cmd_set_geometry_mode, "gsSPSetGeometryMode(G_SHADING_SMOOTH | G_SHADE | G_LIGHTING | G_ZBUFFER)")
 
         -- Set color combiner
-        local cmd_set_color_combiner = gfx_get_command(gfx, 2)
+        local cmd_set_color_combiner = gfx_get_command(gfx, 4)
         local combiner_cases = {
             [CASE_SHADED_SOLID_TEXTURE] = "gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, TEXEL0, 0, ENVIRONMENT, 0, TEXEL0, 0, SHADE, 0, TEXEL0, 0, ENVIRONMENT, 0)",
             [CASE_SHADED_TRANSPARENT_TEXTURE] = "gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, TEXEL0, 0, ENVIRONMENT, 0, TEXEL0, 0, SHADE, 0, TEXEL0, 0, ENVIRONMENT, 0)",
@@ -137,11 +137,11 @@ function geo_update_mce_block(node)
         if texture_info then
             texture = texture_info.texture
         end
-        local cmd_set_texture_image = gfx_get_command(gfx, 9)
+        local cmd_set_texture_image = gfx_get_command(gfx, 11)
         gfx_set_command(cmd_set_texture_image, "gsDPSetTextureImage(G_IM_FMT_RGBA, G_IM_SIZ_16b_LOAD_BLOCK, 1, %t)", texture)
 
         -- Set colors
-        local cmd_environment_color = gfx_get_command(gfx, 14)
+        local cmd_environment_color = gfx_get_command(gfx, 16)
         local color = integer_to_color_table(obj.oColor)
         local color_cases = {
             [CASE_SHADED_SOLID_TEXTURE] = { command = "gsDPSetEnvColor(255, 255, 255, 255)", args = function () end},
@@ -157,11 +157,11 @@ function geo_update_mce_block(node)
         gfx_set_command(cmd_environment_color, color_case.command, color_case.args())
 
         -- Compute vertices
-        local cmd_vertices = gfx_get_command(gfx, 15)
+        local cmd_vertices = gfx_get_command(gfx, 17)
         compute_vertices(obj, cmd_vertices)
 
         -- Build triangles
-        local cmd_triangles = gfx_get_command(gfx, 16)
+        local cmd_triangles = gfx_get_command(gfx, 18)
         build_triangles(obj, cmd_triangles)
     end
 
@@ -176,9 +176,9 @@ end
 function geo_switch_mce_block(node)
     local obj = geo_get_current_object()
 
-    local case = obj.oOpacity == 255 and 2 or 3
-    if mce_block_is_shaded(obj.oAnimState) then
-        case = case - CASE_UNSHADED_SOLID_TEXTURE
+    local case = obj.oOpacity == 255 and 0 or 1
+    if mce_block_is_unshaded(obj.oAnimState) then
+        case = case + CASE_UNSHADED_SOLID_TEXTURE
     end
     if mce_block_is_colored(obj.oAnimState) then
         case = case + CASE_SHADED_SOLID_COLOR

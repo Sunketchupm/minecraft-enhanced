@@ -1075,12 +1075,13 @@ local function on_set_shade_chat_command()
         return true
     end
 
-    local is_shaded = mce_block_is_shaded(gCurrentItem.animState)
-    if is_shaded then
-        mce_block_set_unshaded(gCurrentItem)
-    else
+    local is_unshaded = mce_block_is_unshaded(gCurrentItem.animState)
+    if is_unshaded then
         mce_block_set_shaded(gCurrentItem)
+    else
+        mce_block_set_unshaded(gCurrentItem)
     end
+    djui_chat_message_create("The current block has now been " .. (not is_unshaded and "unshaded" or "shaded"))
 
     return true
 end

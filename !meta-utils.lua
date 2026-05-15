@@ -88,7 +88,7 @@ function mce_block_is_colored(anim_state)
 end
 
 ---@param anim_state integer
-function mce_block_is_shaded(anim_state)
+function mce_block_is_unshaded(anim_state)
     return anim_state & (1 << 25) ~= 0
 end
 
@@ -104,7 +104,7 @@ function mce_block_set_colored(item)
 end
 
 ---@param item Item | Object
-function mce_block_set_shaded(item)
+function mce_block_set_unshaded(item)
     if item.oAction == nil then
         ---@cast item Item
         item.animState = item.animState | (1 << 25)
@@ -126,7 +126,7 @@ function mce_block_set_uncolored(item)
 end
 
 ---@param item Item | Object
-function mce_block_set_unshaded(item)
+function mce_block_set_shaded(item)
     if item.oAction == nil then
         ---@cast item Item
         item.animState = item.animState & ~(1 << 25)
