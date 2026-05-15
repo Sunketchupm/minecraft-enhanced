@@ -341,7 +341,7 @@ ItemGrid.inputs = function(m, item_grid, stick, c_stick)
     if item and item.held then
         handle_holding_item_inputs(m, item, stick)
     else
-        handle_open_settings_inputs(m)
+        --handle_open_settings_inputs(m)
         handle_item_selection_inputs(item_grid, stick)
         handle_pick_up_item_inputs(m, item_grid)
     end

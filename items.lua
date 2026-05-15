@@ -928,7 +928,7 @@ function on_set_surface_chat_command(msg)
     if item and item.behavior == bhvMceBlock then
         local surf = sBlockSurfaceIdLookup[msg:lower()]
         if surf then
-            item.params.flags = surf
+            item.params.params = surf
             djui_chat_message_create("Set the surface type to " .. msg)
         else
             surf = sBlockPropertyLookup[msg:lower()]
@@ -948,7 +948,7 @@ function on_set_surface_chat_command(msg)
                     djui_chat_message_create("Removed the surface property " .. msg)
                 end
             else
-                djui_chat_message_create("Could not find surface type or property" .. "\"" .. msg .. "\"")
+                djui_chat_message_create("Could not find surface type or property " .. "\"" .. msg .. "\"")
             end
         end
     else
@@ -969,7 +969,6 @@ local function on_transparent_chat_command(msg)
             djui_chat_message_create("The current block's alpha has been set to " .. alpha)
         else
             local alpha = item.params.color.a
-            djui_chat_message_create(tostring(alpha))
             if alpha < 255 then
                 alpha = 255
                 djui_chat_message_create("The current block is no longer transparent")
