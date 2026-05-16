@@ -5,7 +5,7 @@ gLevelValues.cellHeightLimit = 32767
 
 smlua_audio_utils_replace_sequence(0x64, 0x25, 75, "03_Seq_sms_custom")
 
-local LEVEL_PLOT = level_register("level_plot_entry", COURSE_CAKE_END, "Plot", "plot", 20000, 0x28, 0x28, 0x28)
+LEVEL_PLOT = level_register("level_plot_entry", COURSE_CAKE_END, "Plot", "plot", 20000, 0x28, 0x28, 0x28)
 
 local function on_chat_command(msg)
     local act = tonumber(msg) or 0
@@ -141,7 +141,18 @@ local function musicplot(msg) -- Various music for plots, can be used to add mor
     end
 end
 
+local function mario_update(m)
+    local np = gNetworkPlayers[m.playerIndex]
+    if np.currLevelNum == LEVEL_PLOT then
+        network_player_set_override_location(np, "Plot")
+    else
+        local level = get_level_name(np.currCourseNum, np.currLevelNum, np.currAreaIndex)
+        network_player_set_override_location(np, level)
+    end
+end
+
 hook_chat_command("plot-music", "[1-26] | Changes what music plays while in a plot. Custom music requires you to reload your plot to apply changes.", musicplot)
 hook_chat_command("plot", "| Warp to a level with no textures or objects. Pass an argument to go to a specific act.", on_chat_command)
 hook_event(HOOK_ON_LEVEL_INIT, on_lvl_init)
 hook_event(HOOK_ON_PAUSE_EXIT, on_pause_exit)
+hook_event(HOOK_MARIO_UPDATE, mario_update)

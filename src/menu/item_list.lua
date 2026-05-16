@@ -1,4 +1,4 @@
-local BlockTextures = require("../block/textures") ---@diagnostic disable-line: different-requires
+local BlockTextures = require("../block/textures")
 
 local Items = {}
 

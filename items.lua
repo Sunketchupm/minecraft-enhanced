@@ -1,4 +1,7 @@
-local Hotbar = require("src/menu/hotbar") ---@diagnostic disable-line: different-requires
+
+require("src/block/builder")
+local Hotbar = require("src/menu/hotbar")
+local BlockTextures = require("src/block/textures")
 
 ---@class (exact) Item
     ---@field behavior BehaviorId
@@ -197,9 +200,6 @@ function obj_get_any_nearest_item(obj)
 end
 
 ------------------------------------------------------------------------------------------
-
-require("src/block/builder")
-local BlockTextures = require("src/block/textures") ---@diagnostic disable-line: different-requires
 
 --[[ Custom properties:
     oAnimState:

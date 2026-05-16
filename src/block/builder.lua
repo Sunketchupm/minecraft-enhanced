@@ -1,5 +1,5 @@
 local Shapes = require("shapes")
-local BlockTextures = require("textures") ---@diagnostic disable-line: different-requires
+local BlockTextures = require("textures")
 
 local CASE_SHADED_SOLID_TEXTURE = 0
 local CASE_SHADED_TRANSPARENT_TEXTURE = 1

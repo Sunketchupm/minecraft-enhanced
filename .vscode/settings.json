@@ -11,5 +11,9 @@
         "bhvMceDoor",
         "bhvMceFlame",
         "bhvMce1Up"
+    ],
+    "Lua.diagnostics.disable": [
+        "different-requires",
+        "lowercase-global"
     ]
 }

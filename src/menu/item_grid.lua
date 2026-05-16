@@ -1,6 +1,6 @@
 local Items = require("item_list")
 local Mouse = require("mouse")
-local Hotbar = require("hotbar") ---@diagnostic disable-line: different-requires
+local Hotbar = require("hotbar")
 
 local ItemGrid = {}
 
@@ -89,15 +89,15 @@ ItemGrid.render = function(rect, item_grid)
 
     -- Render lines
     for i = 1, column_count + 1, 1 do
-        djui_hud_set_color(255, 255, 255, 255)
+        djui_hud_set_color_with_table(MAIN_RECT_COLORS[2])
         djui_hud_render_rect(x + (slot_width * (i - 1) - 1), y, 2, height)
-        djui_hud_set_color(96, 96, 96, 255)
+        djui_hud_set_color_with_table(MAIN_RECT_COLORS[3])
         djui_hud_render_rect(x + (slot_width * (i - 1) + 1), y, 2, height)
     end
     for i = 1, row_count + 1, 1 do
-        djui_hud_set_color(255, 255, 255, 255)
+        djui_hud_set_color_with_table(MAIN_RECT_COLORS[2])
         djui_hud_render_rect(x, y + (slot_height * (i - 1) - 1), width, 2)
-        djui_hud_set_color(96, 96, 96, 255)
+        djui_hud_set_color_with_table(MAIN_RECT_COLORS[3])
         djui_hud_render_rect(x, y + (slot_height * (i - 1) + 1), width, 2)
     end
 
@@ -267,11 +267,11 @@ local function handle_paging_inputs(item_grid, c_stick)
     if not pages then return end
 
     if Mouse.moved then
-        if Mouse.scroll * invert_multiplier > 0 and pages.index > 0 then
+        if Mouse.scroll.y * invert_multiplier > 0 and pages.index > 0 then
             pages.index = pages.index - 1
             item_grid.index = pages.item_count * pages.index
             play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
-        elseif Mouse.scroll * invert_multiplier < 0 and pages.index < pages.count then
+        elseif Mouse.scroll.y * invert_multiplier < 0 and pages.index < pages.count then
             pages.index = pages.index + 1
             item_grid.index = pages.item_count * pages.index
             play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
@@ -286,30 +286,6 @@ local function handle_paging_inputs(item_grid, c_stick)
             item_grid.index = pages.item_count * pages.index
             play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
         end
-    end
-end
-
----@param m MarioState
-local function handle_reset_inputs(m)
-    if m.controller.buttonDown & Y_BUTTON ~= 0 and Hotbar.cooldown <= 0 then
-        Hotbar.clear = Hotbar.clear + 1
-        play_sound(SOUND_MENU_COLLECT_SECRET + ((Hotbar.clear // 12) << 16), gGlobalSoundSource)
-    else
-        if not Mouse.moved then
-            Hotbar.clear = 0
-        end
-    end
-
-    if Hotbar.clear >= 60 then
-        for i = 1, HOTBAR_SIZE, 1 do
-            Hotbar.items[i] = { item = nil, icon = nil, held = false } ---@diagnostic disable-line: assign-type-mismatch
-        end
-        play_sound(SOUND_MENU_LET_GO_MARIO_FACE, gGlobalSoundSource)
-        Hotbar.clear = 0
-        Hotbar.cooldown = 39
-    end
-    if Hotbar.cooldown > 0 then
-        Hotbar.cooldown = Hotbar.cooldown - 1
     end
 end
 
@@ -335,7 +311,6 @@ end
 ---@param c_stick Directions
 ItemGrid.inputs = function(m, item_grid, stick, c_stick)
     handle_paging_inputs(item_grid, c_stick)
-    handle_reset_inputs(m)
 
     local item = item_grid.items[item_grid.index + 1]
     if item and item.held then

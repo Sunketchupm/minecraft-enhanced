@@ -1,41 +1,13 @@
 local Mouse = require("mouse")
 local ItemGrid = require("item_grid")
 local Scroll = require("scroll")
-local Hotbar = require("hotbar") ---@diagnostic disable-line: different-requires
+local Hotbar = require("hotbar")
 local Buttons = require("buttons")
 local Controls = require("controls")
+local PauseRender = require("pause/render")
+require("pause/class")
 
 ------------------------------------------------------------------------------------------------
-
----@param rect Rectangle
-local function render_reset_hotbar(rect)
-    local x, y, width, height = from_rect(rect)
-    local text_x = x + width * 0.5
-    local text_y = y + height * 0.9
-    local button_rect = into_rect(text_x, text_y, width, height)
-    local button_x, button_y, button_width, button_height =
-        from_rect(Buttons.render_menu_button(button_rect, "Reset Hotbar", Y_BUTTON_TEX, Hotbar.handle_reset_inputs, false))
-
-    local reset_bar_width = button_width * math.remap(0, 60, 0, 1, Hotbar.clear)
-    local reset_bar_height = 10
-    local reset_bar_x = button_x
-    local reset_bar_y = button_y + button_height
-    djui_hud_set_color_with_table(GREEN)
-    djui_hud_render_rect(reset_bar_x, reset_bar_y, reset_bar_width, reset_bar_height)
-end
-
---[[
----@param rect Rectangle
-local function render_settings_button(rect)
-    local x, y, width, height = from_rect(rect)
-    local text_x = x + width * 0.2
-    local text_y = y + height * 0.9
-    local button_rect = into_rect(text_x, text_y, width, height)
-    -- TEMPORARY
-    local override_darken = gMenu.settings.transparent
-    Buttons.render_menu_button(button_rect, "Transparent", D_CBUTTON_TEX, Mouse.handle_open_settings_inputs, override_darken)
-end
-]]
 
 ---@param rect Rectangle
 ---@param tab MenuTab
@@ -45,10 +17,8 @@ local function render_tab_header(rect, tab, text)
 
     djui_hud_set_color(63, 63, 63, 255)
     local scale = 1.5
-    local size = djui_hud_measure_text(text) * scale
-    local text_x = x + width * 0.5 - size * 0.5
     local text_y = y + height * 0.04
-    djui_hud_print_text(text, text_x, text_y, scale)
+    render_centered_text(text, x, width, text_y, scale)
 
     local pages = tab.vars.pages
     if pages.count == 0 then return end
@@ -79,7 +49,7 @@ local function render_interior_rectangle(rect, tab)
         interior_rect_width,
         interior_rect_height
     )
-    djui_hud_set_color(175, 175, 175, 255)
+    djui_hud_set_color_with_table_adjust(MAIN_RECT_COLORS[1], -40, -40, -40, 0)
     djui_hud_render_rect(interior_rect_x, interior_rect_y, interior_rect_width, interior_rect_height)
     ItemGrid.render(interior_rect, tab.vars --[[@as ItemGrid]])
 end
@@ -90,8 +60,7 @@ end
 local function render_item_list_tab(rect, tab, name)
     render_interior_rectangle(rect, tab)
     render_tab_header(rect, tab, name)
-    render_reset_hotbar(rect)
-    --render_settings_button(rect)
+    Hotbar.render_reset(rect)
 end
 
 ---@param rect Rectangle
@@ -213,7 +182,7 @@ local function render_description_box(rect, description)
         height = height * 0.8
     }
     local rect_colors = {{r = 0, g = 16, b = 69, a = 255}, {r = 255, g = 255, b = 255, a = 255}, {r = 255, g = 255, b = 255, a = 255}}
-    render_bordered_rectangle(description_rect, rect_colors, 0.006, 0.01, true)
+    render_bordered_rectangle(description_rect, rect_colors, 0.01, true)
 
     local desc_x = description_rect.x + width * 0.03
     local desc_y = description_rect.y + height * 0.03
@@ -285,7 +254,7 @@ local function render_menu_tab(rect, index)
     local tab_x = x + (tab_width * (index - 1))
     local tab_y = y - (tab_height - (tab_height * 0.1))
     local tab_rect = into_rect(tab_x, tab_y, tab_width, tab_height)
-    render_bordered_rectangle(tab_rect, colors, 0.05, 0.07, false)
+    render_bordered_rectangle(tab_rect, colors, 0.1, false)
 
     local icon = gMenu[index].icon
     djui_hud_set_color_with_table(icon.color)
@@ -313,14 +282,16 @@ local function render_main_rectangle(screen_width, screen_height)
     for i = 1, TAB_COUNT do
         render_menu_tab(main_rect, i)
     end
-    render_bordered_rectangle(main_rect, colors, 0.008, 0.01, false)
+    render_bordered_rectangle(main_rect, colors, 0.01, false)
     return main_rect
 end
 
 ---@param screen_width number
 ---@param screen_height number
 local function render_menu(screen_width, screen_height)
-    Hotbar.render(screen_width, screen_height)
+    if not hud_is_hidden() then
+        Hotbar.render(screen_width, screen_height)
+    end
     if not gMenu.open then return end
 
     local rect = render_main_rectangle(screen_width, screen_height)
@@ -334,18 +305,36 @@ end
 
 ------------------------------------------------------------------------------------------------
 
-local function hud_render()
+local Renders = {}
+
+Renders.hud_render_behind = function()
     djui_hud_set_resolution(RESOLUTION_DJUI)
     djui_hud_set_font(FONT_SPECIAL)
     local screen_width = djui_hud_get_screen_width()
     local screen_height = djui_hud_get_screen_height()
+
+    if gPauseMenu.is_paused then
+        return
+    end
+
     if gCanBuild then
         render_menu(screen_width, screen_height)
     end
 
-    if gMenu.settings.show_controls then
+    if not hud_is_hidden() and gMenu.settings.show_controls then
         Controls.render(screen_width, screen_height)
     end
 end
 
-return hud_render
+Renders.hud_render = function ()
+    djui_hud_set_resolution(RESOLUTION_DJUI)
+    djui_hud_set_font(FONT_SPECIAL)
+    local screen_width = djui_hud_get_screen_width()
+    local screen_height = djui_hud_get_screen_height()
+
+    if gPauseMenu.is_paused then
+        PauseRender(screen_width, screen_height)
+    end
+end
+
+return Renders

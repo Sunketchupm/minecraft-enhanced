@@ -7,7 +7,7 @@ local sSavedMarioYaw = 0
 local sPrevRomhackCamState = camera_get_romhack_override()
 ---@param m MarioState
 local function act_free_move(m)
-    if gMenu.open or is_game_paused() then return false end
+    if gMenu.open or gPauseMenu.is_paused then return false end
 
     m.peakHeight = m.pos.y
     m.health = 0x880
@@ -168,6 +168,8 @@ local sStartFlyingWindow = false
 ---@param m MarioState
 local function mario_update(m)
     if m.playerIndex ~= 0 then return end
+    if gPauseMenu.is_paused then return end
+
     if sStartFlyingWindow then
         sFlyingWindow = sFlyingWindow + 1
         if sFlyingWindow > 15 then

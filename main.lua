@@ -1,8 +1,6 @@
 -- name: \\#31db02\\Minecraft \\#1dcff2\\Enhanced \\#dcdcdc\\[WIP]
 -- description: An improved version of the Minecraft mod, originally by zKevin.\n\nMod made by Teru. Texture help by Sherbie. Minecraft+ made by Bene360 (which isn't used in this mod, but their effort shouldn't be wasted).
 
-local Hotbar = require("src/menu/hotbar") ---@diagnostic disable-line: different-requires
-
 gLevelValues.fixCollisionBugs = true
 gLevelValues.fixCollisionBugsFalseLedgeGrab = false
 gLevelValues.fixCollisionBugsGroundPoundBonks = false
@@ -11,6 +9,11 @@ gServerSettings.stayInLevelAfterStar = 1
 gLevelValues.fixInvalidShellRides = false
 
 gCanBuild = true
+gMiscSettings = {
+	show_arrow = true,
+	angle_increment = 15,
+	auto_build = true,
+}
 
 E_MODEL_MCE_BLOCK = smlua_model_util_get_id("mce_block_geo")
 E_MODEL_OUTLINE = smlua_model_util_get_id("mce_outline")
@@ -257,7 +260,7 @@ end
 
 --------------------------------------
 
-local sShowArrow = true
+gMiscSettings.show_arrow = true
 
 --- Called from bhvArrow.bhv
 
@@ -276,16 +279,12 @@ function bhv_arrow_loop(obj)
 		obj_mark_for_deletion(obj)
 	end
 
-	if gMarioStates[0].controller.buttonDown & L_TRIG ~= 0 and sShowArrow then
+	if gMarioStates[0].controller.buttonDown & L_TRIG ~= 0 and gMiscSettings.show_arrow then
 		cur_obj_enable_rendering()
 	else
 		cur_obj_disable_rendering()
 	end
 end
-
-hook_mod_menu_checkbox("Show Angle Arrow", true, function (_, value)
-	sShowArrow = value
-end)
 
 -------------------------------------------------------------------------------
 
@@ -428,7 +427,7 @@ local function set_outline_offset(m)
 	end
 end
 
-local sRotationIncrement = degrees_to_sm64(15)
+gMiscSettings.angle_increment = 15
 ---@param m MarioState
 local function set_item_rotation(m)
 	if not sOutlineObject or not gCurrentItem or m.controller.buttonDown & L_TRIG == 0 then return end
@@ -437,19 +436,19 @@ local function set_item_rotation(m)
 	local pressed = m.controller.buttonPressed
 
 	if pressed & U_CBUTTONS ~= 0 then
-		item_rotation.x = item_rotation.x + sRotationIncrement
+		item_rotation.x = item_rotation.x + degrees_to_sm64(gMiscSettings.angle_increment)
 	elseif pressed & D_CBUTTONS ~= 0 then
-		item_rotation.x = item_rotation.x - sRotationIncrement
+		item_rotation.x = item_rotation.x - degrees_to_sm64(gMiscSettings.angle_increment)
 	end
 	if pressed & L_CBUTTONS ~= 0 then
-		item_rotation.y = item_rotation.y + sRotationIncrement
+		item_rotation.y = item_rotation.y + degrees_to_sm64(gMiscSettings.angle_increment)
 	elseif pressed & R_CBUTTONS ~= 0 then
-		item_rotation.y = item_rotation.y - sRotationIncrement
+		item_rotation.y = item_rotation.y - degrees_to_sm64(gMiscSettings.angle_increment)
 	end
 	if pressed & L_JPAD ~= 0 then
-		item_rotation.z = item_rotation.z + sRotationIncrement
+		item_rotation.z = item_rotation.z + degrees_to_sm64(gMiscSettings.angle_increment)
 	elseif pressed & R_JPAD ~= 0 then
-		item_rotation.z = item_rotation.z - sRotationIncrement
+		item_rotation.z = item_rotation.z - degrees_to_sm64(gMiscSettings.angle_increment)
 	end
 	if pressed & X_BUTTON ~= 0 then
 		gCurrentItem.dimensions.rotation = gVec3sZero()
@@ -457,11 +456,6 @@ local function set_item_rotation(m)
 
 	m.controller.buttonPressed = m.controller.buttonPressed & ~(U_CBUTTONS | L_CBUTTONS | D_CBUTTONS | R_CBUTTONS | X_BUTTON)
 end
-
-hook_mod_menu_inputbox("Angle Increment", "15", 4, function (index, value)
-	sRotationIncrement = degrees_to_sm64(tonumber(value) or 15)
-	update_mod_menu_element_inputbox(index, tostring(math.round(sm64_to_degrees(sRotationIncrement))))
-end)
 
 local function delete_outline()
 	if sOutlineObject then
@@ -475,8 +469,7 @@ end
 
 ---------------------------------------
 
-local sAutoBuild = true
-local sAutoBuildTimer = 0 -- TEMPORARY
+local sAutoBuildTimer = 0
 local sBuiltOrDeleted = false
 
 ---@param m MarioState
@@ -502,7 +495,7 @@ local function builder_mario_update(m)
 	if m.controller.buttonPressed & Y_BUTTON ~= 0 then
 		sBuiltOrDeleted = determine_place_or_delete({ build = true, delete = true })
     end
-	if sAutoBuild and m.controller.buttonDown & Y_BUTTON ~= 0 then
+	if gMiscSettings.auto_build and m.controller.buttonDown & Y_BUTTON ~= 0 then
 		local do_build = sBuiltOrDeleted
 		if sAutoBuildTimer < 5 then
 			sAutoBuildTimer = sAutoBuildTimer + 1
@@ -519,10 +512,6 @@ local function builder_mario_update(m)
 		m.controller.buttonPressed = m.controller.buttonPressed & ~R_TRIG
 	end
 end
-
-hook_mod_menu_checkbox("Autobuild", true, function (_, value)
-	sAutoBuild = value
-end)
 
 -------------------------------------------------------------------------------
 

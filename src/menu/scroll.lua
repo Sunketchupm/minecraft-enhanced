@@ -55,7 +55,7 @@ Scroll.render = function(button, rect, offset_y, scroll, elements)
         if elements[absolute_index] then
             local rendered_button_rect = into_rect(button.x, button.y + button_total_height * (i - 1) + offset_y,
                 button.width, button.height)
-            render_bordered_rectangle(rendered_button_rect, button_colors, 0.01, 0.06, false)
+            render_bordered_rectangle(rendered_button_rect, button_colors, 0.01, false)
             render_shadowed_text(elements[absolute_index], button.x + 12,
                 button.y + 4.5 + button_total_height * (i - 1) + offset_y, 0.8)
         end
@@ -78,9 +78,9 @@ Scroll.inputs = function(_, scroll, stick, _)
         Mouse.menu.prevItemIndex = scroll.index
 
         local invert_multiplier = gMenu.settings.invert_scroll and -1 or 1
-        if (Mouse.scroll * invert_multiplier) > 0 and scroll.offset > 0 then
+        if (Mouse.scroll.y * invert_multiplier) > 0 and scroll.offset > 0 then
             scroll.offset = scroll.offset - 1
-        elseif (Mouse.scroll * invert_multiplier) < 0 and element_count - scroll.offset > scroll.elements_rendered then
+        elseif (Mouse.scroll.y * invert_multiplier) < 0 and element_count - scroll.offset > scroll.elements_rendered then
             scroll.offset = scroll.offset + 1
         end
     else

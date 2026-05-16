@@ -5,7 +5,10 @@ local Mouse = {
     pressed = { left = false, right = false, middle = false },
     held = { left = false, right = false, middle = false },
     released = { left = false, right = false, middle = false },
-    scroll = 0,
+    scroll = {
+        x = 0,
+        y = 0
+    },
     menu = {
         clickedTabIndex = 0,
         hoveringSurfaceTip = false,
@@ -16,16 +19,17 @@ Mouse.has_moved = function()
     return djui_hud_get_mouse_buttons_pressed() ~= 0 or
     djui_hud_get_mouse_buttons_down() ~= 0 or
     djui_hud_get_mouse_buttons_released() ~= 0 or
-    Mouse.scroll ~= 0 or
+    djui_hud_get_mouse_scroll_x() ~= 0 or djui_hud_get_mouse_scroll_y() ~= 0 or
     djui_hud_get_raw_mouse_x() > 0 or djui_hud_get_raw_mouse_y() > 0
 end
 
 Mouse.get_inputs = function()
-    Mouse.scroll = djui_hud_get_mouse_scroll_y()
     if Mouse.has_moved() then
         Mouse.moved = true
     end
 
+    Mouse.scroll.x = djui_hud_get_mouse_scroll_x()
+    Mouse.scroll.y = djui_hud_get_mouse_scroll_y()
     Mouse.pressed.left = djui_hud_get_mouse_buttons_pressed() & 1 ~= 0
     Mouse.pressed.middle = djui_hud_get_mouse_buttons_pressed() & 2 ~= 0
     Mouse.pressed.right = djui_hud_get_mouse_buttons_pressed() & 4 ~= 0
@@ -35,15 +39,16 @@ Mouse.get_inputs = function()
     Mouse.released.left = djui_hud_get_mouse_buttons_released() & 1 ~= 0
     Mouse.released.middle = djui_hud_get_mouse_buttons_released() & 2 ~= 0
     Mouse.released.right = djui_hud_get_mouse_buttons_released() & 4 ~= 0
-end
-
-Mouse.render = function()
-    if not Mouse.moved then return end
 
     Mouse.prev.x = Mouse.pos.x
     Mouse.prev.y = Mouse.pos.y
     Mouse.pos.x = djui_hud_get_mouse_x()
     Mouse.pos.y = djui_hud_get_mouse_y()
+end
+
+Mouse.render = function()
+    if not Mouse.moved then return end
+
     djui_hud_set_color(255, 255, 255, 255)
     djui_hud_render_texture_interpolated(MOUSE_TEX,
         Mouse.prev.x - MOUSE_TEX.width * 0.5, Mouse.prev.y- MOUSE_TEX.height * 0.5, 1, 1,

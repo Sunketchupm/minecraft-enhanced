@@ -24,6 +24,11 @@ Buttons.render_menu_button = function(rect, text, texture, input_func, override_
     local button_rect = into_rect(texture_x - PADDING, y - PADDING, overall_size + PADDING*2, texture.height * texture_scale + PADDING*2)
     local colors = { MAIN_RECT_COLORS[1], MAIN_RECT_COLORS[2], MAIN_RECT_COLORS[3] }
 
+    local new_button_x = x - button_rect.width * 0.5
+    button_rect.x = new_button_x
+    local new_texture_x = new_button_x + PADDING
+    local new_text_x = button_rect.x + button_rect.width - text_size - PADDING
+
     local darken = false
     if Mouse.is_within(button_rect) then
         darken = input_func()
@@ -38,12 +43,7 @@ Buttons.render_menu_button = function(rect, text, texture, input_func, override_
         }
     end
 
-    local new_button_x = x - button_rect.width * 0.5
-    button_rect.x = new_button_x
-    local new_texture_x = new_button_x + PADDING
-    local new_text_x = button_rect.x + button_rect.width - text_size - PADDING
-
-    render_bordered_rectangle(button_rect, colors, 0.008, 0.05, true)
+    render_bordered_rectangle(button_rect, colors, 0.01, true)
 
     -- Render text and texture
     djui_hud_set_color_with_table(WHITE)
