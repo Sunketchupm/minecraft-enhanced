@@ -48,6 +48,28 @@ function integer_to_color_table(color)
     }
 end
 
+---@param deg number
+---@return integer
+function degrees_to_sm64(deg)
+    return deg * 0x8000 / 180.0
+end
+
+---@param angle integer
+---@return number
+function sm64_to_degrees(angle)
+    return angle * 180.0 / 0x8000;
+end
+
+---@param x number
+---@param min number
+---@param max number
+---@return number
+function math.wrap(x, min, max)
+    if x > max then return min + x - max end
+    if x < min then return max + x - min end
+    return x
+end
+
 -------------------------------------------------------------
 
 ---@param id_list BehaviorId[]
@@ -73,6 +95,46 @@ function iterate_id_list(id_list)
 
         return current_obj
     end
+end
+
+---@param point Vec3f
+---@param intersectee Object
+---@return boolean
+function point_is_intersecting_obj(point, intersectee)
+    if not point or not intersectee then return false end
+    if intersectee.numSurfaces == 0 then return false end
+
+    for i = 0, intersectee.numSurfaces - 1, 1 do
+        local surface = obj_get_surface_from_index(intersectee, i)
+
+        local intersectee_pos = gVec3fZero()
+        object_pos_to_vec3f(intersectee_pos, intersectee)
+        local v1 = vec3s_to_vec3f(gVec3fZero(), surface.vertex1)
+        local v2 = vec3s_to_vec3f(gVec3fZero(), surface.vertex2)
+        local v3 = vec3s_to_vec3f(gVec3fZero(), surface.vertex3)
+        local midpoint = {
+            x = (v1.x + v2.x + v3.x) / 3,
+            y = (v1.y + v2.y + v3.y) / 3,
+            z = (v1.z + v2.z + v3.z) / 3,
+        }
+
+        local intersector_rel_pos = vec3f_dif(gVec3fZero(), point, midpoint)
+        vec3f_normalize(intersector_rel_pos)
+
+        local dot = vec3f_dot(surface.normal, intersector_rel_pos)
+        if dot > 0 then return false end
+    end
+    return true
+end
+
+---@param obj Object
+---@param intersectee Object
+---@return boolean
+function obj_is_intersecting_obj(obj, intersectee)
+    if not obj then return false end
+    local pos = gVec3fZero()
+    object_pos_to_vec3f(pos, obj)
+    return point_is_intersecting_obj(pos, intersectee)
 end
 
 -------------------------------------------------------------

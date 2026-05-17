@@ -15,6 +15,9 @@ gMiscSettings = {
 	auto_build = true,
 }
 
+---@type Object?
+local sDeletableObject = nil
+
 E_MODEL_MCE_BLOCK = smlua_model_util_get_id("mce_block_geo")
 E_MODEL_OUTLINE = smlua_model_util_get_id("mce_outline")
 E_MODEL_ARROW = smlua_model_util_get_id("arrow_geo")
@@ -23,7 +26,7 @@ E_MODEL_ARROW = smlua_model_util_get_id("arrow_geo")
 
 local sEnableGrid = true
 local sForceDisableGrid = false
-GRID_SIZE_MULTIPLIER = 200
+BLOCK_DEFAULT_SIZE = 200
 
 ---@param num number
 ---@param grid number
@@ -148,12 +151,25 @@ function bhv_outline_loop(obj)
 		facing_z = coss(m.faceAngle.y)
 	end
 
-	local gridX = current_item.dimensions.grid.x * GRID_SIZE_MULTIPLIER
-	local gridY = current_item.dimensions.grid.y * GRID_SIZE_MULTIPLIER
-	local gridZ = current_item.dimensions.grid.z * GRID_SIZE_MULTIPLIER
-	local posX = __to_grid(m.pos.x + facing_x * math.max(gridX, GRID_SIZE_MULTIPLIER), gridX)
+	local gridX = current_item.dimensions.grid.x * BLOCK_DEFAULT_SIZE
+	local gridY = current_item.dimensions.grid.y * BLOCK_DEFAULT_SIZE
+	local gridZ = current_item.dimensions.grid.z * BLOCK_DEFAULT_SIZE
+	local posX = __to_grid(m.pos.x + facing_x * math.max(gridX, BLOCK_DEFAULT_SIZE), gridX)
 	local posY = __to_grid(m.pos.y, gridY) + (gridY * gOutlineGridYOffset)
-	local posZ = __to_grid(m.pos.z + facing_z * math.max(gridZ, GRID_SIZE_MULTIPLIER), gridZ)
+	local posZ = __to_grid(m.pos.z + facing_z * math.max(gridZ, BLOCK_DEFAULT_SIZE), gridZ)
+
+	if sDeletableObject and point_is_intersecting_obj({ x = posX, y = posY, z = posZ }, sDeletableObject) then
+		sOutlineObject.oPosX = sDeletableObject.oPosX
+		sOutlineObject.oPosY = sDeletableObject.oPosY
+		sOutlineObject.oPosZ = sDeletableObject.oPosZ
+		sOutlineObject.oFaceAnglePitch = sDeletableObject.oFaceAnglePitch
+		sOutlineObject.oFaceAngleYaw = sDeletableObject.oFaceAngleYaw
+		sOutlineObject.oFaceAngleRoll = sDeletableObject.oFaceAngleRoll
+		sOutlineObject.header.gfx.scale.x = sDeletableObject.header.gfx.scale.x + 0.01
+		sOutlineObject.header.gfx.scale.y = sDeletableObject.header.gfx.scale.y + 0.01
+		sOutlineObject.header.gfx.scale.z = sDeletableObject.header.gfx.scale.z + 0.01
+		return
+	end
 
 	sOutlineObject.oPosX = posX
 	sOutlineObject.oPosY = posY
@@ -164,7 +180,11 @@ function bhv_outline_loop(obj)
 	local item_size = item_dimensions.size
 	obj_scale_xyz(obj, item_size.x, item_size.y, item_size.z)
 
-	local rotation = item_dimensions.rotation
+	local rotation = {
+		x = math.round(degrees_to_sm64(item_dimensions.rotation.x)),
+		y = math.round(degrees_to_sm64(item_dimensions.rotation.y)),
+		z = math.round(degrees_to_sm64(item_dimensions.rotation.z))
+	}
 	sOutlineObject.oFaceAnglePitch = rotation.x
 	sOutlineObject.oFaceAngleYaw = rotation.y
 	sOutlineObject.oFaceAngleRoll = rotation.z
@@ -216,9 +236,14 @@ function bhv_preview_item_loop(obj)
 		obj_mark_for_deletion(obj)
 		return
 	end
-	local current_item = gCurrentItem
 	obj.parentObj = obj
 
+	if sDeletableObject and obj_is_intersecting_obj(sOutlineObject, sDeletableObject) then
+		obj_mark_for_deletion(obj)
+		return
+	end
+
+	local current_item = gCurrentItem
 	local item_params = current_item.params
 	obj.oPosX = sOutlineObject.oPosX
 	obj.oPosY = sOutlineObject.oPosY - (item_params.yOffset * current_item.dimensions.size.y)
@@ -270,9 +295,9 @@ function bhv_arrow_loop(obj)
 	if sOutlineObject and obj_get_first_with_behavior_id(bhvOutline) and current_item and current_item.model then
 		local item_params = current_item.params
 		outline_scale = sOutlineObject.header.gfx.scale
-		obj.oPosX = sOutlineObject.oPosX + sins(sOutlineObject.oFaceAngleYaw) * GRID_SIZE_MULTIPLIER * outline_scale.x
+		obj.oPosX = sOutlineObject.oPosX + sins(sOutlineObject.oFaceAngleYaw) * BLOCK_DEFAULT_SIZE * outline_scale.x
 		obj.oPosY = sOutlineObject.oPosY - (item_params.yOffset * current_item.dimensions.size.y)
-		obj.oPosZ = sOutlineObject.oPosZ + coss(sOutlineObject.oFaceAngleYaw) * GRID_SIZE_MULTIPLIER * outline_scale.z
+		obj.oPosZ = sOutlineObject.oPosZ + coss(sOutlineObject.oFaceAngleYaw) * BLOCK_DEFAULT_SIZE * outline_scale.z
 		obj_scale_xyz(obj, outline_scale.x, outline_scale.y, outline_scale.z)
 		obj.oFaceAngleYaw = sOutlineObject.oFaceAngleYaw - 16384
 	else
@@ -411,19 +436,19 @@ local function set_item_rotation(m)
 	local pressed = m.controller.buttonPressed
 
 	if pressed & U_CBUTTONS ~= 0 then
-		item_rotation.x = item_rotation.x + degrees_to_sm64(gMiscSettings.angle_increment)
+		item_rotation.x = math.wrap(item_rotation.x + gMiscSettings.angle_increment, -180, 180)
 	elseif pressed & D_CBUTTONS ~= 0 then
-		item_rotation.x = item_rotation.x - degrees_to_sm64(gMiscSettings.angle_increment)
+		item_rotation.x = math.wrap(item_rotation.x - gMiscSettings.angle_increment, -180, 180)
 	end
 	if pressed & L_CBUTTONS ~= 0 then
-		item_rotation.y = item_rotation.y + degrees_to_sm64(gMiscSettings.angle_increment)
+		item_rotation.y = math.wrap(item_rotation.y + gMiscSettings.angle_increment, -180, 180)
 	elseif pressed & R_CBUTTONS ~= 0 then
-		item_rotation.y = item_rotation.y - degrees_to_sm64(gMiscSettings.angle_increment)
+		item_rotation.y = math.wrap(item_rotation.y - gMiscSettings.angle_increment, -180, 180)
 	end
 	if pressed & L_JPAD ~= 0 then
-		item_rotation.z = item_rotation.z + degrees_to_sm64(gMiscSettings.angle_increment)
+		item_rotation.z = math.wrap(item_rotation.z + gMiscSettings.angle_increment, -180, 180)
 	elseif pressed & R_JPAD ~= 0 then
-		item_rotation.z = item_rotation.z - degrees_to_sm64(gMiscSettings.angle_increment)
+		item_rotation.z = math.wrap(item_rotation.z - gMiscSettings.angle_increment, -180, 180)
 	end
 	if pressed & X_BUTTON ~= 0 then
 		gCurrentItem.dimensions.rotation = gVec3sZero()
@@ -457,19 +482,7 @@ local function is_nearest_item_intersecting()
 		end
 	end
 	if not nearest then return false end
-
-	local dists = {
-		x_min = nearest.oPosX - (nearest.oScaleX * GRID_SIZE_MULTIPLIER * 0.5),
-		y_min = nearest.oPosY - (nearest.oScaleY * GRID_SIZE_MULTIPLIER * 0.5),
-		z_min = nearest.oPosZ - (nearest.oScaleZ * GRID_SIZE_MULTIPLIER * 0.5),
-		x_max = nearest.oPosX + (nearest.oScaleX * GRID_SIZE_MULTIPLIER * 0.5),
-		y_max = nearest.oPosY + (nearest.oScaleY * GRID_SIZE_MULTIPLIER * 0.5),
-		z_max = nearest.oPosZ + (nearest.oScaleZ * GRID_SIZE_MULTIPLIER * 0.5),
-	}
-	local is_intersecting = sOutlineObject.oPosX > dists.x_min and sOutlineObject.oPosX < dists.x_max and
-							sOutlineObject.oPosY > dists.y_min and sOutlineObject.oPosY < dists.y_max and
-							sOutlineObject.oPosZ > dists.z_min and sOutlineObject.oPosZ < dists.z_max
-	return is_intersecting, nearest
+	return obj_is_intersecting_obj(sOutlineObject, nearest), nearest
 end
 
 ---------------------------------------
@@ -498,6 +511,7 @@ local function builder_mario_update(m)
 	set_item_rotation(m)
 
 	local is_intersecting, nearest_obj = is_nearest_item_intersecting()
+	sDeletableObject = nearest_obj
 	if m.controller.buttonPressed & Y_BUTTON ~= 0 then
 		determine_place_or_delete(is_intersecting, nearest_obj)
     end

@@ -1,13 +1,3 @@
-
----@param m MarioState
----@param block Object
-local function mario_is_within_block(m, block)
-    -- ! Use a better checking system as this does not at all account for angles
-    return m.pos.x > block.oPosX - (100 * block.oScaleX) and m.pos.x < block.oPosX + (100 * block.oScaleX) and
-            m.pos.y > block.oPosY - (100 * block.oScaleY) and m.pos.y < block.oPosY + (100 * block.oScaleY) and
-            m.pos.z > block.oPosZ - (100 * block.oScaleZ) and m.pos.z < block.oPosZ + (100 * block.oScaleZ)
-end
-
 local sActionsCanWallkick = {
     [ACT_JUMP] = true,
     [ACT_HOLD_JUMP] = true,
@@ -49,67 +39,10 @@ local sFlightHitBounceWall = false
 ---@type Object?
 gHitBreakableBlock = nil
 
----@param m MarioState
-local function vanilla_mario_update_geometry_inputs(m)
-    resolve_and_return_wall_collisions(m.pos, 60, 50)
-    resolve_and_return_wall_collisions(m.pos, 30, 24)
+---@type Object?
+local sInSpecialBlock = nil
 
-    m.floor = collision_find_floor(m.pos.x, m.pos.y, m.pos.z)
-    m.floorHeight = find_floor_height(m.pos.x, m.pos.y, m.pos.z)
-
-    -- If Mario is OOB, move his position to his graphical position (which was not updated)
-    -- and check for the floor there.
-    -- This can cause errant behavior when combined with astral projection,
-    -- since the graphical position was not Mario's previous location.
-    if not m.floor then
-        vec3f_copy(m.pos, m.marioObj.header.gfx.pos)
-        m.floorHeight = find_floor_height(m.pos.x, m.pos.y, m.pos.z)
-    end
-
-    m.ceil = collision_find_ceil(m.pos.x, m.floorHeight, m.pos.z)
-    m.ceilHeight = find_ceil_height(m.pos.x, m.floorHeight, m.pos.z)
-    gasLevel = find_poison_gas_level(m.pos.x, m.pos.z)
-    m.waterLevel = find_water_level(m.pos.x, m.pos.z)
-
-    if m.floor then
-        m.floorAngle = atan2s(m.floor.normal.z, m.floor.normal.x)
-        m.terrainSoundAddend = mario_get_terrain_sound_addend(m)
-
-        if m.pos.y > m.waterLevel - 40 and mario_floor_is_slippery(m) ~= 0 then
-            m.input = m.input | INPUT_ABOVE_SLIDE
-        end
-
-        if (m.floor.flags & SURFACE_FLAG_DYNAMIC ~= 0)
-            or (m.ceil and m.ceil.flags & SURFACE_FLAG_DYNAMIC ~= 0) then
-            ceilToFloorDist = m.ceilHeight - m.floorHeight
-
-            if 0.0 <= ceilToFloorDist and ceilToFloorDist <= 150.0 then
-                m.input = m.input | INPUT_SQUISHED
-            end
-        end
-
-        if m.pos.y > m.floorHeight + 100.0 then
-            m.input = m.input | INPUT_OFF_FLOOR
-        end
-
-        if m.pos.y < m.waterLevel - 10 then
-            m.input = m.input | INPUT_IN_WATER
-        end
-
-        if m.pos.y < gasLevel - 100.0 then
-            m.input = m.input | INPUT_IN_POISON_GAS
-        end
-    end
-end
-
-local sSpecialSurfaceTypes = {
-    verticalWind = {},
-    toxicGas = {},
-    booster = {},
-    water = {}
-}
-
----@type table<string, fun(m: MarioState):boolean?>
+---@type table<string, fun(m: MarioState): boolean?>
 local sSpecialSurfaceHandlers = {
     verticalWind = function (m)
         if m.action ~= ACT_CUSTOM_VERTICAL_WIND and m.action & ACT_FLAG_ALLOW_VERTICAL_WIND_ACTION ~= 0 then
@@ -121,44 +54,45 @@ local sSpecialSurfaceHandlers = {
         end
         spawn_wind_particles(1, 0)
         play_sound(SOUND_ENV_WIND2, m.marioObj.header.gfx.cameraToObject)
-        sSpecialSurfaceTypes.verticalWind = {}
     end,
     toxicGas = function (m)
         if m.flags & MARIO_METAL_CAP == 0 then
             m.health = m.health - 3
         end
-        sSpecialSurfaceTypes.toxicGas = {}
     end,
     booster = function (m)
         if m.action ~= ACT_DECELERATING then
-            m.vel.x = m.vel.x * 1.1
-            m.vel.z = m.vel.z * 1.1
+            mario_set_forward_vel(m, m.forwardVel * 1.1)
         end
-        sSpecialSurfaceTypes.booster = {}
     end,
     water = function (m)
-        local blocks = sSpecialSurfaceTypes.water
-        local highest_water_y = gLevelValues.floorLowerLimit
-        local first_check = true
-        local in_water_block = false
-        for _, block in ipairs(blocks) do
-            if first_check then
-                vanilla_mario_update_geometry_inputs(m)
-                first_check = false
-                highest_water_y = m.waterLevel
-            end
-            local new_water_level = block.oPosY + block.oScaleY * 100
-            if new_water_level > highest_water_y then
-                m.waterLevel = new_water_level
-                highest_water_y = new_water_level
-            else
-                m.waterLevel = highest_water_y
-            end
-            in_water_block = true
-        end
+        if not sInSpecialBlock then return end
 
-        sSpecialSurfaceTypes.water = {}
-        if in_water_block then
+        local highest = gLevelValues.floorLowerLimit
+        local lowest = gLevelValues.cellHeightLimit
+        for i = 0, sInSpecialBlock.numSurfaces - 1, 1 do
+            local surface = obj_get_surface_from_index(sInSpecialBlock, i)
+            if surface.upperY > highest then
+                highest = surface.upperY
+            end
+            if surface.lowerY < lowest then
+                lowest = surface.lowerY
+            end
+        end
+        m.waterLevel = find_water_level(m.pos.x, m.pos.z)
+
+        local floor_raycast = collision_find_surface_on_ray(m.pos.x, highest + 20, m.pos.z, 0, -math.abs(highest - lowest), 0)
+        if not (floor_raycast and floor_raycast.hitPos and floor_raycast.surface and floor_raycast.surface.object == sInSpecialBlock) then return end
+        local floor_height = floor_raycast.hitPos.y
+        local is_below_floor = m.pos.y < floor_height
+
+        local ceil_raycast = collision_find_surface_on_ray(m.pos.x, lowest - 20, m.pos.z, 0, math.abs(highest - lowest), 0)
+        if not (ceil_raycast and ceil_raycast.hitPos and ceil_raycast.surface and ceil_raycast.surface.object == sInSpecialBlock) then return end
+        local ceil_height = floor_raycast.hitPos.y
+        local is_above_ceil = m.pos.y > ceil_height
+
+        if is_below_floor and is_above_ceil then
+            m.waterLevel = floor_height
             return false
         end
     end
@@ -238,7 +172,7 @@ local function custom_surface_mario_update(m)
             end
 
             if surface_properties & MCE_BLOCK_PROPERTY_CHECKPOINT ~= 0 then
-                gRespawnLocation = {x = block.oPosX, y = block.oPosY + block.oScaleY * GRID_SIZE_MULTIPLIER, z = block.oPosZ}
+                gRespawnLocation = {x = block.oPosX, y = block.oPosY + block.oScaleY * BLOCK_DEFAULT_SIZE, z = block.oPosZ}
                 gRespawnAngle = block.oFaceAngleYaw
             end
             if surface_properties & MCE_BLOCK_PROPERTY_CONVEYOR ~= 0 then
@@ -289,11 +223,13 @@ local function custom_surface_mario_update(m)
         end
     end
     ------------------ MISC -------------------
-    if #sSpecialSurfaceTypes.verticalWind > 0 then
-        sSpecialSurfaceHandlers.verticalWind(m)
-    end
-    if #sSpecialSurfaceTypes.toxicGas > 0 then
-        sSpecialSurfaceHandlers.toxicGas(m)
+    if sInSpecialBlock then
+        local surface_id = sInSpecialBlock.oItemParams & 0xFF
+        if surface_id == MCE_BLOCK_COL_ID_VERTICAL_WIND then
+            sSpecialSurfaceHandlers.verticalWind(m)
+        elseif surface_id == MCE_BLOCK_COL_ID_TOXIC_GAS then
+            sSpecialSurfaceHandlers.toxicGas(m)
+        end
     end
 
     if m.action == ACT_FLYING then
@@ -345,7 +281,7 @@ local function custom_surface_before_phys_step(m)
         sPreservedFlightSpeed = m.forwardVel
     end
 
-    if #sSpecialSurfaceTypes.booster > 0 then
+    if sInSpecialBlock and sInSpecialBlock.oItemParams & 0xFF == MCE_BLOCK_COL_ID_BOOSTER then
         sSpecialSurfaceHandlers.booster(m)
     end
 end
@@ -469,30 +405,30 @@ end
 ---@param m MarioState
 local function custom_surface_override_geometry_inputs(m)
     if m.playerIndex ~= 0 then return end
+
     ------------------ WATER -------------------
-    return sSpecialSurfaceHandlers.water(m)
+    if sInSpecialBlock and sInSpecialBlock.oItemParams & 0xFF == MCE_BLOCK_COL_ID_WATER then
+        return sSpecialSurfaceHandlers.water(m)
+    end
 end
 
 local function custom_surface_block_update()
     local block = obj_get_first_with_behavior_id(bhvMceBlock)
     ---@type MarioState
     local m = gMarioStates[0]
-    local already_exists = {verticalWind = false, toxicGas = false, booster = false}
+    sInSpecialBlock = nil
     while block do
         local surface_id = block.oItemParams & 0xFF
         local surface_properties = block.oItemFlags
 
-        if not already_exists.verticalWind and surface_id == MCE_BLOCK_COL_ID_VERTICAL_WIND and mario_is_within_block(m, block) then
-            table.insert(sSpecialSurfaceTypes.verticalWind, block)
-            already_exists.verticalWind = true
-        elseif not already_exists.toxicGas and surface_id == MCE_BLOCK_COL_ID_TOXIC_GAS and mario_is_within_block(m, block) then
-            table.insert(sSpecialSurfaceTypes.toxicGas, block)
-            already_exists.toxicGas = true
-        elseif not already_exists.booster and surface_id == MCE_BLOCK_COL_ID_BOOSTER and mario_is_within_block(m, block) then
-            table.insert(sSpecialSurfaceTypes.booster, block)
-            already_exists.booster = true
-        elseif surface_id == MCE_BLOCK_COL_ID_WATER and mario_is_within_block(m, block) then
-            table.insert(sSpecialSurfaceTypes.water, block)
+        local special_surface_ids = {
+            [MCE_BLOCK_COL_ID_VERTICAL_WIND] = true,
+            [MCE_BLOCK_COL_ID_TOXIC_GAS] = true,
+            [MCE_BLOCK_COL_ID_BOOSTER] = true,
+            [MCE_BLOCK_COL_ID_WATER] = true,
+        }
+        if obj_is_intersecting_obj(m.marioObj, block) and special_surface_ids[surface_id] then
+            sInSpecialBlock = block
         end
 
         if surface_properties & MCE_BLOCK_PROPERTY_DISAPPEARING ~= 0 then

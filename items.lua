@@ -202,6 +202,7 @@ local COL_MCE_BLOCK_SLIPPERY = smlua_collision_util_get("mce_block_col_slippery"
 local COL_MCE_BLOCK_VERY_SLIPPERY = smlua_collision_util_get("mce_block_col_very_slippery")
 local COL_MCE_BLOCK_HANGABLE = smlua_collision_util_get("mce_block_col_hangable")
 local COL_MCE_BLOCK_VANISH = smlua_collision_util_get("mce_block_col_vanish")
+local COL_MCE_BLOCK_INTANGIBLE = smlua_collision_util_get("mce_block_col_intangible")
 
 -- Surfaces
 MCE_BLOCK_COL_ID_NO_COLLISION = 0xFF
@@ -273,6 +274,8 @@ local function block_collision_lookup(obj)
         if surface_id == MCE_BLOCK_PROPERTY_CONVEYOR then
             obj.collisionData = COL_MCE_BLOCK_HANGABLE
         end
+    else
+        obj.collisionData = COL_MCE_BLOCK_INTANGIBLE
     end
 end
 
@@ -281,7 +284,14 @@ end
 ---@param obj Object
 function bhv_mce_block_init(obj)
     block_collision_lookup(obj)
-    obj.oCollisionDistance = 500 * vec3f_length({x = obj.oScaleX, y = obj.oScaleY, z = obj.oScaleZ})
+    local longest_side = obj.header.gfx.scale.x
+    if longest_side < obj.header.gfx.scale.y then
+        longest_side = obj.header.gfx.scale.y
+    end
+    if longest_side < obj.header.gfx.scale.z then
+        longest_side = obj.header.gfx.scale.z
+    end
+    obj.oCollisionDistance = 200 * longest_side + 300
     obj.header.gfx.skipInViewCheck = true
     network_init_object(obj, false, {
         "oPosX",
