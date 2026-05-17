@@ -498,11 +498,6 @@ local function builder_mario_update(m)
 	set_item_rotation(m)
 
 	local is_intersecting, nearest_obj = is_nearest_item_intersecting()
-	if is_intersecting and nearest_obj then
-		--nearest_obj.activeFlags = nearest_obj.activeFlags | ACTIVE_FLAG_DITHERED_ALPHA
-		djui_chat_message_create(tostring(nearest_obj))
-	end
-
 	if m.controller.buttonPressed & Y_BUTTON ~= 0 then
 		determine_place_or_delete(is_intersecting, nearest_obj)
     end
