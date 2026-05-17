@@ -103,6 +103,8 @@ local function hud_render(screen_width, screen_height)
             end
         end
     end
+
+    Mouse.render()
 end
 
 return hud_render

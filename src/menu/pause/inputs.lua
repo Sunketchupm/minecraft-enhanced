@@ -21,18 +21,23 @@ local function handle_menu_inputs(m)
 
     if input.up and gPauseMenu.v_index > 1 then
         gPauseMenu.v_index = gPauseMenu.v_index - 1
+        play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
     elseif input.down and gPauseMenu.v_index < #gPauseMenu[gPauseMenu.current_menu][gPauseMenu.h_index] then
         gPauseMenu.v_index = gPauseMenu.v_index + 1
+        play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
     end
 
     if input.left and gPauseMenu.h_index > 1 then
         gPauseMenu.h_index = gPauseMenu.h_index - 1
+        play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
     elseif input.right and gPauseMenu.h_index < #gPauseMenu[gPauseMenu.current_menu] then
         gPauseMenu.h_index = gPauseMenu.h_index + 1
+        play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
     end
 
     if Mouse.pressed.left or (not Mouse.moved and pressed & A_BUTTON ~= 0 or pressed & START_BUTTON ~= 0) then
         gPauseMenu.get_current_button().action(m)
+        play_sound(SOUND_MENU_CLICK_FILE_SELECT, gGlobalSoundSource)
     elseif Mouse.pressed.right or (not Mouse.moved and pressed & B_BUTTON ~= 0) then
         gPauseMenu.v_index = 1
         if gPauseMenu.current_menu == PAUSE_MENU_MAIN then
@@ -40,6 +45,7 @@ local function handle_menu_inputs(m)
         else
             set_new_menu(PAUSE_MENU_MAIN)
         end
+        play_sound(SOUND_MENU_CLICK_CHANGE_VIEW, gGlobalSoundSource)
     end
 end
 
