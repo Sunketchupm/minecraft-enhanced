@@ -473,6 +473,9 @@ local BlockTextures = {
     g("texture_menu_erase"),
     g("texture_menu_score"),
     g("texture_menu_sound"),
+    g("dashpanel"),
+    g("shrinkingplatform"),
+    g("checkpoint"),
     g("barrier")
 }
 
