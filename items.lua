@@ -181,24 +181,6 @@ function obj_scale_mult_to(obj, scale)
     obj.header.gfx.scale.z = obj.header.gfx.scale.z * scale
 end
 
----@param obj Object
----@return Object? item
-function obj_get_any_nearest_item(obj)
-    local nearest_item = nil
-    local nearest_dist = 0xFFFF
-    for _, item_behavior in ipairs(gItemBhvIds) do
-        local item = obj_get_nearest_object_with_behavior_id(obj, item_behavior)
-        if item then
-            local dist = dist_between_objects(item, obj)
-            if dist < nearest_dist then
-                nearest_item = item
-                nearest_dist = dist
-            end
-        end
-    end
-    return nearest_item
-end
-
 ------------------------------------------------------------------------------------------
 
 --[[ Custom properties:
@@ -625,31 +607,6 @@ local function object_removal_criteria(obj, mod_command)
         return index == -1 or is_player_in_local_area(gMarioStates[index]) == 0
     end
     return obj.oOwner == owner_index or remove_all
-end
-
----@param id_list BehaviorId[]
-local function iterate_id_list(id_list)
-    local current_index = 1
-    local current_obj = nil
-    return function ()
-        if not current_obj then
-            current_obj = obj_get_first_with_behavior_id(id_list[current_index])
-        else
-            current_obj = obj_get_next_with_same_behavior_id(current_obj)
-        end
-
-        if not current_obj then
-            while not current_obj do
-                current_index = current_index + 1
-                if not id_list[current_index] then
-                    return nil
-                end
-                current_obj = obj_get_first_with_behavior_id(id_list[current_index])
-            end
-        end
-
-        return current_obj
-    end
 end
 
 ---@param msg string

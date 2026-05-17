@@ -338,42 +338,17 @@ local function place_item()
 end
 
 local sCanDelete = true
----@param allow_build_delete { build: boolean, delete: boolean }
----@return boolean
-local function determine_place_or_delete(allow_build_delete)
+---@param is_intersecting boolean
+---@param nearest_obj Object?
+local function determine_place_or_delete(is_intersecting, nearest_obj)
 	if not sOutlineObject then return false end
-	local nearest = obj_get_any_nearest_item(sOutlineObject)
 
-	if nearest then
-		if gCurrentItem then
-			local dists = {
-				x = math.abs(nearest.oPosX - sOutlineObject.oPosX),
-				y = math.abs(nearest.oPosY - sOutlineObject.oPosY),
-				z = math.abs(nearest.oPosZ - sOutlineObject.oPosZ)
-			}
-			local is_outside_range = dists.x >= gCurrentItem.dimensions.grid.x or
-									 dists.y >= gCurrentItem.dimensions.grid.y or
-									 dists.z >= gCurrentItem.dimensions.grid.z
-			if not sCanDelete then
-				is_outside_range = true
-			end
-
-			if allow_build_delete.build and is_outside_range then
-				place_item()
-				return true
-			elseif allow_build_delete.delete and not is_outside_range then
-				play_sound(SOUND_GENERAL_BOX_LANDING, gMarioStates[0].marioObj.header.gfx.cameraToObject)
-				obj_mark_for_deletion(nearest)
-				return false
-			end
-		end
-	elseif allow_build_delete.build then
-		if gCurrentItem then
-			place_item()
-		end
-		return true
+	if not is_intersecting then
+		place_item()
+	elseif nearest_obj then
+		play_sound(SOUND_GENERAL_BOX_LANDING, gMarioStates[0].marioObj.header.gfx.cameraToObject)
+		obj_mark_for_deletion(nearest_obj)
 	end
-	return false
 end
 
 ---@param m MarioState
@@ -467,10 +442,39 @@ local function delete_outline()
 	end
 end
 
+---@return boolean, Object?
+local function is_nearest_item_intersecting()
+	if not sOutlineObject then return false end
+
+	---@type Object?
+	local nearest = nil
+	local nearest_dist = 0xFFFFFFFF
+	for obj in iterate_id_list(gItemBhvIds) do
+		local dist = dist_between_objects(sOutlineObject, obj)
+		if dist < nearest_dist then
+			nearest = obj
+			nearest_dist = dist
+		end
+	end
+	if not nearest then return false end
+
+	local dists = {
+		x_min = nearest.oPosX - (nearest.oScaleX * GRID_SIZE_MULTIPLIER * 0.5),
+		y_min = nearest.oPosY - (nearest.oScaleY * GRID_SIZE_MULTIPLIER * 0.5),
+		z_min = nearest.oPosZ - (nearest.oScaleZ * GRID_SIZE_MULTIPLIER * 0.5),
+		x_max = nearest.oPosX + (nearest.oScaleX * GRID_SIZE_MULTIPLIER * 0.5),
+		y_max = nearest.oPosY + (nearest.oScaleY * GRID_SIZE_MULTIPLIER * 0.5),
+		z_max = nearest.oPosZ + (nearest.oScaleZ * GRID_SIZE_MULTIPLIER * 0.5),
+	}
+	local is_intersecting = sOutlineObject.oPosX > dists.x_min and sOutlineObject.oPosX < dists.x_max and
+							sOutlineObject.oPosY > dists.y_min and sOutlineObject.oPosY < dists.y_max and
+							sOutlineObject.oPosZ > dists.z_min and sOutlineObject.oPosZ < dists.z_max
+	return is_intersecting, nearest
+end
+
 ---------------------------------------
 
 local sAutoBuildTimer = 0
-local sBuiltOrDeleted = false
 
 ---@param m MarioState
 local function builder_mario_update(m)
@@ -492,18 +496,24 @@ local function builder_mario_update(m)
 	set_item_size_control(m)
 	set_outline_offset(m)
 	set_item_rotation(m)
+
+	local is_intersecting, nearest_obj = is_nearest_item_intersecting()
+	if is_intersecting and nearest_obj then
+		--nearest_obj.activeFlags = nearest_obj.activeFlags | ACTIVE_FLAG_DITHERED_ALPHA
+		djui_chat_message_create(tostring(nearest_obj))
+	end
+
 	if m.controller.buttonPressed & Y_BUTTON ~= 0 then
-		sBuiltOrDeleted = determine_place_or_delete({ build = true, delete = true })
+		determine_place_or_delete(is_intersecting, nearest_obj)
     end
 	if gMiscSettings.auto_build and m.controller.buttonDown & Y_BUTTON ~= 0 then
-		local do_build = sBuiltOrDeleted
 		if sAutoBuildTimer < 5 then
 			sAutoBuildTimer = sAutoBuildTimer + 1
 			return
 		else
 			sAutoBuildTimer = 0
 		end
-		determine_place_or_delete({build = do_build, delete = not do_build})
+		determine_place_or_delete(is_intersecting, nearest_obj)
 	else
 		sAutoBuildTimer = 0
 	end

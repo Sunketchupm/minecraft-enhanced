@@ -50,35 +50,30 @@ end
 
 -------------------------------------------------------------
 
-local first_update_functions = {}
-function add_first_update(func)
-    table.insert(first_update_functions, func)
-end
-
-local sFirstUpdate = true
-local function on_first_update()
-    if not sFirstUpdate then return end
-    sFirstUpdate = false
-    for _, func in pairs(first_update_functions) do
-        func()
-    end
-end
-hook_event(HOOK_UPDATE, on_first_update)
-
-local BlockTextures = require("src/block/textures")
-local sRenderTimer = 3
-local function hud_render()
-    if sRenderTimer > 0 then
-        djui_hud_set_resolution(RESOLUTION_N64)
-        djui_hud_set_color(255, 255, 255, 255)
-        for _, texture in ipairs(BlockTextures) do
-            djui_hud_render_texture(texture, 0, 0, 0.1, 0.1)
+---@param id_list BehaviorId[]
+function iterate_id_list(id_list)
+    local current_index = 1
+    local current_obj = nil
+    return function ()
+        if not current_obj then
+            current_obj = obj_get_first_with_behavior_id(id_list[current_index])
+        else
+            current_obj = obj_get_next_with_same_behavior_id(current_obj)
         end
-        sRenderTimer = sRenderTimer - 1
+
+        if not current_obj then
+            while not current_obj do
+                current_index = current_index + 1
+                if not id_list[current_index] then
+                    return nil
+                end
+                current_obj = obj_get_first_with_behavior_id(id_list[current_index])
+            end
+        end
+
+        return current_obj
     end
 end
-
-hook_event(HOOK_ON_HUD_RENDER, hud_render)
 
 -------------------------------------------------------------
 
@@ -135,3 +130,37 @@ function mce_block_set_shaded(item)
         item.oAnimState = item.oAnimState & ~(1 << 25)
     end
 end
+
+-------------------------------------------------------------
+
+local first_update_functions = {}
+function add_first_update(func)
+    table.insert(first_update_functions, func)
+end
+
+local sFirstUpdate = true
+local function on_first_update()
+    if not sFirstUpdate then return end
+    sFirstUpdate = false
+    for _, func in pairs(first_update_functions) do
+        func()
+    end
+end
+hook_event(HOOK_UPDATE, on_first_update)
+
+local BlockTextures = require("src/block/textures")
+local sRenderTimer = 3
+local function hud_render()
+    if sRenderTimer > 0 then
+        djui_hud_set_resolution(RESOLUTION_N64)
+        djui_hud_set_color(255, 255, 255, 255)
+        for _, texture in ipairs(BlockTextures) do
+            djui_hud_render_texture(texture, 0, 0, 0.1, 0.1)
+        end
+        sRenderTimer = sRenderTimer - 1
+    end
+end
+
+hook_event(HOOK_ON_HUD_RENDER, hud_render)
+
+-------------------------------------------------------------
