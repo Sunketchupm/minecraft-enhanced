@@ -102,7 +102,20 @@ end
 ---@return boolean
 function point_is_intersecting_obj(point, intersectee)
     if not point or not intersectee then return false end
-    if intersectee.numSurfaces == 0 then return false end
+
+    if obj_has_behavior_id(intersectee, bhvMceBlock) == 0 then
+        -- Bounding box detection
+        local scale_x = intersectee.oScaleX * BLOCK_DEFAULT_SIZE * 0.5
+        local scale_y = intersectee.oScaleY * BLOCK_DEFAULT_SIZE * 0.5
+        local scale_z = intersectee.oScaleZ * BLOCK_DEFAULT_SIZE * 0.5
+        local within_x = point.x > intersectee.oPosX - scale_x and point.x < intersectee.oPosX + scale_x
+        local within_y = point.y > intersectee.oPosY - scale_y and point.y < intersectee.oPosY + scale_y
+        local within_z = point.z > intersectee.oPosZ - scale_z and point.z < intersectee.oPosZ + scale_z
+        return within_x and within_y and within_z
+    elseif intersectee.numSurfaces == 0 then
+        -- Out of collision range
+        return false
+    end
 
     for i = 0, intersectee.numSurfaces - 1, 1 do
         local surface = obj_get_surface_from_index(intersectee, i)

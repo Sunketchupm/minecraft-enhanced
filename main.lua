@@ -165,9 +165,9 @@ function bhv_outline_loop(obj)
 		sOutlineObject.oFaceAnglePitch = sDeletableObject.oFaceAnglePitch
 		sOutlineObject.oFaceAngleYaw = sDeletableObject.oFaceAngleYaw
 		sOutlineObject.oFaceAngleRoll = sDeletableObject.oFaceAngleRoll
-		sOutlineObject.header.gfx.scale.x = sDeletableObject.header.gfx.scale.x + 0.01
-		sOutlineObject.header.gfx.scale.y = sDeletableObject.header.gfx.scale.y + 0.01
-		sOutlineObject.header.gfx.scale.z = sDeletableObject.header.gfx.scale.z + 0.01
+		sOutlineObject.header.gfx.scale.x = sDeletableObject.oScaleX + 0.01
+		sOutlineObject.header.gfx.scale.y = sDeletableObject.oScaleY + 0.01
+		sOutlineObject.header.gfx.scale.z = sDeletableObject.oScaleZ + 0.01
 		return
 	end
 
@@ -521,7 +521,12 @@ local function builder_mario_update(m)
 	set_item_rotation(m)
 
 	local is_intersecting, nearest_obj = is_nearest_item_intersecting()
-	sDeletableObject = nearest_obj
+	if is_intersecting then
+		sDeletableObject = nearest_obj
+	else
+		sDeletableObject = nil
+	end
+
 	if m.controller.buttonPressed & Y_BUTTON ~= 0 then
 		local built = determine_place_or_delete(is_intersecting, nearest_obj, 0)
 		sAutoBuildType = built and ONLY_PLACE or ONLY_DELETE
