@@ -363,17 +363,25 @@ local function place_item()
 end
 
 local sCanDelete = true
+local ONLY_PLACE = 1
+local ONLY_DELETE = 2
+
 ---@param is_intersecting boolean
 ---@param nearest_obj Object?
-local function determine_place_or_delete(is_intersecting, nearest_obj)
+---@param force_build_or_delete integer
+---@return boolean
+local function determine_place_or_delete(is_intersecting, nearest_obj, force_build_or_delete)
 	if not sOutlineObject then return false end
 
-	if not is_intersecting then
+	if not sCanDelete or not is_intersecting and force_build_or_delete ~= ONLY_DELETE then
 		place_item()
-	elseif nearest_obj then
+		return true
+	elseif is_intersecting and nearest_obj and force_build_or_delete ~= ONLY_PLACE then
 		play_sound(SOUND_GENERAL_BOX_LANDING, gMarioStates[0].marioObj.header.gfx.cameraToObject)
 		obj_mark_for_deletion(nearest_obj)
+		return false
 	end
+	return false
 end
 
 ---@param m MarioState
@@ -487,6 +495,7 @@ end
 
 ---------------------------------------
 
+local sAutoBuildType = 0
 local sAutoBuildTimer = 0
 
 ---@param m MarioState
@@ -513,7 +522,8 @@ local function builder_mario_update(m)
 	local is_intersecting, nearest_obj = is_nearest_item_intersecting()
 	sDeletableObject = nearest_obj
 	if m.controller.buttonPressed & Y_BUTTON ~= 0 then
-		determine_place_or_delete(is_intersecting, nearest_obj)
+		local built = determine_place_or_delete(is_intersecting, nearest_obj, 0)
+		sAutoBuildType = built and ONLY_PLACE or ONLY_DELETE
     end
 	if gMiscSettings.auto_build and m.controller.buttonDown & Y_BUTTON ~= 0 then
 		if sAutoBuildTimer < 5 then
@@ -522,7 +532,7 @@ local function builder_mario_update(m)
 		else
 			sAutoBuildTimer = 0
 		end
-		determine_place_or_delete(is_intersecting, nearest_obj)
+		determine_place_or_delete(is_intersecting, nearest_obj, sAutoBuildType)
 	else
 		sAutoBuildTimer = 0
 	end
