@@ -239,9 +239,10 @@ function bhv_preview_item_loop(obj)
 	obj.parentObj = obj
 
 	if sDeletableObject and obj_is_intersecting_obj(sOutlineObject, sDeletableObject) then
-		obj_mark_for_deletion(obj)
+		cur_obj_hide()
 		return
 	end
+	cur_obj_unhide()
 
 	local current_item = gCurrentItem
 	local item_params = current_item.params
