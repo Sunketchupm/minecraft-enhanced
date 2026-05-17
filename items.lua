@@ -793,7 +793,7 @@ local function on_set_item_size_chat_command(msg)
 	end
 
     ---@type Item?
-    local item = Hotbar.items[Hotbar.index].item
+    local item = gCurrentItem
     if item then
         if sizes_count == 1 then
             local new_size = __parse_size(item, sizes[1], "x")
@@ -924,7 +924,7 @@ local sBlockPropertyLookup = {
 ---@param msg string
 function on_set_surface_chat_command(msg)
     ---@type Item?
-    local item = Hotbar.items[Hotbar.index].item
+    local item = gCurrentItem
     if item and item.behavior == bhvMceBlock then
         local surf = sBlockSurfaceIdLookup[msg:lower()]
         if surf then
@@ -979,7 +979,7 @@ local function on_transparent_chat_command(msg)
             item.params.color.a = alpha
         end
     else
-        djui_chat_message_create("A block must be selected in the hotbar")
+        djui_chat_message_create("A block must be selected!")
     end
     return true
 end
