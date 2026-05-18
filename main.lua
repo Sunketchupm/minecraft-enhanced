@@ -363,7 +363,6 @@ local function place_item()
 	end
 end
 
-local sCanDelete = true
 local ONLY_PLACE = 1
 local ONLY_DELETE = 2
 
@@ -374,7 +373,7 @@ local ONLY_DELETE = 2
 local function determine_place_or_delete(is_intersecting, nearest_obj, force_build_or_delete)
 	if not sOutlineObject then return false end
 
-	if not sCanDelete or not is_intersecting and force_build_or_delete ~= ONLY_DELETE then
+	if not is_intersecting and force_build_or_delete ~= ONLY_DELETE then
 		place_item()
 		return true
 	elseif is_intersecting and nearest_obj and force_build_or_delete ~= ONLY_PLACE then
@@ -498,6 +497,7 @@ end
 
 local sAutoBuildType = 0
 local sAutoBuildTimer = 0
+local sCanDelete = true
 
 ---@param m MarioState
 local function builder_mario_update(m)
@@ -521,11 +521,11 @@ local function builder_mario_update(m)
 	set_item_rotation(m)
 
 	local is_intersecting, nearest_obj = is_nearest_item_intersecting()
-	if is_intersecting then
-		sDeletableObject = nearest_obj
-	else
-		sDeletableObject = nil
+	if not sCanDelete then
+		is_intersecting = false
+		nearest_obj = nil
 	end
+	sDeletableObject = nearest_obj
 
 	if m.controller.buttonPressed & Y_BUTTON ~= 0 then
 		local built = determine_place_or_delete(is_intersecting, nearest_obj, 0)
