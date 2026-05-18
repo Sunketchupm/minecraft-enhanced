@@ -9,14 +9,14 @@ local LEVEL_PLOT = level_register("level_plot_entry", COURSE_CAKE_END, "Plot", "
 
 local MUSIC_CROSSCODE_TITLE = audio_stream_load("crosscode-title.ogg")
 local MUSIC_DKC_AQUATIC_AQUARIUM = audio_stream_load("dkc-aquaticambience.ogg")
-local MUSIC_DKC_ZORAS_DOMAIN = audio_stream_load("zelda-zorasdomainday.ogg")
+local MUSIC_BOTW_ZORAS_DOMAIN = audio_stream_load("zelda-zorasdomainday.ogg")
 local MUSIC_DELTA_CASTLE_TOWN = audio_stream_load("delta-mycastletown.ogg")
 local MUSIC_SMG_SPACE_JUNK = audio_stream_load("smg-spacejunk.ogg")
 
 -- alter to loop at certain points
 audio_stream_set_looping(MUSIC_CROSSCODE_TITLE, true)
 audio_stream_set_looping(MUSIC_DKC_AQUATIC_AQUARIUM, true)
-audio_stream_set_looping(MUSIC_DKC_ZORAS_DOMAIN, true)
+audio_stream_set_looping(MUSIC_BOTW_ZORAS_DOMAIN, true)
 audio_stream_set_looping(MUSIC_DELTA_CASTLE_TOWN, true)
 audio_stream_set_looping(MUSIC_SMG_SPACE_JUNK, true)
 
@@ -30,29 +30,19 @@ local function on_chat_command(msg)
     return true
 end
 
-local function mario_update(m)
-    if is_game_paused() then
-        audio_stream_pause(MUSIC_CROSSCODE_TITLE)
-        audio_stream_pause(MUSIC_DKC_AQUATIC_AQUARIUM)
-        audio_stream_pause(MUSIC_DKC_ZORAS_DOMAIN)
-        audio_stream_pause(MUSIC_DELTA_CASTLE_TOWN)
-        audio_stream_pause(MUSIC_SMG_SPACE_JUNK)
-    end
-end
-
 local function on_lvl_init()
     if gNetworkPlayers[0].currLevelNum == LEVEL_PLOT then
         play_music(0, 0x64, 1)
         if get_current_background_music() == 0x64 then
             audio_stream_stop(MUSIC_DKC_AQUATIC_AQUARIUM)
-            audio_stream_stop(MUSIC_DKC_ZORAS_DOMAIN)
+            audio_stream_stop(MUSIC_BOTW_ZORAS_DOMAIN)
             audio_stream_stop(MUSIC_CROSSCODE_TITLE)
             audio_stream_stop(MUSIC_DELTA_CASTLE_TOWN)
             audio_stream_stop(MUSIC_SMG_SPACE_JUNK)
         end
     else
         audio_stream_stop(MUSIC_DKC_AQUATIC_AQUARIUM)
-        audio_stream_stop(MUSIC_DKC_ZORAS_DOMAIN)
+        audio_stream_stop(MUSIC_BOTW_ZORAS_DOMAIN)
         audio_stream_stop(MUSIC_CROSSCODE_TITLE)
         audio_stream_stop(MUSIC_DELTA_CASTLE_TOWN)
         audio_stream_stop(MUSIC_SMG_SPACE_JUNK)
@@ -85,7 +75,7 @@ local function musicplot(msg) -- Various music for plots, can be used to add mor
 
     local ogg_music = {
         [15] = {name = "Donkey Kong Country - Aquatic Ambience", composer = "David Wise", song = MUSIC_DKC_AQUATIC_AQUARIUM},
-        [16] = {name = "The Legend of Zelda: Breath of the Wild - Zora's Domain (Day)", composer = "Koji Kondo", song = MUSIC_DKC_ZORAS_DOMAIN},
+        [16] = {name = "The Legend of Zelda: Breath of the Wild - Zora's Domain (Day)", composer = "Koji Kondo", song = MUSIC_BOTW_ZORAS_DOMAIN},
         [17] = {name = "Crosscode - Title", composer = "Deniz Akbulut", song = MUSIC_CROSSCODE_TITLE},
         [18] = {name = "Deltarune - My Castle Town", composer = "Toby Fox", song = MUSIC_DELTA_CASTLE_TOWN},
         [19] = {name = "Super Mario Galaxy - Space Junk Galaxy", composer = "Mahito Yokota", song = MUSIC_SMG_SPACE_JUNK},
@@ -120,7 +110,7 @@ local function musicplot(msg) -- Various music for plots, can be used to add mor
         if selectionV then
             djui_chat_message_create("Music: " .. selectionV.name .. " | Composer: " .. selectionV.composer)
             audio_stream_stop(MUSIC_DKC_AQUATIC_AQUARIUM)
-            audio_stream_stop(MUSIC_DKC_ZORAS_DOMAIN)
+            audio_stream_stop(MUSIC_BOTW_ZORAS_DOMAIN)
             audio_stream_stop(MUSIC_CROSSCODE_TITLE)
             audio_stream_stop(MUSIC_DELTA_CASTLE_TOWN)
             audio_stream_stop(MUSIC_SMG_SPACE_JUNK)
@@ -130,7 +120,7 @@ local function musicplot(msg) -- Various music for plots, can be used to add mor
         elseif selectionO then
             djui_chat_message_create("Music: " .. selectionO.name .. " | Composer: " .. selectionO.composer)
             audio_stream_stop(MUSIC_DKC_AQUATIC_AQUARIUM)
-            audio_stream_stop(MUSIC_DKC_ZORAS_DOMAIN)
+            audio_stream_stop(MUSIC_BOTW_ZORAS_DOMAIN)
             audio_stream_stop(MUSIC_CROSSCODE_TITLE)
             audio_stream_stop(MUSIC_DELTA_CASTLE_TOWN)
             audio_stream_stop(MUSIC_SMG_SPACE_JUNK)
@@ -140,7 +130,7 @@ local function musicplot(msg) -- Various music for plots, can be used to add mor
         elseif selectionM then
             djui_chat_message_create("Music: " .. selectionM.name .. " | Composer: " .. selectionM.composer)
             audio_stream_stop(MUSIC_DKC_AQUATIC_AQUARIUM)
-            audio_stream_stop(MUSIC_DKC_ZORAS_DOMAIN)
+            audio_stream_stop(MUSIC_BOTW_ZORAS_DOMAIN)
             audio_stream_stop(MUSIC_CROSSCODE_TITLE)
             audio_stream_stop(MUSIC_DELTA_CASTLE_TOWN)
             audio_stream_stop(MUSIC_SMG_SPACE_JUNK)
@@ -165,15 +155,13 @@ local function mario_update(m)
         local level = get_level_name(np.currCourseNum, np.currLevelNum, np.currAreaIndex)
         network_player_set_override_location(np, level)
     end
-end
 
-local function mario_update(m)
-    local np = gNetworkPlayers[m.playerIndex]
-    if np.currLevelNum == LEVEL_PLOT then
-        network_player_set_override_location(np, "Plot")
-    else
-        local level = get_level_name(np.currCourseNum, np.currLevelNum, np.currAreaIndex)
-        network_player_set_override_location(np, level)
+    if is_game_paused() then
+        audio_stream_pause(MUSIC_CROSSCODE_TITLE)
+        audio_stream_pause(MUSIC_DKC_AQUATIC_AQUARIUM)
+        audio_stream_pause(MUSIC_BOTW_ZORAS_DOMAIN)
+        audio_stream_pause(MUSIC_DELTA_CASTLE_TOWN)
+        audio_stream_pause(MUSIC_SMG_SPACE_JUNK)
     end
 end
 
