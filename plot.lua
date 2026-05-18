@@ -5,7 +5,24 @@ gLevelValues.cellHeightLimit = 32767
 
 smlua_audio_utils_replace_sequence(0x64, 0x25, 75, "03_Seq_sms_custom")
 
-LEVEL_PLOT = level_register("level_plot_entry", COURSE_CAKE_END, "Plot", "plot", 20000, 0x28, 0x28, 0x28)
+local LEVEL_PLOT = level_register("level_plot_entry", COURSE_CAKE_END, "Plot", "plot", 20000, 0x28, 0x28, 0x28)
+
+local MUSIC_CROSSCODE_TITLE = audio_stream_load("crosscode-title.ogg")
+local MUSIC_DKC_AQUATIC_AQUARIUM = audio_stream_load("dkc-aquaticambience.ogg")
+local MUSIC_DKC_ZORAS_DOMAIN = audio_stream_load("zelda-zorasdomainday.ogg")
+local MUSIC_DELTA_CASTLE_TOWN = audio_stream_load("delta-mycastletown.ogg")
+local MUSIC_SMG_SPACE_JUNK = audio_stream_load("smg-spacejunk.ogg")
+
+-- alter to loop at certain points
+audio_stream_set_looping(MUSIC_CROSSCODE_TITLE, true)
+audio_stream_set_looping(MUSIC_DKC_AQUATIC_AQUARIUM, true)
+audio_stream_set_looping(MUSIC_DKC_ZORAS_DOMAIN, true)
+audio_stream_set_looping(MUSIC_DELTA_CASTLE_TOWN, true)
+audio_stream_set_looping(MUSIC_SMG_SPACE_JUNK, true)
+
+--[[ hook_event(HOOK_UPDATE, function()
+    djui_chat_message_create("SequenceID: " .. get_current_background_music())
+end) ]]
 
 local function on_chat_command(msg)
     local act = math.clamp(tonumber(msg) or 0, 0, 255)
@@ -13,9 +30,32 @@ local function on_chat_command(msg)
     return true
 end
 
+local function mario_update(m)
+    if is_game_paused() then
+        audio_stream_pause(MUSIC_CROSSCODE_TITLE)
+        audio_stream_pause(MUSIC_DKC_AQUATIC_AQUARIUM)
+        audio_stream_pause(MUSIC_DKC_ZORAS_DOMAIN)
+        audio_stream_pause(MUSIC_DELTA_CASTLE_TOWN)
+        audio_stream_pause(MUSIC_SMG_SPACE_JUNK)
+    end
+end
+
 local function on_lvl_init()
     if gNetworkPlayers[0].currLevelNum == LEVEL_PLOT then
         play_music(0, 0x64, 1)
+        if get_current_background_music() == 0x64 then
+            audio_stream_stop(MUSIC_DKC_AQUATIC_AQUARIUM)
+            audio_stream_stop(MUSIC_DKC_ZORAS_DOMAIN)
+            audio_stream_stop(MUSIC_CROSSCODE_TITLE)
+            audio_stream_stop(MUSIC_DELTA_CASTLE_TOWN)
+            audio_stream_stop(MUSIC_SMG_SPACE_JUNK)
+        end
+    else
+        audio_stream_stop(MUSIC_DKC_AQUATIC_AQUARIUM)
+        audio_stream_stop(MUSIC_DKC_ZORAS_DOMAIN)
+        audio_stream_stop(MUSIC_CROSSCODE_TITLE)
+        audio_stream_stop(MUSIC_DELTA_CASTLE_TOWN)
+        audio_stream_stop(MUSIC_SMG_SPACE_JUNK)
     end
 end
 
@@ -26,117 +66,93 @@ local function on_pause_exit(exit_to_castle)
 end
 
 local function musicplot(msg) -- Various music for plots, can be used to add more if needed
+    local vanilla_music = {
+        [1] = {name = "Title Screen", composer = "Koji Kondo", song = SEQ_MENU_TITLE_SCREEN},
+        [2] = {name = "Bob-omb Battlefield", composer = "Koji Kondo", song = SEQ_LEVEL_GRASS},
+        [3] = {name = "Peach's Castle", composer = "Koji Kondo", song = SEQ_LEVEL_INSIDE_CASTLE},
+        [4] = {name = "Dire, Dire Docks", composer = "Koji Kondo", song = SEQ_LEVEL_WATER},
+        [5] = {name = "Lethal Lava Land", composer = "Koji Kondo", song = SEQ_LEVEL_HOT},
+        [6] = {name = "Princess' Secret Slide", composer = "Koji Kondo", song = SEQ_LEVEL_SLIDE},
+        [7] = {name = "Big Boo's Haunt", composer = "Koji Kondo", song = SEQ_LEVEL_SPOOKY},
+        [8] = {name = "Hazy Maze Cave", composer = "Koji Kondo", song = SEQ_LEVEL_UNDERGROUND},
+        [9] = {name = "Merry-Go-Round", composer = "Koji Kondo", song = SEQ_EVENT_MERRY_GO_ROUND},
+        [10] = {name = "The Endless Staircase", composer = "Koji Kondo", song = SEQ_EVENT_ENDLESS_STAIRS},
+        [11] = {name = "Koopa Road", composer = "Koji Kondo", song = SEQ_LEVEL_KOOPA_ROAD},
+        [12] = {name = "Stage Boss", composer = "Koji Kondo", song = SEQ_EVENT_BOSS},
+        [13] = {name = "Bowser's Theme", composer = "Koji Kondo", song = SEQ_LEVEL_BOSS_KOOPA},
+        [14] = {name = "Ultimate Bowser", composer = "Koji Kondo", song = SEQ_LEVEL_BOSS_KOOPA_FINAL},
+    }
+
+    local ogg_music = {
+        [15] = {name = "Donkey Kong Country - Aquatic Ambience", composer = "David Wise", song = MUSIC_DKC_AQUATIC_AQUARIUM},
+        [16] = {name = "The Legend of Zelda: Breath of the Wild - Zora's Domain (Day)", composer = "Koji Kondo", song = MUSIC_DKC_ZORAS_DOMAIN},
+        [17] = {name = "Crosscode - Title", composer = "Deniz Akbulut", song = MUSIC_CROSSCODE_TITLE},
+        [18] = {name = "Deltarune - My Castle Town", composer = "Toby Fox", song = MUSIC_DELTA_CASTLE_TOWN},
+        [19] = {name = "Super Mario Galaxy - Space Junk Galaxy", composer = "Mahito Yokota", song = MUSIC_SMG_SPACE_JUNK},
+    }
+
+    local m64_music = {
+        [20] = {name = "Super Mario Sunshine - Sky & Sea", composer = "Shinobu Tanaka (ported by ???)", song = "03_Seq_sms_custom", soundfont = 0x25},
+        [21] = {name = "Chrono Trigger - Corridors of Time", composer = "Yasunori Mitsuda (ported by scuttlebug_raiser)", song = "0F_Seq_corridorsoftime_custom", soundfont = 0x2A},
+        [22] = {name = "Pokemon Platinum :Eterna Forest", composer = "Hitomi Sato (ported by Asbeth)", song = "10_Seq_eternaforest_custom", soundfont = 0x0C},
+        [23] = {name = "Animal Crossing: New Horizons - 12PM", composer = "Kazumi Totaka (ported by ???)", song = "11_Seq_nhorizons12pm_custom", soundfont = 0x11},
+        [24] = {name = "Kirby's Adventure - Orange Ocean", composer = "Hirokazu Ando (ported by ???)", song = "12_Seq_kirbyoraocea_custom", soundfont = 0x25},
+        [25] = {name = "Mario Kart 8 Deluxe - Results (Animal Crossing)", composer = "Atsuko Asahi (ported by ???)", song = "13_Seq_mk8acresults_custom", soundfont = 0x25},
+
+        [26] = {name = "Sonna Koto Ura no Mata Urabanashi desho?", composer = "Megumi Nakajima (ported by DaMemes)", song = "04_Seq_kotourasanop_custom", soundfont = 0x25},
+        [27] = {name = "Touhou 20: Fossilized Wonders - Golden Land of Prester John", composer = "ZUN (ported by DaMemes)", song = "05_Seq_th20stage3_custom", soundfont = 0x25},
+        [28] = {name = "Touhou 20: Fossilized Wonders - Might As Well Stake Your Life to Solve the Riddle", composer = "ZUN (ported by DaMemes)", song = "06_Seq_th20nareko_custom", soundfont = 0x25},
+        [29] = {name = "Touhou 11: Subterranean Animism - Walking the Streets of a Former Hell", composer = "ZUN (ported by DaMemes)", song = "07_Seq_th11stage3_custom", soundfont = 0x25},
+        [30] = {name = "Touhou 9: Phantasmagoria of Flower View - Ghostly Band ~ Phantom Ensemble (Touhoumon Version)", composer = "ZUN (ported by DaMemes)", song = "08_Seq_touhoumonprismriver_custom", soundfont = 0x25},
+        [31] = {name = "Touhou 16: Hidden Star in Four Seasons - Illusionary White Traveler", composer = "ZUN (ported by DaMemes)", song = "09_Seq_th16stage4r_custom", soundfont = 0x25},
+        [32] = {name = "Touhou 16: Hidden Star in Four Seasons - Secret God Matara ~ Hidden Star in All Seasons", composer = "ZUN (ported by DaMemes)", song = "0A_Seq_th16okina2_custom", soundfont = 0x25},
+        [33] = {name = "Xenoblade Chronicles - Gaur Plains (Day)", composer = "ACE+ (ported by Bubby64)", song = "0B_Seq_xenogaurday_custom", soundfont = 0x25},
+        [34] = {name = "Pokémon Mystery Dungeon: Explorers of Time/Darkness/Sky - Dialga's Fight to the Finish!", composer = "Arata Iiyoshi (ported by Bubby64)", song = "0C_Seq_pmddialgafight_custom", soundfont = 0x25},
+        [35] = {name = "Castlevania: Dawn of Sorrow - Cursed Clock Tower", composer = "Michiru Yamane (ported by Mosky2000)", song = "0D_Seq_castlevaniaclocktower_custom", soundfont = 0x25},
+        [36] = {name = "Final Fantasy 8 - The Man with the Machine Gun", composer = "Nobuo Uematsu (ported by Bubby64)", song = "0E_Seq_ff8machinegun_custom", soundfont = 0x25}
+    }
+
     if gNetworkPlayers[0].currLevelNum == LEVEL_PLOT then
-        if msg == "1" then djui_chat_message_create("Music: Title Screen | Composer: Koji Kondo")
+        local selectionV = vanilla_music[tonumber(msg)]
+        local selectionO = ogg_music[tonumber(msg)]
+        local selectionM = m64_music[tonumber(msg)]
+
+        if selectionV then
+            djui_chat_message_create("Music: " .. selectionV.name .. " | Composer: " .. selectionV.composer)
+            audio_stream_stop(MUSIC_DKC_AQUATIC_AQUARIUM)
+            audio_stream_stop(MUSIC_DKC_ZORAS_DOMAIN)
+            audio_stream_stop(MUSIC_CROSSCODE_TITLE)
+            audio_stream_stop(MUSIC_DELTA_CASTLE_TOWN)
+            audio_stream_stop(MUSIC_SMG_SPACE_JUNK)
             smlua_audio_utils_reset_all()
-            set_background_music(SEQ_PLAYER_LEVEL, SEQ_MENU_TITLE_SCREEN, 0)
+            set_background_music(SEQ_PLAYER_LEVEL, selectionV.song, 0)
             return true
-        elseif msg == "2" then djui_chat_message_create("Music: Bob-omb Battlefield | Composer: Koji Kondo")
-            smlua_audio_utils_reset_all()
-            set_background_music(SEQ_PLAYER_LEVEL, SEQ_LEVEL_GRASS, 0)
+        elseif selectionO then
+            djui_chat_message_create("Music: " .. selectionO.name .. " | Composer: " .. selectionO.composer)
+            audio_stream_stop(MUSIC_DKC_AQUATIC_AQUARIUM)
+            audio_stream_stop(MUSIC_DKC_ZORAS_DOMAIN)
+            audio_stream_stop(MUSIC_CROSSCODE_TITLE)
+            audio_stream_stop(MUSIC_DELTA_CASTLE_TOWN)
+            audio_stream_stop(MUSIC_SMG_SPACE_JUNK)
+            play_music(0, 0, 1)
+            audio_stream_play(selectionO.song, true, 1)
             return true
-        elseif msg == "3" then djui_chat_message_create("Music: Peach's Castle | Composer: Koji Kondo")
-            smlua_audio_utils_reset_all()
-            set_background_music(SEQ_PLAYER_LEVEL, SEQ_LEVEL_INSIDE_CASTLE, 0)
-            return true
-        elseif msg == "4" then djui_chat_message_create("Music: Dire, Dire Docks | Composer: Koji Kondo")
-            smlua_audio_utils_reset_all()
-            set_background_music(SEQ_PLAYER_LEVEL, SEQ_LEVEL_WATER, 0)
-            return true
-        elseif msg == "5" then djui_chat_message_create("Music: Lethal Lava Land | Composer: Koji Kondo")
-            smlua_audio_utils_reset_all()
-            set_background_music(SEQ_PLAYER_LEVEL, SEQ_LEVEL_HOT, 0)
-            return true
-        elseif msg == "6" then djui_chat_message_create("Music: Princess' Secret Slide | Composer: Koji Kondo")
-            smlua_audio_utils_reset_all()
-            set_background_music(SEQ_PLAYER_LEVEL, SEQ_LEVEL_SLIDE, 0)
-            return true
-        elseif msg == "7" then djui_chat_message_create("Music: Big Boo's Haunt | Composer: Koji Kondo")
-            smlua_audio_utils_reset_all()
-            set_background_music(SEQ_PLAYER_LEVEL, SEQ_LEVEL_SPOOKY, 0)
-            return true
-        elseif msg == "8" then djui_chat_message_create("Music: Hazy Maze Cave | Composer: Koji Kondo")
-            smlua_audio_utils_reset_all()
-            set_background_music(SEQ_PLAYER_LEVEL, SEQ_LEVEL_UNDERGROUND, 0)
-            return true
-        elseif msg == "9" then djui_chat_message_create("Music: Merry-Go-Round | Composer: Koji Kondo")
-            smlua_audio_utils_reset_all()
-            set_background_music(SEQ_PLAYER_LEVEL, SEQ_EVENT_MERRY_GO_ROUND, 0)
-            return true
-        elseif msg == "10" then djui_chat_message_create("Music: The Endless Staircase | Composer: Koji Kondo")
-            smlua_audio_utils_reset_all()
-            set_background_music(SEQ_PLAYER_LEVEL, SEQ_EVENT_ENDLESS_STAIRS, 0)
-            return true
-        elseif msg == "11" then djui_chat_message_create("Music: Koopa Road | Composer: Koji Kondo")
-            smlua_audio_utils_reset_all()
-            set_background_music(SEQ_PLAYER_LEVEL, SEQ_LEVEL_KOOPA_ROAD, 0)
-            return true
-        elseif msg == "12" then djui_chat_message_create("Music: Stage Boss | Composer: Koji Kondo")
-            smlua_audio_utils_reset_all()
-            set_background_music(SEQ_PLAYER_LEVEL, SEQ_EVENT_BOSS, 0)
-            return true
-        elseif msg == "13" then djui_chat_message_create("Music: Bowser's Theme | Composer: Koji Kondo")
-            smlua_audio_utils_reset_all()
-            set_background_music(SEQ_PLAYER_LEVEL, SEQ_LEVEL_BOSS_KOOPA, 0)
-            return true
-        elseif msg == "14" then djui_chat_message_create("Music: Ultimate Bowser | Composer: Koji Kondo")
-            smlua_audio_utils_reset_all()
-            set_background_music(SEQ_PLAYER_LEVEL, SEQ_LEVEL_BOSS_KOOPA_FINAL, 0)
-            return true
-        elseif msg == "15" then djui_chat_message_create("Music: Super Mario Sunshine - Sky & Sea | Composer: Shinobu Tanaka")
-            smlua_audio_utils_replace_sequence(0x64, 0x25, 75, "03_Seq_sms_custom")
-            djui_popup_create("Be sure to save and reload your current plot to finalize your selection!", 2)
-            return true
-        elseif msg == "16" then djui_chat_message_create("Music: Megumi Nakajima - Sonna Koto Ura no Mata Urabanashi desho? (Kotoura-san OP) | Composer: DaMemes")
-            smlua_audio_utils_replace_sequence(0x64, 0x25, 75, "04_Seq_kotourasanop_custom")
-            djui_popup_create("Be sure to save and reload your current plot to finalize your selection!", 2)
-            return true
-        elseif msg == "17" then djui_chat_message_create("Music: Touhou 20: Fossilized Wonders - Golden Land of Prester John | Composer: DaMemes")
-            smlua_audio_utils_replace_sequence(0x64, 0x25, 75, "05_Seq_th20stage3_custom")
-            djui_popup_create("Be sure to save and reload your current plot to finalize your selection!", 2)
-            return true
-        elseif msg == "18" then djui_chat_message_create("Music: Touhou 20: Fossilized Wonders - Might as Well Stake Your Life to Solve the Riddle | Composer: DaMemes")
-            smlua_audio_utils_replace_sequence(0x64, 0x25, 75, "06_Seq_th20nareko_custom")
-            djui_popup_create("Be sure to save and reload your current plot to finalize your selection!", 2)
-            return true
-        elseif msg == "19" then djui_chat_message_create("Music: Touhou 11: Subterranean Animism - Walking the Streets of a Former Hell | Composer: DaMemes")
-            smlua_audio_utils_replace_sequence(0x64, 0x25, 75, "07_Seq_th11stage3_custom")
-            djui_popup_create("Be sure to save and reload your current plot to finalize your selection!", 2)
-            return true
-        elseif msg == "20" then djui_chat_message_create("Music: Touhou 9: Phantasmagoria of Flower View - Ghostly Band ~ Phantom Ensemble (Touhoumon Version) | Composer: DaMemes")
-            smlua_audio_utils_replace_sequence(0x64, 0x25, 75, "08_Seq_touhoumonprismriver_custom")
-            djui_popup_create("Be sure to save and reload your current plot to finalize your selection!", 2)
-            return true
-        elseif msg == "21" then djui_chat_message_create("Music: Touhou 16: Hidden Star in Four Seasons - Illusionary White Traveler | Composer: DaMemes")
-            smlua_audio_utils_replace_sequence(0x64, 0x25, 75, "09_Seq_th16stage4r_custom")
-            djui_popup_create("Be sure to save and reload your current plot to finalize your selection!", 2)
-            return true
-        elseif msg == "22" then djui_chat_message_create("Music: Touhou 16: Hidden Star in Four Seasons - Secret God Matara ~ Hidden Star in All Seasons | Composer: DaMemes")
-            smlua_audio_utils_replace_sequence(0x64, 0x25, 75, "0A_Seq_th16okina2_custom")
-            djui_popup_create("Be sure to save and reload your current plot to finalize your selection!", 2)
-            return true
-        elseif msg == "23" then djui_chat_message_create("Music: Xenoblade Chronicles - Gaur Plains (Day) | Composer: Bubby64")
-            smlua_audio_utils_replace_sequence(0x64, 0x25, 75, "0B_Seq_xenogaurday_custom")
-            djui_popup_create("Be sure to save and reload your current plot to finalize your selection!", 2)
-            return true
-        elseif msg == "24" then djui_chat_message_create("Music: Pokémon Mystery Dungeon: Explorers of Time/Darkness/Sky - Dialga's Fight to the Finish! Composer: Bubby64")
-            smlua_audio_utils_replace_sequence(0x64, 0x25, 75, "0C_Seq_pmddialgafight_custom")
-            djui_popup_create("Be sure to save and reload your current plot to finalize your selection!", 2)
-            return true
-        elseif msg == "25" then djui_chat_message_create("Music: Castlevania: Dawn of Sorrow - Cursed Clock Tower | Composer: Mosky2000")
-            smlua_audio_utils_replace_sequence(0x64, 0x25, 75, "0D_Seq_castlevaniaclocktower_custom")
-            djui_popup_create("Be sure to save and reload your current plot to finalize your selection!", 2)
-            return true
-        elseif msg == "26" then djui_chat_message_create("Music: Final Fantasy 8 - The Man with the Machine Gun | Composer: Bubby64")
-            smlua_audio_utils_replace_sequence(0x64, 0x25, 75, "0E_Seq_ff8machinegun_custom")
+        elseif selectionM then
+            djui_chat_message_create("Music: " .. selectionM.name .. " | Composer: " .. selectionM.composer)
+            audio_stream_stop(MUSIC_DKC_AQUATIC_AQUARIUM)
+            audio_stream_stop(MUSIC_DKC_ZORAS_DOMAIN)
+            audio_stream_stop(MUSIC_CROSSCODE_TITLE)
+            audio_stream_stop(MUSIC_DELTA_CASTLE_TOWN)
+            audio_stream_stop(MUSIC_SMG_SPACE_JUNK)
+            smlua_audio_utils_replace_sequence(0x64, selectionM.soundfont, 75, selectionM.song)
             djui_popup_create("Be sure to save and reload your current plot to finalize your selection!", 2)
             return true
         else
-            djui_chat_message_create("Input [1-14] for vanilla music. Input [15-26] for custom music.")
+            djui_chat_message_create("Invalid selection. Please enter a number corresponding to the music you want to play. [1-36]")
             return true
         end
     else
-        djui_chat_message_create("You must enter a plot to run this command. [/plot [#]]")
+        djui_chat_message_create("You must enter a plot to run this command. [/plot]")
         return true
     end
 end
@@ -151,8 +167,19 @@ local function mario_update(m)
     end
 end
 
-hook_chat_command("plot-music", "[1-26] | Changes what music plays while in a plot. Custom music requires you to reload your plot to apply changes.", musicplot)
+local function mario_update(m)
+    local np = gNetworkPlayers[m.playerIndex]
+    if np.currLevelNum == LEVEL_PLOT then
+        network_player_set_override_location(np, "Plot")
+    else
+        local level = get_level_name(np.currCourseNum, np.currLevelNum, np.currAreaIndex)
+        network_player_set_override_location(np, level)
+    end
+end
+
+hook_chat_command("plot-music", "[1-36] | Changes what music plays while in a plot. Custom music requires you to reload your plot to apply changes.", musicplot)
 hook_chat_command("plot", "| Warp to a level with no textures or objects. Pass an argument to go to a specific act.", on_chat_command)
+hook_event(HOOK_MARIO_UPDATE, mario_update)
 hook_event(HOOK_ON_LEVEL_INIT, on_lvl_init)
 hook_event(HOOK_ON_PAUSE_EXIT, on_pause_exit)
 hook_event(HOOK_MARIO_UPDATE, mario_update)
