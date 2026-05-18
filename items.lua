@@ -996,9 +996,9 @@ local __parse_color = function (item, color, key)
         return item.params.color[key]
     end
 
-    local new_color = 0
     local symbol = color:sub(1, 1)
     if symbol == "+" or symbol == "-" then
+        local new_color = 0
         local is_hex = color:sub(2, 3) == "0x"
         local base = is_hex and 16 or 10
         local start = is_hex and 4 or 2
@@ -1007,10 +1007,8 @@ local __parse_color = function (item, color, key)
             number = "-" .. number
         end
 
-        local addend = tonumber(number, base) or item.params.color[key]
-        if addend then
-            new_color = item.params.color[key] + addend
-        end
+        local addend = tonumber(number, base) or 0
+        new_color = item.params.color[key] + addend
         return math.floor(math.clamp(new_color, 0, 255))
     end
     local is_hex = color:sub(1, 2) == "0x"
