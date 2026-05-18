@@ -97,7 +97,7 @@ Controls.render = function(screen_width, screen_height)
                 { A_BUTTON_TEX, "Select Item" },
                 { LR_JPAD_TEX, "Cycle Hotbar" },
                 { L_CBUTTON_TEX, R_CBUTTON_TEX, "Next/Previous Page" },
-                { U_CBUTTON_TEX, D_CBUTTON_TEX, "Next/Previous Tab" },
+                { L_TRIG_TEX, R_TRIG_TEX, "Next/Previous Tab" },
             }
             render_controls_tips(screen, x, y, group)
         end
