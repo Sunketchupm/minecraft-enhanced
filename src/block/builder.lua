@@ -1,15 +1,6 @@
 local Shapes = require("shapes")
 local BlockTextures = require("textures")
 
-local CASE_SHADED_SOLID_TEXTURE = 0
-local CASE_SHADED_TRANSPARENT_TEXTURE = 1
-local CASE_UNSHADED_SOLID_TEXTURE = 2
-local CASE_UNSHADED_TRANSPARENT_TEXTURE = 3
-local CASE_SHADED_SOLID_COLOR = 4
-local CASE_SHADED_TRANSPARENT_COLOR = 5
-local CASE_UNSHADED_SOLID_COLOR = 6
-local CASE_UNSHADED_TRANSPARENT_COLOR = 7
-
 ---@param obj Object
 local __get_shape_index = function (obj)
     return (obj.oAnimState >> 16) & 0xFF
@@ -114,25 +105,31 @@ function geo_update_mce_block(node)
         gfx = gfx_create(gfx_name, gfx_template_length)
         gfx_copy(gfx, gfx_template, gfx_template_length)
 
-        local case = cast_graph_node(node).parameter
+        local is_transparent = cast_graph_node(node).parameter == 1
+        local is_colored = mce_block_check_flag(obj, MCE_BLOCK_FLAG_COLORED)
+        local is_unshaded = mce_block_check_flag(obj, MCE_BLOCK_FLAG_UNSHADED)
+        local is_untiled = mce_block_check_flag(obj, MCE_BLOCK_FLAG_UNTILED)
 
         -- Set geometry mode
         local cmd_set_geometry_mode = gfx_get_command(gfx, 0)
         gfx_set_command(cmd_set_geometry_mode, "gsSPSetGeometryMode(G_SHADING_SMOOTH | G_SHADE | G_LIGHTING | G_ZBUFFER)")
 
         -- Set color combiner
+        local combiner_case = "gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, TEXEL0, 0, ENVIRONMENT, 0, TEXEL0, 0, SHADE, 0, TEXEL0, 0, ENVIRONMENT, 0)"
+        if is_unshaded then
+            if is_colored then
+                combiner_case = "gsDPSetCombineLERP(0, 0, 0, ENVIRONMENT, 0, 0, 0, ENVIRONMENT, 0, 0, 0, ENVIRONMENT, 0, 0, 0, ENVIRONMENT)"
+            else
+                combiner_case = "gsDPSetCombineLERP(0, 0, 0, TEXEL0, TEXEL0, 0, ENVIRONMENT, 0, 0, 0, 0, TEXEL0, TEXEL0, 0, ENVIRONMENT, 0)"
+            end
+        else
+            if is_colored then
+                combiner_case = "gsDPSetCombineLERP(ENVIRONMENT, 0, SHADE, 0, ENVIRONMENT, 0, SHADE, 0, ENVIRONMENT, 0, SHADE, 0, ENVIRONMENT, 0, SHADE, 0)"
+            else
+                combiner_case = "gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, TEXEL0, 0, ENVIRONMENT, 0, TEXEL0, 0, SHADE, 0, TEXEL0, 0, ENVIRONMENT, 0)"
+            end
+        end
         local cmd_set_color_combiner = gfx_get_command(gfx, 4)
-        local combiner_cases = {
-            [CASE_SHADED_SOLID_TEXTURE] = "gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, TEXEL0, 0, ENVIRONMENT, 0, TEXEL0, 0, SHADE, 0, TEXEL0, 0, ENVIRONMENT, 0)",
-            [CASE_SHADED_TRANSPARENT_TEXTURE] = "gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, TEXEL0, 0, ENVIRONMENT, 0, TEXEL0, 0, SHADE, 0, TEXEL0, 0, ENVIRONMENT, 0)",
-            [CASE_SHADED_SOLID_COLOR] = "gsDPSetCombineLERP(ENVIRONMENT, 0, SHADE, 0, ENVIRONMENT, 0, SHADE, 0, ENVIRONMENT, 0, SHADE, 0, ENVIRONMENT, 0, SHADE, 0)",
-            [CASE_SHADED_TRANSPARENT_COLOR] = "gsDPSetCombineLERP(ENVIRONMENT, 0, SHADE, 0, ENVIRONMENT, 0, SHADE, 0, ENVIRONMENT, 0, SHADE, 0, ENVIRONMENT, 0, SHADE, 0)",
-            [CASE_UNSHADED_SOLID_TEXTURE] = "gsDPSetCombineLERP(0, 0, 0, TEXEL0, TEXEL0, 0, ENVIRONMENT, 0, 0, 0, 0, TEXEL0, TEXEL0, 0, ENVIRONMENT, 0)",
-            [CASE_UNSHADED_TRANSPARENT_TEXTURE] = "gsDPSetCombineLERP(0, 0, 0, TEXEL0, TEXEL0, 0, ENVIRONMENT, 0, 0, 0, 0, TEXEL0, TEXEL0, 0, ENVIRONMENT, 0)",
-            [CASE_UNSHADED_SOLID_COLOR] = "gsDPSetCombineLERP(0, 0, 0, ENVIRONMENT, 0, 0, 0, ENVIRONMENT, 0, 0, 0, ENVIRONMENT, 0, 0, 0, ENVIRONMENT)",
-            [CASE_UNSHADED_TRANSPARENT_COLOR] = "gsDPSetCombineLERP(0, 0, 0, ENVIRONMENT, 0, 0, 0, ENVIRONMENT, 0, 0, 0, ENVIRONMENT, 0, 0, 0, ENVIRONMENT)",
-        }
-        local combiner_case = combiner_cases[case] or "gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, TEXEL0, 0, ENVIRONMENT, 0, TEXEL0, 0, SHADE, 0, TEXEL0, 0, ENVIRONMENT, 0)"
         gfx_set_command(cmd_set_color_combiner, combiner_case)
 
         -- Set texture
@@ -145,30 +142,33 @@ function geo_update_mce_block(node)
         gfx_set_command(cmd_set_texture_image, "gsDPSetTextureImage(G_IM_FMT_RGBA, G_IM_SIZ_16b_LOAD_BLOCK, 1, %t)", texture)
 
         -- Set texture tiles
-        --[[
-        local default_size = 60
-        local scale_x = obj.oScaleX
-        local scale_z = obj.oScaleZ
-        local tile_x = default_size * (1/scale_x)
-        local tile_z = default_size * (1/scale_z)
-        local cmd_set_tile_size = gfx_get_command(gfx, 15)
-        gfx_set_command(cmd_set_tile_size, "gsDPSetTileSize(0, 0, 0, %i, %i)", tile_x, tile_z)
-        ]]
+        if not is_untiled and not is_colored then
+            local default_size = 60
+            local scale_x = obj.oScaleX
+            local scale_z = obj.oScaleZ
+            local tile_x = default_size * (1/scale_x)
+            local tile_z = default_size * (1/scale_z)
+            local cmd_set_tile_size = gfx_get_command(gfx, 15)
+            gfx_set_command(cmd_set_tile_size, "gsDPSetTileSize(0, 0, 0, %i, %i)", tile_x, tile_z)
+        end
 
         -- Set colors
-        local cmd_environment_color = gfx_get_command(gfx, 16)
         local color = integer_to_color_table(obj.oColor)
-        local color_cases = {
-            [CASE_SHADED_SOLID_TEXTURE] = { command = "gsDPSetEnvColor(255, 255, 255, 255)", args = function () end},
-            [CASE_SHADED_TRANSPARENT_TEXTURE] = { command = "gsDPSetEnvColor(255, 255, 255, %i)", args = function () return obj.oOpacity end },
-            [CASE_SHADED_SOLID_COLOR] = { command = "gsDPSetEnvColor(%i, %i, %i, 255)", args = function () return color.r, color.g, color.b end },
-            [CASE_SHADED_TRANSPARENT_COLOR] = { command = "gsDPSetEnvColor(%i, %i, %i, %i)", args = function () return color.r, color.g, color.b, obj.oOpacity end },
-            [CASE_UNSHADED_SOLID_TEXTURE] = { command = "gsDPSetEnvColor(255, 255, 255, 255)", args = function () end},
-            [CASE_UNSHADED_TRANSPARENT_TEXTURE] = { command = "gsDPSetEnvColor(255, 255, 255, %i)", args = function () return obj.oOpacity end },
-            [CASE_UNSHADED_SOLID_COLOR] = { command = "gsDPSetEnvColor(%i, %i, %i, 255)", args = function () return color.r, color.g, color.b end },
-            [CASE_UNSHADED_TRANSPARENT_COLOR] = { command = "gsDPSetEnvColor(%i, %i, %i, %i)", args = function () return color.r, color.g, color.b, obj.oOpacity end },
-        }
-        local color_case = color_cases[case] or { command = "gsDPSetEnvColor(255, 255, 255, 255)", args = function () end }
+        local color_case = { command = "gsDPSetEnvColor(255, 255, 255, 255)", args = function () end }
+        if is_transparent then
+            if is_colored then
+                color_case = { command = "gsDPSetEnvColor(%i, %i, %i, %i)", args = function () return color.r, color.g, color.b, obj.oOpacity end }
+            else
+                color_case = { command = "gsDPSetEnvColor(255, 255, 255, %i)", args = function () return obj.oOpacity end }
+            end
+        else
+            if is_colored then
+                color_case = { command = "gsDPSetEnvColor(%i, %i, %i, 255)", args = function () return color.r, color.g, color.b end }
+            else
+                color_case = { command = "gsDPSetEnvColor(255, 255, 255, 255)", args = function () end }
+            end
+        end
+        local cmd_environment_color = gfx_get_command(gfx, 16)
         gfx_set_command(cmd_environment_color, color_case.command, color_case.args())
 
         -- Compute vertices
@@ -184,7 +184,7 @@ function geo_update_mce_block(node)
     local graph_node = cast_graph_node(node.next) --[[@as GraphNodeDisplayList]]
     graph_node.displayList = gfx
 
-    node.flags = 0x600 | (node.flags & 0xFF);
+    node.flags = 0x600 | (node.flags & 0xFF)
 end
 
 ---@param node GraphNode
@@ -192,13 +192,6 @@ function geo_switch_mce_block(node)
     local obj = geo_get_current_object()
 
     local case = obj.oOpacity == 255 and 0 or 1
-    if mce_block_is_unshaded(obj.oAnimState) then
-        case = case + CASE_UNSHADED_SOLID_TEXTURE
-    end
-    if mce_block_is_colored(obj.oAnimState) then
-        case = case + CASE_SHADED_SOLID_COLOR
-    end
-
     local graph_node = cast_graph_node(node) --[[@as GraphNodeSwitchCase]]
     graph_node.selectedCase = case
 end
@@ -216,4 +209,10 @@ local function on_object_unload(obj)
     if vtx then vtx_delete(vtx) end
 end
 
+local function on_warp()
+    gfx_delete_all()
+    vtx_delete_all()
+end
+
 hook_event(HOOK_ON_OBJECT_UNLOAD, on_object_unload)
+hook_event(HOOK_ON_WARP, on_warp)

@@ -152,57 +152,34 @@ end
 
 -------------------------------------------------------------
 
----@param anim_state integer
-function mce_block_is_colored(anim_state)
-    return anim_state & (1 << 24) ~= 0
-end
-
----@param anim_state integer
-function mce_block_is_unshaded(anim_state)
-    return anim_state & (1 << 25) ~= 0
-end
-
 ---@param item Item | Object
-function mce_block_set_colored(item)
+---@param flag integer
+function mce_block_check_flag(item, flag)
     if item.oAction == nil then
         ---@cast item Item
-        item.animState = item.animState | (1 << 24)
+        return item.animState & flag ~= 0
     else
-        ---@cast item Object
-        item.oAnimState = item.oAnimState | (1 << 24)
+        return item.oAnimState & flag ~= 0
     end
 end
 
 ---@param item Item | Object
-function mce_block_set_unshaded(item)
+---@param flag integer
+function mce_block_toggle_flag(item, flag)
     if item.oAction == nil then
         ---@cast item Item
-        item.animState = item.animState | (1 << 25)
+        if item.animState & flag ~= 0 then
+            item.animState = item.animState & ~flag
+        else
+            item.animState = item.animState | flag
+        end
     else
         ---@cast item Object
-        item.oAnimState = item.oAnimState | (1 << 25)
-    end
-end
-
----@param item Item | Object
-function mce_block_set_uncolored(item)
-    if item.oAction == nil then
-        ---@cast item Item
-        item.animState = item.animState & ~(1 << 24)
-    else
-        ---@cast item Object
-        item.oAnimState = item.oAnimState & ~(1 << 24)
-    end
-end
-
----@param item Item | Object
-function mce_block_set_shaded(item)
-    if item.oAction == nil then
-        ---@cast item Item
-        item.animState = item.animState & ~(1 << 25)
-    else
-        ---@cast item Object
-        item.oAnimState = item.oAnimState & ~(1 << 25)
+        if item.oAnimState & flag ~= 0 then
+            item.oAnimState = item.oAnimState & ~flag
+        else
+            item.oAnimState = item.oAnimState | flag
+        end
     end
 end
 

@@ -194,7 +194,7 @@ local function handle_item_settings(item_link)
         end
     end
     if gCurrentTab == TAB_BUILDING_BLOCKS_COLORS then
-        mce_block_set_colored(item)
+        mce_block_toggle_flag(item, MCE_BLOCK_FLAG_COLORED)
     end
     return item_link
 end
@@ -202,9 +202,9 @@ end
 ---@param item MenuItemLink
 local function on_confirm_item_input(item)
     sIsHolding = false
-    handle_item_settings(item)
     ---@type MenuItemLink
     local hotbar_item = table.deepcopy(item)
+    handle_item_settings(hotbar_item)
     Hotbar.items[Hotbar.index] = hotbar_item
     audio_sample_play(SOUND_MCE_PRESS, gGlobalSoundSource, 1)
 end

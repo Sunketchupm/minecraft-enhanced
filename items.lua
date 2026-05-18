@@ -192,6 +192,10 @@ end
         - - 2nd bit: is shaded
 ]]
 
+MCE_BLOCK_FLAG_COLORED = (1 << 24)
+MCE_BLOCK_FLAG_UNSHADED = (1 << 25)
+MCE_BLOCK_FLAG_UNTILED = (1 << 26)
+
 local COL_MCE_BLOCK_DEFAULT = smlua_collision_util_get("mce_block_col_default")
 local COL_MCE_BLOCK_LAVA = smlua_collision_util_get("mce_block_col_lava")
 local COL_MCE_BLOCK_DEATH = smlua_collision_util_get("mce_block_col_death")
@@ -1021,7 +1025,7 @@ end
 
 ---@param msg string
 local function on_set_color_chat_command(msg)
-    if not gCurrentItem or gCurrentItem.model ~= E_MODEL_MCE_BLOCK or not mce_block_is_colored(gCurrentItem.animState) then
+    if not gCurrentItem or gCurrentItem.model ~= E_MODEL_MCE_BLOCK or not mce_block_check_flag(gCurrentItem, MCE_BLOCK_FLAG_COLORED) then
         djui_chat_message_create("You need to be holding a color block to set its color")
         return true
     end
@@ -1049,13 +1053,22 @@ local function on_set_shade_chat_command()
         return true
     end
 
-    local is_unshaded = mce_block_is_unshaded(gCurrentItem.animState)
-    if is_unshaded then
-        mce_block_set_shaded(gCurrentItem)
-    else
-        mce_block_set_unshaded(gCurrentItem)
+    mce_block_toggle_flag(gCurrentItem, MCE_BLOCK_FLAG_UNSHADED)
+    local is_unshaded = mce_block_check_flag(gCurrentItem, MCE_BLOCK_FLAG_UNSHADED)
+    djui_chat_message_create("The current block has now been " .. (is_unshaded and "unshaded" or "shaded"))
+
+    return true
+end
+
+local function on_set_tiling_chat_command()
+    if not gCurrentItem or gCurrentItem.model ~= E_MODEL_MCE_BLOCK then
+        djui_chat_message_create("You need to be holding a block to toggle its tiling")
+        return true
     end
-    djui_chat_message_create("The current block has now been " .. (not is_unshaded and "unshaded" or "shaded"))
+
+    mce_block_toggle_flag(gCurrentItem, MCE_BLOCK_FLAG_UNTILED)
+    local is_untiled = mce_block_check_flag(gCurrentItem, MCE_BLOCK_FLAG_UNTILED)
+    djui_chat_message_create("The current block has now been " .. (is_untiled and "untiled" or "tiled"))
 
     return true
 end
@@ -1067,3 +1080,4 @@ hook_chat_command("transparent", "[<opacity>] | Makes the current selected block
 hook_chat_command("replace", "[hotbar index] | Replaces the placed blocks with the same held model, with the block model of the supplied hotbar index.", on_replace_chat_command)
 hook_chat_command("color", "[<r> <g> <b>] | Sets the color of the currently selected block", on_set_color_chat_command)
 hook_chat_command("shade", "| Toggle shading on the currently selected block", on_set_shade_chat_command)
+hook_chat_command("tile", "| Toggle tiling on the currently selected block", on_set_tiling_chat_command)
