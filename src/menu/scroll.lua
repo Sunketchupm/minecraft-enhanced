@@ -73,7 +73,7 @@ Scroll.inputs = function(_, scroll, stick, _)
     local element_count = #scroll.elements
     if Mouse.moved then
         if Mouse.menu.prevItemIndex ~= scroll.index then
-            play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource)
+            audio_sample_play(SOUND_MCE_SCROLL, gGlobalSoundSource, 1)
         end
         Mouse.menu.prevItemIndex = scroll.index
 
@@ -93,7 +93,7 @@ Scroll.inputs = function(_, scroll, stick, _)
             elseif relative_button_index < 4 and scroll.offset > 0 then
                 scroll.offset = scroll.offset - 1
             end
-            play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource)
+            audio_sample_play(SOUND_MCE_MOVE, gGlobalSoundSource, 1)
         elseif stick.down then
             scroll.index = scroll.index + 1
             if scroll.index > element_count then
@@ -102,7 +102,7 @@ Scroll.inputs = function(_, scroll, stick, _)
             elseif relative_button_index > scroll.elements_rendered - 3 and scroll.index + 1 < element_count then
                 scroll.offset = scroll.offset + 1
             end
-            play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource)
+            audio_sample_play(SOUND_MCE_MOVE, gGlobalSoundSource, 1)
         end
     end
 end

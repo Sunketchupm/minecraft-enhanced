@@ -22,6 +22,11 @@ E_MODEL_MCE_BLOCK = smlua_model_util_get_id("mce_block_geo")
 E_MODEL_OUTLINE = smlua_model_util_get_id("mce_outline")
 E_MODEL_ARROW = smlua_model_util_get_id("arrow_geo")
 
+SOUND_MCE_SCROLL = audio_sample_load("menu_scroll.ogg")
+SOUND_MCE_PRESS = audio_sample_load("menu_press.ogg")
+SOUND_MCE_MOVE = audio_sample_load("menu_move.ogg")
+SOUND_MCE_BACK = audio_sample_load("menu_back.ogg")
+
 -------------------------------------------------------------------------------
 
 local sEnableGrid = true

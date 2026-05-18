@@ -139,7 +139,7 @@ local function handle_item_selection_inputs(item_grid, stick)
     if stick.up or stick.left or stick.down or stick.right then
         if current_item_index < 0 then
             current_item_index = begin_page_index
-            play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource)
+            audio_sample_play(SOUND_MCE_MOVE, gGlobalSoundSource, 1)
             item_grid.index = current_item_index
             return
         end
@@ -173,7 +173,7 @@ local function handle_item_selection_inputs(item_grid, stick)
             current_item_index = begin_page_index
         end
 
-        play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource)
+        audio_sample_play(SOUND_MCE_PRESS, gGlobalSoundSource, 1)
     end
     item_grid.index = current_item_index
 end
@@ -206,7 +206,7 @@ local function on_confirm_item_input(item)
     ---@type MenuItemLink
     local hotbar_item = table.deepcopy(item)
     Hotbar.items[Hotbar.index] = hotbar_item
-    play_sound(SOUND_MENU_CLICK_FILE_SELECT, gGlobalSoundSource)
+    audio_sample_play(SOUND_MCE_PRESS, gGlobalSoundSource, 1)
 end
 
 ---@param m MarioState
@@ -221,10 +221,10 @@ local function handle_holding_item_inputs(m, item, stick)
     else
         if stick.left and Hotbar.index > 1 then
             Hotbar.index = Hotbar.index - 1
-            play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource)
+            audio_sample_play(SOUND_MCE_PRESS, gGlobalSoundSource, 1)
         elseif stick.right and Hotbar.index < #Hotbar.items then
             Hotbar.index = Hotbar.index + 1
-            play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource)
+            audio_sample_play(SOUND_MCE_PRESS, gGlobalSoundSource, 1)
         end
 
         if m.controller.buttonReleased & A_BUTTON ~= 0 then
@@ -242,10 +242,10 @@ local function handle_pick_up_item_inputs(m, item_grid)
     if not item then return end
 
     if Mouse.moved then
-        if sLastSelectedIndex ~= item_grid.index then
-            play_sound(SOUND_MENU_MESSAGE_NEXT_PAGE, gGlobalSoundSource)
+        --[[ if sLastSelectedIndex ~= item_grid.index then
+            audio_sample_play(SOUND_MCE_PRESS, gGlobalSoundSource, 1)
         end
-        sLastSelectedIndex = item_grid.index
+        sLastSelectedIndex = item_grid.index]]
 
         if Mouse.pressed.left then
             item.held = true
@@ -270,21 +270,21 @@ local function handle_paging_inputs(item_grid, c_stick)
         if Mouse.scroll.y * invert_multiplier > 0 and pages.index > 0 then
             pages.index = pages.index - 1
             item_grid.index = pages.item_count * pages.index
-            play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
+            audio_sample_play(SOUND_MCE_SCROLL, gGlobalSoundSource, 1)
         elseif Mouse.scroll.y * invert_multiplier < 0 and pages.index < pages.count then
             pages.index = pages.index + 1
             item_grid.index = pages.item_count * pages.index
-            play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
+            audio_sample_play(SOUND_MCE_SCROLL, gGlobalSoundSource, 1)
         end
     else
         if c_stick.left and pages.index > 0 then
             pages.index = pages.index - 1
             item_grid.index = pages.item_count * pages.index
-            play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
+            audio_sample_play(SOUND_MCE_SCROLL, gGlobalSoundSource, 1)
         elseif c_stick.right and pages.index < pages.count then
             pages.index = pages.index + 1
             item_grid.index = pages.item_count * pages.index
-            play_sound(SOUND_MENU_CHANGE_SELECT, gGlobalSoundSource)
+            audio_sample_play(SOUND_MCE_SCROLL, gGlobalSoundSource, 1)
         end
     end
 end
