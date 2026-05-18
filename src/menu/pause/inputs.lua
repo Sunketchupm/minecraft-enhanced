@@ -39,9 +39,10 @@ local function handle_menu_inputs(m)
         gPauseMenu.get_current_button().action(m)
         play_sound(SOUND_MENU_CLICK_FILE_SELECT, gGlobalSoundSource)
     elseif Mouse.pressed.right or (not Mouse.moved and pressed & B_BUTTON ~= 0) then
-        gPauseMenu.v_index = 1
         if gPauseMenu.current_menu == PAUSE_MENU_MAIN then
             gPauseMenu.is_paused = false
+            gPauseMenu.h_index = 1
+            gPauseMenu.v_index = 1
         else
             set_new_menu(PAUSE_MENU_MAIN)
         end

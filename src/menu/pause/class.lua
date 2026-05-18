@@ -49,6 +49,8 @@ gPauseMenu[PAUSE_MENU_MAIN] = {
                     level_trigger_warp(m, WARP_OP_EXIT)
                 end
                 gPauseMenu.is_paused = false
+                gPauseMenu.h_index = 1
+                gPauseMenu.v_index = 1
             end},
         {
             name = "Exit to Castle",
@@ -56,6 +58,8 @@ gPauseMenu[PAUSE_MENU_MAIN] = {
                 initiate_warp(gLevelValues.exitCastleLevel, gLevelValues.exitCastleArea, gLevelValues.exitCastleWarpNode, WARP_ARG_EXIT_COURSE)
                 fade_into_special_warp(0, 0)
                 gPauseMenu.is_paused = false
+                gPauseMenu.h_index = 1
+                gPauseMenu.v_index = 1
             end
         },
         { name = "Options", action = function () set_new_menu(PAUSE_MENU_OPTIONS) end },
