@@ -999,17 +999,26 @@ local __parse_color = function (item, color, key)
     local new_color = 0
     local symbol = color:sub(1, 1)
     if symbol == "+" or symbol == "-" then
-        local number = color:sub(2)
+        local is_hex = color:sub(2, 3) == "0x"
+        local base = is_hex and 16 or 10
+        local start = is_hex and 4 or 2
+        local number = color:sub(start)
         if symbol == "-" then
             number = "-" .. number
         end
-        if tonumber(number) then
-            new_color = item.params.color[key] + number
+
+        local addend = tonumber(number, base) or item.params.color[key]
+        if addend then
+            new_color = item.params.color[key] + addend
         end
         return math.floor(math.clamp(new_color, 0, 255))
     end
+    local is_hex = color:sub(1, 2) == "0x"
+    local base = is_hex and 16 or 10
+    local start = is_hex and 3 or 1
+    local number = color:sub(start)
 
-    return math.floor(math.clamp(tonumber(color) or item.params.color[key], 0, 255))
+    return math.floor(math.clamp(tonumber(number, base) or item.params.color[key], 0, 255))
 end
 
 ---@param msg string
@@ -1020,7 +1029,7 @@ local function on_set_color_chat_command(msg)
     end
 
     local commands = string.split(msg, " ")
-    if not commands[1] then
+    if not (commands[1] and commands[2] and commands[3]) then
         djui_chat_message_create("Usage: [<r> <g> <b>]")
         return true
     end
