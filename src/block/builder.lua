@@ -16,7 +16,11 @@ local __get_shape_index = function (obj)
 end
 
 local __get_object_identifer = function (obj)
-    return tostring(obj.oAnimState) .. tostring(obj.oColor) .. tostring(obj.oOpacity)
+    return tostring(obj.oAnimState) ..
+            tostring(obj.oColor) ..
+            tostring(obj.oOpacity) ..
+            tostring(obj.oScaleX) ..
+            tostring(obj.oScaleZ)
 end
 
 --- @param obj Object
@@ -139,6 +143,17 @@ function geo_update_mce_block(node)
         end
         local cmd_set_texture_image = gfx_get_command(gfx, 11)
         gfx_set_command(cmd_set_texture_image, "gsDPSetTextureImage(G_IM_FMT_RGBA, G_IM_SIZ_16b_LOAD_BLOCK, 1, %t)", texture)
+
+        -- Set texture tiles
+        --[[
+        local default_size = 60
+        local scale_x = obj.oScaleX
+        local scale_z = obj.oScaleZ
+        local tile_x = default_size * (1/scale_x)
+        local tile_z = default_size * (1/scale_z)
+        local cmd_set_tile_size = gfx_get_command(gfx, 15)
+        gfx_set_command(cmd_set_tile_size, "gsDPSetTileSize(0, 0, 0, %i, %i)", tile_x, tile_z)
+        ]]
 
         -- Set colors
         local cmd_environment_color = gfx_get_command(gfx, 16)

@@ -8,21 +8,21 @@ Gfx mce_texture_block_dl[] = {
 	gsSPLight(&mce_block_light.l, 1),
     gsSPLight(&mce_block_light.a, 2),
 	gsDPPipeSync(),
-	gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, TEXEL0, 0, ENVIRONMENT, 0, TEXEL0, 0, SHADE, 0, TEXEL0, 0, ENVIRONMENT, 0), // 2
+	gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, TEXEL0, 0, ENVIRONMENT, 0, TEXEL0, 0, SHADE, 0, TEXEL0, 0, ENVIRONMENT, 0), // 4
 	gsDPSetAlphaDither(G_AD_NOISE),
 	gsDPSetTextureConvert(G_TC_FILT),
 	gsDPSetTextureFilter(G_TF_BILERP),
 	gsDPSetTexturePersp(G_TP_PERSP),
 	gsDPPipelineMode(G_PM_1PRIMITIVE),
-	gsSPTexture(65535, 65535, 0, 0, 1), // 8
-	gsDPSetTextureImage(G_IM_FMT_RGBA, G_IM_SIZ_16b_LOAD_BLOCK, 1, NULL), // 9
+	gsSPTexture(65535, 65535, 0, 0, 1), // 10
+	gsDPSetTextureImage(G_IM_FMT_RGBA, G_IM_SIZ_16b_LOAD_BLOCK, 1, NULL), // 11
 	gsDPSetTile(G_IM_FMT_RGBA, G_IM_SIZ_16b_LOAD_BLOCK, 0, 0, 7, 0, G_TX_WRAP | G_TX_NOMIRROR, 0, 0, G_TX_WRAP | G_TX_NOMIRROR, 0, 0),
 	gsDPLoadBlock(7, 0, 0, 255, 512),
 	gsDPSetTile(G_IM_FMT_RGBA, G_IM_SIZ_16b, 4, 0, 0, 0, G_TX_WRAP | G_TX_NOMIRROR, 4, 0, G_TX_WRAP | G_TX_NOMIRROR, 4, 0),
-	gsDPSetTileSize(0, 0, 0, 60, 60),
-	gsDPSetEnvColor(255, 255, 255, 255), // 14
-    gsSPVertex(NULL, 0, 0), // 15
-    gsSPDisplayList(NULL), // 16
+	gsDPSetTileSize(0, 0, 0, 60, 60), // 15
+	gsDPSetEnvColor(255, 255, 255, 255), // 16
+    gsSPVertex(NULL, 0, 0), // 17
+    gsSPDisplayList(NULL), // 18
 	gsDPPipeSync(),
 	gsSPSetGeometryMode(G_LIGHTING),
 	gsSPClearGeometryMode(G_TEXTURE_GEN),

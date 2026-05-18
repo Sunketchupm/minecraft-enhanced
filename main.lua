@@ -253,6 +253,9 @@ function bhv_preview_item_loop(obj)
 	obj.oItemParams = item_params.params
 	obj.oColor = color_table_to_integer(item_params.color)
 	local outline_scale = sOutlineObject.header.gfx.scale
+	obj.oScaleX = outline_scale.x
+	obj.oScaleY = outline_scale.y
+	obj.oScaleZ = outline_scale.z
 	obj_scale_xyz(obj, outline_scale.x, outline_scale.y, outline_scale.z)
 	obj_set_model_extended(obj, current_item.model)
 
