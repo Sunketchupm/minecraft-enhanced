@@ -8,7 +8,7 @@ smlua_audio_utils_replace_sequence(0x64, 0x25, 75, "03_Seq_sms_custom")
 LEVEL_PLOT = level_register("level_plot_entry", COURSE_CAKE_END, "Plot", "plot", 20000, 0x28, 0x28, 0x28)
 
 local function on_chat_command(msg)
-    local act = tonumber(msg) or 0
+    local act = math.clamp(tonumber(msg) or 0, 0, 255)
     warp_to_warpnode(LEVEL_PLOT, 1, act, 0xA)
     return true
 end

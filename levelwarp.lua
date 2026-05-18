@@ -86,7 +86,7 @@ local function on_warp_command(msg)
         if commands[1] == value[1] or commands[1] == value[2] then
             level = value[3]
             area = tonumber(commands[2]) or 1
-            act = tonumber(commands[3]) or (course_is_main_course(level_to_course[level]) and 1 or 0)
+            act = math.clamp(tonumber(commands[3]) or (course_is_main_course(level_to_course[level]) and 1 or 0), 0, 255)
             if commands[4] and string.sub(commands[4], 1, 2) == "0x" then
                 node = tonumber(string.sub(commands[4], 3, #commands[4]), 16) or 10
             else
