@@ -121,7 +121,7 @@ local function on_death(m)
     m.squishTimer = 1
     m.faceAngle.y = gRespawnAngle
 
-    reset_all_items()
+    reset_all_items(true)
     return false
 end
 
