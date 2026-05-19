@@ -2,6 +2,7 @@
 require("src/block/builder")
 local Hotbar = require("src/menu/hotbar")
 local BlockTextures = require("src/block/textures")
+local Shapes = require("src/block/shapes")
 
 ---@class (exact) Item
     ---@field behavior BehaviorId
@@ -190,23 +191,15 @@ end
         - 4th byte: flags:
         - - 1st bit: is colored
         - - 2nd bit: is shaded
+        - - 3rd bit: is untiled
 ]]
 
 MCE_BLOCK_FLAG_COLORED = (1 << 24)
 MCE_BLOCK_FLAG_UNSHADED = (1 << 25)
 MCE_BLOCK_FLAG_UNTILED = (1 << 26)
 
-local COL_MCE_BLOCK_DEFAULT = smlua_collision_util_get("mce_block_col_default")
-local COL_MCE_BLOCK_LAVA = smlua_collision_util_get("mce_block_col_lava")
-local COL_MCE_BLOCK_DEATH = smlua_collision_util_get("mce_block_col_death")
-local COL_MCE_BLOCK_QUICKSAND = smlua_collision_util_get("mce_block_col_quicksand")
-local COL_MCE_BLOCK_SHALLOW_QUICKSAND = smlua_collision_util_get("mce_block_col_shallowsand")
-local COL_MCE_BLOCK_NOT_SLIPPERY = smlua_collision_util_get("mce_block_col_not_slippery")
-local COL_MCE_BLOCK_SLIPPERY = smlua_collision_util_get("mce_block_col_slippery")
-local COL_MCE_BLOCK_VERY_SLIPPERY = smlua_collision_util_get("mce_block_col_very_slippery")
-local COL_MCE_BLOCK_HANGABLE = smlua_collision_util_get("mce_block_col_hangable")
-local COL_MCE_BLOCK_VANISH = smlua_collision_util_get("mce_block_col_vanish")
-local COL_MCE_BLOCK_INTANGIBLE = smlua_collision_util_get("mce_block_col_intangible")
+MCE_BLOCK_SHAPE_CUBE = 0
+MCE_BLOCK_SHAPE_PYRAMID = 1
 
 -- Surfaces
 MCE_BLOCK_COL_ID_NO_COLLISION = 0xFF
@@ -245,19 +238,6 @@ MCE_BLOCK_PROPERTY_CHECKPOINT = (1 << 11)
 
 MCE_BLOCK_ACT_RESET = 10
 
-local sStandardCollisionLookup = {
-    [MCE_BLOCK_COL_ID_DEFAULT] = COL_MCE_BLOCK_DEFAULT,
-    [MCE_BLOCK_COL_ID_LAVA] = COL_MCE_BLOCK_LAVA,
-    [MCE_BLOCK_COL_ID_DEATH] = COL_MCE_BLOCK_DEATH,
-    [MCE_BLOCK_COL_ID_QUICKSAND] = COL_MCE_BLOCK_QUICKSAND,
-    [MCE_BLOCK_COL_ID_SHALLOW_QUICKSAND] = COL_MCE_BLOCK_SHALLOW_QUICKSAND,
-    [MCE_BLOCK_COL_ID_NOT_SLIPPERY] = COL_MCE_BLOCK_NOT_SLIPPERY,
-    [MCE_BLOCK_COL_ID_SLIPPERY] = COL_MCE_BLOCK_SLIPPERY,
-    [MCE_BLOCK_COL_ID_VERY_SLIPPERY] = COL_MCE_BLOCK_VERY_SLIPPERY,
-    [MCE_BLOCK_COL_ID_HANGABLE] = COL_MCE_BLOCK_HANGABLE,
-    [MCE_BLOCK_COL_ID_VANISH] = COL_MCE_BLOCK_VANISH,
-}
-
 local sIgnoreCollisionLookup = {
     [MCE_BLOCK_COL_ID_NO_COLLISION] = true,
     [MCE_BLOCK_COL_ID_VERTICAL_WIND] = true,
@@ -266,20 +246,25 @@ local sIgnoreCollisionLookup = {
     [MCE_BLOCK_COL_ID_BOOSTER] = true,
 }
 
+---@param surface_id integer
+---@param shape_id integer
+---@return Pointer_Collision
+local __get_collision = function (surface_id, shape_id)
+    return smlua_collision_util_get("mce_block_col_" .. surface_id .. "_" .. shape_id)
+            or smlua_collision_util_get("mce_block_col_0_" .. shape_id)
+end
+
 ---@param obj Object
 local function block_collision_lookup(obj)
-    local surface_id = obj.oItemParams & 0xFF
+    local surface_id = mce_block_get_surface_index(obj)
+    local shape_id = mce_block_get_shape_index(obj)
     if not sIgnoreCollisionLookup[surface_id] then
-        local collision = COL_MCE_BLOCK_DEFAULT
-        if sStandardCollisionLookup[surface_id] then
-            collision = sStandardCollisionLookup[surface_id]
-        end
-        obj.collisionData = collision
+        obj.collisionData = __get_collision(surface_id, shape_id)
         if surface_id == MCE_BLOCK_PROPERTY_CONVEYOR then
-            obj.collisionData = COL_MCE_BLOCK_HANGABLE
+            obj.collisionData = __get_collision(MCE_BLOCK_COL_ID_HANGABLE, shape_id)
         end
     else
-        obj.collisionData = COL_MCE_BLOCK_INTANGIBLE
+        obj.collisionData = __get_collision(MCE_BLOCK_COL_ID_NO_COLLISION, shape_id)
     end
 end
 
@@ -1073,6 +1058,29 @@ local function on_set_tiling_chat_command()
     return true
 end
 
+local shapes = {
+    ["cube"] = Shapes.SHAPE_CUBE,
+    ["pyramid"] = Shapes.SHAPE_PYRAMID,
+    ["cylinder"] = Shapes.SHAPE_CYLINDER,
+    ["sphere"] = Shapes.SHAPE_SPHERE,
+}
+
+local function on_set_shape_chat_command(msg)
+    if not gCurrentItem or gCurrentItem.model ~= E_MODEL_MCE_BLOCK then
+        djui_chat_message_create("You need to be holding a block to change its shape")
+        return true
+    end
+
+    local shape = shapes[msg]
+    if not shape then
+        djui_chat_message_create("Could not get valid shape: " .. msg)
+        return true
+    end
+
+    mce_block_set_shape(gCurrentItem, shape)
+    return true
+end
+
 hook_chat_command("size", "[num] or [x y z] | Sets the size scaling of the currently selected item. Clamped between 0.01 and 25", on_set_item_size_chat_command)
 hook_chat_command("surface", "! BLOCK ONLY ! Sets the surface type of a block. Refer to the Surface Types tab for which exist and what they do", on_set_surface_chat_command)
 hook_chat_command("surf", "! SAME AS /surface !", on_set_surface_chat_command)
@@ -1081,3 +1089,4 @@ hook_chat_command("replace", "[hotbar index] | Replaces the placed blocks with t
 hook_chat_command("color", "[<r> <g> <b>] | Sets the color of the currently selected block", on_set_color_chat_command)
 hook_chat_command("shade", "| Toggle shading on the currently selected block", on_set_shade_chat_command)
 hook_chat_command("tile", "| Toggle tiling on the currently selected block", on_set_tiling_chat_command)
+hook_chat_command("shape", "[cube|pyramid|cylinder|sphere] | Sets the shape of the block", on_set_shape_chat_command)

@@ -183,6 +183,30 @@ function mce_block_toggle_flag(item, flag)
     end
 end
 
+---@param obj Object
+function mce_block_get_shape_index(obj)
+    return (obj.oAnimState >> 16) & 0xFF
+end
+
+---@param obj Object
+function mce_block_get_surface_index(obj)
+    return obj.oItemParams & 0xFF
+end
+
+---@param item Item | Object
+---@param shape integer
+function mce_block_set_shape(item, shape)
+    if item.oAction == nil then
+        ---@cast item Item
+        item.animState = item.animState & ~0x00FF0000
+        item.animState = item.animState + (shape << 16)
+    else
+        ---@cast item Object
+        item.oAnimState = item.oAnimState & ~0x00FF0000
+        item.oAnimState = item.oAnimState + (shape << 16)
+    end
+end
+
 -------------------------------------------------------------
 
 local first_update_functions = {}

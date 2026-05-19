@@ -1,11 +1,6 @@
 local Shapes = require("shapes")
 local BlockTextures = require("textures")
 
----@param obj Object
-local __get_shape_index = function (obj)
-    return (obj.oAnimState >> 16) & 0xFF
-end
-
 local __get_object_identifer = function (obj)
     return tostring(obj.oAnimState) ..
             tostring(obj.oColor) ..
@@ -16,80 +11,74 @@ end
 
 --- @param obj Object
 --- @param gfx Gfx
---- Compute the vertices of the current shape and fill the vertex buffer.
-local function compute_vertices(obj, gfx)
-    local shape = Shapes[__get_shape_index(obj)]
+--- Build the triangles for the current shape.
+local function build_display_list(obj, gfx)
+    local shape = Shapes[mce_block_get_shape_index(obj)]
     if not shape then return end
 
     local vertices = shape.vertices
-    local num_vertices = #vertices
-
-    -- Create a new or retrieve an existing vertex buffer for the shape
-    -- Use the object pointer to form a unique identifier
-    local vtx_name = "mce_block_vertices_" .. __get_object_identifer(obj)
-    local vtx = vtx_get_from_name(vtx_name)
-    if vtx == nil then
-        vtx = vtx_create(vtx_name, num_vertices)
-    else
-        vtx_resize(vtx, num_vertices)
-    end
-
-    -- Update the vertex command
-    gfx_set_command(gfx, "gsSPVertex(%v, %i, 0)", vtx, num_vertices)
-
-    -- Fill the vertex buffer
-    for _, vertex in ipairs(vertices) do
-        vtx.x = vertex.x
-        vtx.y = vertex.y
-        vtx.z = vertex.z
-        vtx.tu = vertex.tu
-        vtx.tv = vertex.tv
-        vtx.r = vertex.r
-        vtx.g = vertex.g
-        vtx.b = vertex.b
-        vtx.a = vertex.a
-        vtx = vtx_get_next_vertex(vtx)
-    end
-end
-
---- @param obj Object
---- @param gfx Gfx
---- Build the triangles for the current shape.
-local function build_triangles(obj, gfx)
-    local shape = Shapes[__get_shape_index(obj)]
-    if not shape then return end
-
     local triangles = shape.triangles
-    local num_triangles = #triangles
 
-    -- Create a new or retrieve an existing triangles display list for the shape
-    -- Use the object pointer to form a unique identifier
-    local tris_name = "mce_block_triangles_" .. __get_object_identifer(obj)
-    local tris = gfx_get_from_name(tris_name)
-    if tris == nil then
-        tris = gfx_create(tris_name, num_triangles + 1) -- +1 for the gsSPEndDisplayList command
-    else
-        gfx_resize(tris, num_triangles + 1)
-    end
+    ---@type { cmd: string, args: table }[]
+    local commands = {}
 
-    -- Update the triangles command
-    gfx_set_command(gfx, "gsSPDisplayList(%g)", tris)
-
-    -- Fill the triangles display list
-    for _, indices in ipairs(triangles) do
-        if #indices == 6 then
-            gfx_set_command(tris, "gsSP2Triangles(%i, %i, %i, 0, %i, %i, %i, 0)",
-                indices[1], indices[2], indices[3],
-                indices[4], indices[5], indices[6]
-            )
-        elseif #indices == 3 then
-            gfx_set_command(tris, "gsSP1Triangle(%i, %i, %i, 0)",
-                indices[1], indices[2], indices[3]
-            )
+    -- Vertices and triangles have the same count
+    for i = 1, #vertices do
+        local vtx_group = vertices[i]
+        local vtx_name = "mce_block_vertices_" .. __get_object_identifer(obj) .. "_" .. i
+        local vtx = vtx_get_from_name(vtx_name)
+        if vtx == nil then
+            vtx = vtx_create(vtx_name, #vtx_group)
+        else
+            vtx_resize(vtx, #vtx_group)
         end
-        tris = gfx_get_next_command(tris)
+
+        table.insert(commands, { cmd = "gsSPVertex(%v, %i, 0)", args = { vtx, vtx_group }})
+
+        local tri_group = triangles[i]
+        for _, tri in ipairs(tri_group) do
+            table.insert(commands, { cmd = "gsSP1Triangle(%i, %i, %i, 0)", args = { tri[1], tri[2], tri[3] } })
+        end
     end
-    gfx_set_command(tris, "gsSPEndDisplayList()")
+
+
+    local tris_name = "mce_block_tris_" .. __get_object_identifer(obj)
+    local tris_gfx = gfx_get_from_name(tris_name)
+    if tris_gfx == nil then
+        tris_gfx = gfx_create(tris_name, #commands + 1) -- +1 for the gsSPEndDisplayList command
+    else
+        gfx_resize(tris_gfx, #commands + 1)
+    end
+
+    gfx_set_command(gfx, "gsSPDisplayList(%g)", tris_gfx)
+
+    -- Fill the display list
+    for _, command in ipairs(commands) do
+        local args = command.args
+        if command.cmd:sub(1, 10) == "gsSPVertex" then
+            local vtx = args[1]
+            local vtx_group = args[2]
+            gfx_set_command(tris_gfx, command.cmd, vtx, #vtx_group)
+            for _, vertex in ipairs(vtx_group) do
+                vtx.x = vertex.x
+                vtx.y = vertex.y
+                vtx.z = vertex.z
+                vtx.tu = vertex.tu
+                vtx.tv = vertex.tv
+                vtx.r = vertex.r
+                vtx.g = vertex.g
+                vtx.b = vertex.b
+                vtx.a = vertex.a
+                vtx = vtx_get_next_vertex(vtx)
+            end
+        else
+            local t1, t2, t3 = args[1], args[2], args[3]
+            gfx_set_command(tris_gfx, command.cmd, t1, t2, t3)
+        end
+        tris_gfx = gfx_get_next_command(tris_gfx)
+    end
+
+    gfx_set_command(tris_gfx, "gsSPEndDisplayList()")
 end
 
 ---@param node GraphNode
@@ -171,13 +160,9 @@ function geo_update_mce_block(node)
         local cmd_environment_color = gfx_get_command(gfx, 16)
         gfx_set_command(cmd_environment_color, color_case.command, color_case.args())
 
-        -- Compute vertices
-        local cmd_vertices = gfx_get_command(gfx, 17)
-        compute_vertices(obj, cmd_vertices)
-
-        -- Build triangles
-        local cmd_triangles = gfx_get_command(gfx, 18)
-        build_triangles(obj, cmd_triangles)
+        -- Build display list
+        local cmd_display_list = gfx_get_command(gfx, 17)
+        build_display_list(obj, cmd_display_list)
     end
 
     -- Update the graph node display list

@@ -352,7 +352,6 @@ local function place_item()
 			obj.oAnimState = current_item.animState
 
 			if current_item.behavior == bhvMceBlock then
-				obj.oAnimState = current_item.animState
 				obj.oOpacity = current_item.params.color.a
 			end
 		end

@@ -21,8 +21,7 @@ Gfx mce_texture_block_dl[] = {
 	gsDPSetTile(G_IM_FMT_RGBA, G_IM_SIZ_16b, 4, 0, 0, 0, G_TX_WRAP | G_TX_NOMIRROR, 4, 0, G_TX_WRAP | G_TX_NOMIRROR, 4, 0),
 	gsDPSetTileSize(0, 0, 0, 60, 60), // 15
 	gsDPSetEnvColor(255, 255, 255, 255), // 16
-    gsSPVertex(NULL, 0, 0), // 17
-    gsSPDisplayList(NULL), // 18
+    gsSPDisplayList(NULL), // 17
 	gsDPPipeSync(),
 	gsSPSetGeometryMode(G_LIGHTING),
 	gsSPClearGeometryMode(G_TEXTURE_GEN),
