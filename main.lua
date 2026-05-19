@@ -147,23 +147,7 @@ function bhv_outline_loop(obj)
 
 	sOutlineObject = obj
 
-	---@type MarioState
-	local m = gMarioStates[0]
-	local facing_x = sins(m.intendedYaw)
-	local facing_z = coss(m.intendedYaw)
-	if m.controller.buttonDown & L_TRIG ~= 0 then
-		facing_x = sins(m.faceAngle.y)
-		facing_z = coss(m.faceAngle.y)
-	end
-
-	local gridX = current_item.dimensions.grid.x * BLOCK_DEFAULT_SIZE
-	local gridY = current_item.dimensions.grid.y * BLOCK_DEFAULT_SIZE
-	local gridZ = current_item.dimensions.grid.z * BLOCK_DEFAULT_SIZE
-	local posX = __to_grid(m.pos.x + facing_x * math.max(gridX, BLOCK_DEFAULT_SIZE), gridX)
-	local posY = __to_grid(m.pos.y, gridY) + (gridY * gOutlineGridYOffset)
-	local posZ = __to_grid(m.pos.z + facing_z * math.max(gridZ, BLOCK_DEFAULT_SIZE), gridZ)
-
-	if sDeletableObject and point_is_intersecting_obj({ x = posX, y = posY, z = posZ }, sDeletableObject) then
+	if sDeletableObject then
 		sOutlineObject.oPosX = sDeletableObject.oPosX
 		sOutlineObject.oPosY = sDeletableObject.oPosY
 		sOutlineObject.oPosZ = sDeletableObject.oPosZ
@@ -175,10 +159,6 @@ function bhv_outline_loop(obj)
 		sOutlineObject.header.gfx.scale.z = sDeletableObject.oScaleZ + 0.01
 		return
 	end
-
-	sOutlineObject.oPosX = posX
-	sOutlineObject.oPosY = posY
-	sOutlineObject.oPosZ = posZ
 
 	local item_dimensions = current_item.dimensions
 
@@ -243,7 +223,7 @@ function bhv_preview_item_loop(obj)
 	end
 	obj.parentObj = obj
 
-	if sDeletableObject and obj_is_intersecting_obj(sOutlineObject, sDeletableObject) then
+	if sDeletableObject then
 		cur_obj_hide()
 		return
 	end
@@ -472,6 +452,27 @@ local function set_item_rotation(m)
 	m.controller.buttonPressed = m.controller.buttonPressed & ~(U_CBUTTONS | L_CBUTTONS | D_CBUTTONS | R_CBUTTONS | X_BUTTON)
 end
 
+---@param m MarioState
+---@return Vec3f?
+local function set_pos_on_grid(m)
+	if not gCurrentItem then return end
+
+	local facing_x = sins(m.intendedYaw)
+	local facing_z = coss(m.intendedYaw)
+	if m.controller.buttonDown & L_TRIG ~= 0 then
+		facing_x = sins(m.faceAngle.y)
+		facing_z = coss(m.faceAngle.y)
+	end
+
+	local gridX = gCurrentItem.dimensions.grid.x * BLOCK_DEFAULT_SIZE
+	local gridY = gCurrentItem.dimensions.grid.y * BLOCK_DEFAULT_SIZE
+	local gridZ = gCurrentItem.dimensions.grid.z * BLOCK_DEFAULT_SIZE
+	local posX = __to_grid(m.pos.x + facing_x * math.max(gridX, BLOCK_DEFAULT_SIZE), gridX)
+	local posY = __to_grid(m.pos.y, gridY) + (gridY * gOutlineGridYOffset)
+	local posZ = __to_grid(m.pos.z + facing_z * math.max(gridZ, BLOCK_DEFAULT_SIZE), gridZ)
+	return { x = posX, y = posY, z = posZ }
+end
+
 local function delete_outline()
 	if sOutlineObject then
 		obj_mark_for_deletion(sOutlineObject)
@@ -482,22 +483,25 @@ local function delete_outline()
 	end
 end
 
+---@param pos Vec3f
 ---@return boolean, Object?
-local function is_nearest_item_intersecting()
-	if not sOutlineObject then return false end
-
+local function is_nearest_item_intersecting(pos)
 	---@type Object?
 	local nearest = nil
 	local nearest_dist = 0xFFFFFFFF
 	for obj in iterate_id_list(gItemBhvIds) do
-		local dist = dist_between_objects(sOutlineObject, obj)
+		local dist = dist_between_object_and_point(obj, pos.x, pos.y, pos.z)
 		if dist < nearest_dist then
 			nearest = obj
 			nearest_dist = dist
 		end
 	end
 	if not nearest then return false end
-	return obj_is_intersecting_obj(sOutlineObject, nearest), nearest
+	local is_intersecting = point_is_intersecting_obj(pos, nearest)
+	if is_intersecting then
+		return true, nearest
+	end
+	return false
 end
 
 ---------------------------------------
@@ -508,6 +512,12 @@ local sCanDelete = true
 
 ---@param m MarioState
 local function builder_mario_update(m)
+	set_item_size_control(m)
+	set_outline_offset(m)
+	set_item_rotation(m)
+	local pos = set_pos_on_grid(m)
+	if not pos then return end
+
 	if not obj_get_first_with_behavior_id(bhvOutline) then
 		sOutlineObject = nil
 		if gCurrentItem then
@@ -521,13 +531,15 @@ local function builder_mario_update(m)
 		return
 	end
 
+	if sOutlineObject then
+		sOutlineObject.oPosX = pos.x
+		sOutlineObject.oPosY = pos.y
+		sOutlineObject.oPosZ = pos.z
+	end
+
 	sEnableGrid = not sForceDisableGrid and (m.controller.buttonDown & L_TRIG == 0 or m.controller.buttonDown & R_TRIG == 0)
 
-	set_item_size_control(m)
-	set_outline_offset(m)
-	set_item_rotation(m)
-
-	local is_intersecting, nearest_obj = is_nearest_item_intersecting()
+	local is_intersecting, nearest_obj = is_nearest_item_intersecting(pos)
 	if not sCanDelete then
 		is_intersecting = false
 		nearest_obj = nil

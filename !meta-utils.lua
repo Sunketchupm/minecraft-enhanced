@@ -112,13 +112,12 @@ function point_is_intersecting_obj(point, intersectee)
         local within_y = point.y > intersectee.oPosY - scale_y and point.y < intersectee.oPosY + scale_y
         local within_z = point.z > intersectee.oPosZ - scale_z and point.z < intersectee.oPosZ + scale_z
         return within_x and within_y and within_z
-    elseif intersectee.numSurfaces == 0 then
-        -- Out of collision range
-        return false
     end
 
-    for i = 0, intersectee.numSurfaces - 1, 1 do
-        local surface = obj_get_surface_from_index(intersectee, i)
+    local col = gBlockCollisionLookup[intersectee._pointer]
+    if not col then return false end
+    for i = 0, col.length - 1, 1 do
+        local surface = get_static_object_surface(col, i)
 
         local intersectee_pos = gVec3fZero()
         object_pos_to_vec3f(intersectee_pos, intersectee)
@@ -205,6 +204,23 @@ function mce_block_set_shape(item, shape)
         item.oAnimState = item.oAnimState & ~0x00FF0000
         item.oAnimState = item.oAnimState + (shape << 16)
     end
+end
+
+local __common_collision = function (obj, toggle)
+    local col = gBlockCollisionLookup[obj._pointer]
+    if col then
+        toggle_static_object_collision(col, toggle)
+    end
+end
+
+---@param obj Object
+function mce_block_enable_collision(obj)
+    __common_collision(obj, true)
+end
+
+---@param obj Object
+function mce_block_disable_collision(obj)
+    __common_collision(obj, false)
 end
 
 -------------------------------------------------------------

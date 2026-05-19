@@ -192,6 +192,7 @@ end
         - - 1st bit: is colored
         - - 2nd bit: is shaded
         - - 3rd bit: is untiled
+        - - 4th bit: has no collision
 ]]
 
 MCE_BLOCK_FLAG_COLORED = (1 << 24)
@@ -246,6 +247,9 @@ local sIgnoreCollisionLookup = {
     [MCE_BLOCK_COL_ID_BOOSTER] = true,
 }
 
+---@type table<integer, StaticObjectCollision>
+gBlockCollisionLookup = {}
+
 ---@param surface_id integer
 ---@param shape_id integer
 ---@return Pointer_Collision
@@ -266,6 +270,10 @@ local function block_collision_lookup(obj)
     else
         obj.collisionData = __get_collision(MCE_BLOCK_COL_ID_NO_COLLISION, shape_id)
     end
+    -- As shrinking is dynamic, don't put it in the static pool
+    if obj.oItemFlags & MCE_BLOCK_PROPERTY_SHRINKING == 0 then
+        gBlockCollisionLookup[obj._pointer] = load_static_object_collision()
+    end
 end
 
 --- Called from bhvMceBlock.bhv
@@ -280,7 +288,6 @@ function bhv_mce_block_init(obj)
     if longest_side < obj.header.gfx.scale.z then
         longest_side = obj.header.gfx.scale.z
     end
-    obj.oCollisionDistance = 200 * longest_side + 300
     obj.header.gfx.skipInViewCheck = true
     network_init_object(obj, false, {
         "oPosX",
@@ -301,7 +308,6 @@ function bhv_mce_block_init(obj)
         "oAnimState",
         "oItemParams",
         "oItemFlags",
-        "oCollisionDistance",
         "oColor"
     })
 end
@@ -311,7 +317,7 @@ function bhv_mce_block_loop(obj)
     obj.parentObj = obj
 
     if obj.oAction == MCE_BLOCK_ACT_RESET then
-        block_collision_lookup(obj)
+        mce_block_enable_collision(obj)
         obj_scale_xyz(obj, obj.oScaleX, obj.oScaleY, obj.oScaleZ)
         obj.oAction = 0
         if obj.oOpacity == 0 then
@@ -349,11 +355,24 @@ function bhv_mce_block_loop(obj)
             spawn_triangle_break_particles(20, 138, 0.7, 3)
             create_sound_spawner(SOUND_GENERAL_BREAK_BOX)
             obj.oOpacity = 0
-            obj.collisionData = nil
             obj.oAction = 3
+            mce_block_disable_collision(obj)
         end
+    -- Turn the object collision dynamic if it's shrinking
+    elseif obj.oItemFlags & MCE_BLOCK_PROPERTY_SHRINKING ~= 0 then
+        load_object_collision_model()
     end
 end
+
+---@param obj Object
+local function on_object_unload(obj)
+    if obj_has_behavior_id(obj, bhvMceBlock) ~= 0 then
+        mce_block_disable_collision(obj)
+        gBlockCollisionLookup[obj._pointer] = nil
+    end
+end
+
+hook_event(HOOK_ON_OBJECT_UNLOAD, on_object_unload)
 
 ------------------------------------------------------------------------------------------
 
@@ -882,6 +901,13 @@ function on_set_surface_chat_command(msg)
     ---@type Item?
     local item = gCurrentItem
     if item and item.behavior == bhvMceBlock then
+        if msg:lower() == "reset" or msg:lower() == "clear" then
+            item.params.params = item.params.params & ~0xFF
+            item.params.flags = 0
+            djui_chat_message_create("The surface has been reset")
+            return true
+        end
+
         local surf = sBlockSurfaceIdLookup[msg:lower()]
         if surf then
             item.params.params = surf

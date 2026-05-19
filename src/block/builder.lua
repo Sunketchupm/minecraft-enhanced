@@ -29,8 +29,6 @@ local function build_display_list(obj, gfx)
         local vtx = vtx_get_from_name(vtx_name)
         if vtx == nil then
             vtx = vtx_create(vtx_name, #vtx_group)
-        else
-            vtx_resize(vtx, #vtx_group)
         end
 
         table.insert(commands, { cmd = "gsSPVertex(%v, %i, 0)", args = { vtx, vtx_group }})
@@ -46,8 +44,6 @@ local function build_display_list(obj, gfx)
     local tris_gfx = gfx_get_from_name(tris_name)
     if tris_gfx == nil then
         tris_gfx = gfx_create(tris_name, #commands + 1) -- +1 for the gsSPEndDisplayList command
-    else
-        gfx_resize(tris_gfx, #commands + 1)
     end
 
     gfx_set_command(gfx, "gsSPDisplayList(%g)", tris_gfx)
@@ -187,11 +183,14 @@ local function on_object_unload(obj)
     local gfx = gfx_get_from_name("mce_block_dl_" .. __get_object_identifer(obj))
     if gfx then gfx_delete(gfx) end
 
-    local tris = gfx_get_from_name("mce_block_triangles_" .. __get_object_identifer(obj))
+    local tris = gfx_get_from_name("mce_block_tris_" .. __get_object_identifer(obj))
     if tris then gfx_delete(tris) end
 
-    local vtx = vtx_get_from_name("mce_block_vertices_" .. __get_object_identifer(obj))
-    if vtx then vtx_delete(vtx) end
+    local shape = Shapes[mce_block_get_shape_index(obj)]
+    for index in ipairs(shape.vertices) do
+        local vtx = vtx_get_from_name("mce_block_vertices_" .. __get_object_identifer(obj) .. "_" .. index)
+        if vtx then vtx_delete(vtx) end
+    end
 end
 
 local function on_warp()

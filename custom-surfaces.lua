@@ -67,11 +67,13 @@ local sSpecialSurfaceHandlers = {
     end,
     water = function (m)
         if not sInSpecialBlock then return end
+        local col = gBlockCollisionLookup[sInSpecialBlock._pointer]
+        if not col then return end
 
         local highest = gLevelValues.floorLowerLimit
         local lowest = gLevelValues.cellHeightLimit
-        for i = 0, sInSpecialBlock.numSurfaces - 1, 1 do
-            local surface = obj_get_surface_from_index(sInSpecialBlock, i)
+        for i = 0, col.length - 1, 1 do
+            local surface = get_static_object_surface(col, i)
             if surface.upperY > highest then
                 highest = surface.upperY
             end
@@ -427,7 +429,7 @@ local function custom_surface_block_update()
             [MCE_BLOCK_COL_ID_BOOSTER] = true,
             [MCE_BLOCK_COL_ID_WATER] = true,
         }
-        if obj_is_intersecting_obj(m.marioObj, block) and special_surface_ids[surface_id] then
+        if special_surface_ids[surface_id] and obj_is_intersecting_obj(m.marioObj, block) then
             sInSpecialBlock = block
         end
 
@@ -436,7 +438,7 @@ local function custom_surface_block_update()
                 block.oOpacity = math.max(block.oOpacity - 30, 0)
                 if block.oOpacity == 0 then
                     block.oAction = 2
-                    block.collisionData = nil
+                    mce_block_disable_collision(block)
                 end
             end
         elseif surface_properties & MCE_BLOCK_PROPERTY_SHRINKING ~= 0 then
