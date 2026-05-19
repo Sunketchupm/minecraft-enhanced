@@ -41,9 +41,7 @@ local function handle_menu_inputs(m)
         audio_sample_play(SOUND_MCE_PRESS, gGlobalSoundSource, 1)
     elseif Mouse.pressed.right or (not Mouse.moved and pressed & B_BUTTON ~= 0) then
         if gPauseMenu.current_menu == PAUSE_MENU_MAIN then
-            gPauseMenu.is_paused = false
-            gPauseMenu.h_index = 1
-            gPauseMenu.v_index = 1
+            close_pause_menu()
         else
             set_new_menu(PAUSE_MENU_MAIN)
         end
@@ -60,6 +58,9 @@ local function before_mario_update(m)
     local pressed = m.controller.buttonPressed
     if pressed & R_TRIG ~= 0 then
         djui_open_pause_menu()
+        gPauseMenu.is_paused = false
+        gPauseMenu.h_index = 1
+        gPauseMenu.v_index = 1
     end
 
     handle_menu_inputs(m)

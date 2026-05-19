@@ -5,7 +5,7 @@ gLevelValues.cellHeightLimit = 32767
 
 smlua_audio_utils_replace_sequence(0x64, 0x25, 75, "03_Seq_sms_custom")
 
-local LEVEL_PLOT = level_register("level_plot_entry", COURSE_CAKE_END, "Plot", "plot", 20000, 0x28, 0x28, 0x28)
+LEVEL_PLOT = level_register("level_plot_entry", COURSE_CAKE_END, "Plot", "plot", 20000, 0x28, 0x28, 0x28)
 
 local MUSIC_CROSSCODE_TITLE = audio_stream_load("crosscode-title.ogg")
 local MUSIC_DKC_AQUATIC_AQUARIUM = audio_stream_load("dkc-aquaticambience.ogg")

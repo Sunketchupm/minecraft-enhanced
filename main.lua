@@ -577,7 +577,7 @@ end
 local function before_mario_update(m)
 	if m.playerIndex ~= 0 then return end
 	if gCanBuild then
-		if not gMenu.open then
+		if not gMenu.open and not gPauseMenu.is_paused then
 			builder_mario_update(m)
 		end
 	else
