@@ -93,7 +93,9 @@ end
 ---@param m MarioState
 ---@param is_mouse boolean
 local function handle_reset_inputs(m, is_mouse)
-    if m.controller.buttonPressed & Y_BUTTON ~= 0 then
+    if gCurrentItemLink and gCurrentItemLink.held then return end
+
+    if m.controller.buttonPressed & Y_BUTTON ~= 0 or is_mouse then
         Hotbar.items[Hotbar.index] = {}
     end
 
