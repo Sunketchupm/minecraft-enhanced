@@ -1073,6 +1073,8 @@ local shapes = {
     ["pyramid"] = Shapes.SHAPE_PYRAMID,
     ["cylinder"] = Shapes.SHAPE_CYLINDER,
     ["sphere"] = Shapes.SHAPE_SPHERE,
+    ["stair"] = Shapes.SHAPE_STAIR,
+    ["slope"] = Shapes.SHAPE_SLOPE,
 }
 
 local function on_set_shape_chat_command(msg)

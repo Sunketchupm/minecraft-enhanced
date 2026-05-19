@@ -1,4 +1,4 @@
-const Collision cylinder_collision[] = {
+const Collision cylinder_1_collision[] = {
 	COL_INIT(),
 	COL_VERTEX_INIT(32),
 	COL_VERTEX(0, -100, -100),

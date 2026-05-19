@@ -1,9 +1,9 @@
-Lights1 cylinder_cube_mat_1_lights = gdSPDefLights1(
+Lights1 cylinder_1_cube_mat_1_lights = gdSPDefLights1(
 	0x7F, 0x7F, 0x7F,
 	0xFF, 0xFF, 0xFF, 0x49, 0x49, 0x49);
 
-Gfx cylinder_Abutton_ci4_aligner[] = {gsSPEndDisplayList()};
-u8 cylinder_Abutton_ci4[] = {
+Gfx cylinder_1_Abutton_ci4_aligner[] = {gsSPEndDisplayList()};
+u8 cylinder_1_Abutton_ci4[] = {
 	0x00, 0x00, 0x01, 0x11, 0x11, 0x10, 0x00, 0x00, 
 	0x00, 0x01, 0x23, 0x33, 0x33, 0x32, 0x10, 0x00, 
 	0x00, 0x23, 0x33, 0x33, 0x33, 0x33, 0x32, 0x00, 
@@ -23,13 +23,13 @@ u8 cylinder_Abutton_ci4[] = {
 	
 };
 
-Gfx cylinder_Abutton_pal_rgba16_aligner[] = {gsSPEndDisplayList()};
-u8 cylinder_Abutton_pal_rgba16[] = {
+Gfx cylinder_1_Abutton_pal_rgba16_aligner[] = {gsSPEndDisplayList()};
+u8 cylinder_1_Abutton_pal_rgba16[] = {
 	0x00, 0x00, 0x42, 0x3f, 0x4a, 0x7f, 0x63, 0x3f, 
 	0x31, 0x8d, 
 };
 
-Vtx cylinder_cylinder_mesh_layer_4_vtx_0[103] = {
+Vtx cylinder_1_cylinder_1_mesh_layer_4_vtx_0[103] = {
 	{{ {0, -100, -100}, 0, {-16, 496}, {25, 0, 131, 255} }},
 	{{ {0, 100, -100}, 0, {496, 496}, {25, 0, 131, 255} }},
 	{{ {38, 100, -92}, 0, {496, -16}, {25, 0, 131, 255} }},
@@ -135,8 +135,8 @@ Vtx cylinder_cylinder_mesh_layer_4_vtx_0[103] = {
 	{{ {-71, -100, -71}, 0, {59, 59}, {0, 129, 0, 255} }},
 };
 
-Gfx cylinder_cylinder_mesh_layer_4_tri_0[] = {
-	gsSPVertex(cylinder_cylinder_mesh_layer_4_vtx_0 + 0, 16, 0),
+Gfx cylinder_1_cylinder_1_mesh_layer_4_tri_0[] = {
+	gsSPVertex(cylinder_1_cylinder_1_mesh_layer_4_vtx_0 + 0, 16, 0),
 	gsSP1Triangle(0, 1, 2, 0),
 	gsSP1Triangle(0, 2, 3, 0),
 	gsSP1Triangle(4, 5, 6, 0),
@@ -145,7 +145,7 @@ Gfx cylinder_cylinder_mesh_layer_4_tri_0[] = {
 	gsSP1Triangle(8, 10, 11, 0),
 	gsSP1Triangle(12, 13, 14, 0),
 	gsSP1Triangle(12, 14, 15, 0),
-	gsSPVertex(cylinder_cylinder_mesh_layer_4_vtx_0 + 16, 16, 0),
+	gsSPVertex(cylinder_1_cylinder_1_mesh_layer_4_vtx_0 + 16, 16, 0),
 	gsSP1Triangle(0, 1, 2, 0),
 	gsSP1Triangle(0, 2, 3, 0),
 	gsSP1Triangle(4, 5, 6, 0),
@@ -154,7 +154,7 @@ Gfx cylinder_cylinder_mesh_layer_4_tri_0[] = {
 	gsSP1Triangle(8, 10, 11, 0),
 	gsSP1Triangle(12, 13, 14, 0),
 	gsSP1Triangle(12, 14, 15, 0),
-	gsSPVertex(cylinder_cylinder_mesh_layer_4_vtx_0 + 32, 16, 0),
+	gsSPVertex(cylinder_1_cylinder_1_mesh_layer_4_vtx_0 + 32, 16, 0),
 	gsSP1Triangle(0, 1, 2, 0),
 	gsSP1Triangle(0, 2, 3, 0),
 	gsSP1Triangle(4, 5, 6, 0),
@@ -163,7 +163,7 @@ Gfx cylinder_cylinder_mesh_layer_4_tri_0[] = {
 	gsSP1Triangle(8, 10, 11, 0),
 	gsSP1Triangle(12, 13, 14, 0),
 	gsSP1Triangle(12, 14, 15, 0),
-	gsSPVertex(cylinder_cylinder_mesh_layer_4_vtx_0 + 48, 16, 0),
+	gsSPVertex(cylinder_1_cylinder_1_mesh_layer_4_vtx_0 + 48, 16, 0),
 	gsSP1Triangle(0, 1, 2, 0),
 	gsSP1Triangle(0, 2, 3, 0),
 	gsSP1Triangle(4, 5, 6, 0),
@@ -174,7 +174,7 @@ Gfx cylinder_cylinder_mesh_layer_4_tri_0[] = {
 	gsSP1Triangle(8, 11, 13, 0),
 	gsSP1Triangle(11, 14, 13, 0),
 	gsSP1Triangle(11, 15, 14, 0),
-	gsSPVertex(cylinder_cylinder_mesh_layer_4_vtx_0 + 64, 15, 0),
+	gsSPVertex(cylinder_1_cylinder_1_mesh_layer_4_vtx_0 + 64, 15, 0),
 	gsSP1Triangle(0, 1, 2, 0),
 	gsSP1Triangle(2, 3, 4, 0),
 	gsSP1Triangle(2, 4, 5, 0),
@@ -185,7 +185,7 @@ Gfx cylinder_cylinder_mesh_layer_4_tri_0[] = {
 	gsSP1Triangle(8, 10, 7, 0),
 	gsSP1Triangle(11, 12, 13, 0),
 	gsSP1Triangle(11, 13, 14, 0),
-	gsSPVertex(cylinder_cylinder_mesh_layer_4_vtx_0 + 79, 16, 0),
+	gsSPVertex(cylinder_1_cylinder_1_mesh_layer_4_vtx_0 + 79, 16, 0),
 	gsSP1Triangle(0, 1, 2, 0),
 	gsSP1Triangle(0, 2, 3, 0),
 	gsSP1Triangle(4, 5, 6, 0),
@@ -197,7 +197,7 @@ Gfx cylinder_cylinder_mesh_layer_4_tri_0[] = {
 	gsSP1Triangle(10, 12, 9, 0),
 	gsSP1Triangle(9, 13, 14, 0),
 	gsSP1Triangle(9, 14, 15, 0),
-	gsSPVertex(cylinder_cylinder_mesh_layer_4_vtx_0 + 95, 8, 0),
+	gsSPVertex(cylinder_1_cylinder_1_mesh_layer_4_vtx_0 + 95, 8, 0),
 	gsSP1Triangle(0, 1, 2, 0),
 	gsSP1Triangle(3, 2, 4, 0),
 	gsSP1Triangle(2, 5, 4, 0),
@@ -207,9 +207,9 @@ Gfx cylinder_cylinder_mesh_layer_4_tri_0[] = {
 };
 
 
-Gfx mat_cylinder_cube_mat_1[] = {
-	gsSPSetGeometryMode(G_ZBUFFER | G_SHADE | G_SHADING_SMOOTH | G_LIGHTING),
-	gsSPSetLights1(cylinder_cube_mat_1_lights),
+Gfx mat_cylinder_1_cube_mat_1[] = {
+	gsSPSetGeometryMode(G_LIGHTING | G_ZBUFFER | G_SHADING_SMOOTH | G_SHADE),
+	gsSPSetLights1(cylinder_1_cube_mat_1_lights),
 	gsDPPipeSync(),
 	gsDPSetCombineLERP(TEXEL0, 0, SHADE, 0, TEXEL0, 0, ENVIRONMENT, 0, TEXEL0, 0, SHADE, 0, TEXEL0, 0, ENVIRONMENT, 0),
 	gsDPSetAlphaDither(G_AD_NOISE),
@@ -219,10 +219,10 @@ Gfx mat_cylinder_cube_mat_1[] = {
 	gsDPSetTexturePersp(G_TP_PERSP),
 	gsDPPipelineMode(G_PM_1PRIMITIVE),
 	gsSPTexture(65535, 65535, 0, 0, 1),
-	gsDPSetTextureImage(G_IM_FMT_RGBA, G_IM_SIZ_16b, 1, cylinder_Abutton_pal_rgba16),
+	gsDPSetTextureImage(G_IM_FMT_RGBA, G_IM_SIZ_16b, 1, cylinder_1_Abutton_pal_rgba16),
 	gsDPSetTile(0, 0, 0, 256, 5, 0, G_TX_WRAP | G_TX_NOMIRROR, 0, 0, G_TX_WRAP | G_TX_NOMIRROR, 0, 0),
 	gsDPLoadTLUTCmd(5, 4),
-	gsDPSetTextureImage(G_IM_FMT_CI, G_IM_SIZ_16b, 1, cylinder_Abutton_ci4),
+	gsDPSetTextureImage(G_IM_FMT_CI, G_IM_SIZ_16b, 1, cylinder_1_Abutton_ci4),
 	gsDPSetTile(G_IM_FMT_CI, G_IM_SIZ_16b, 0, 0, 7, 0, G_TX_WRAP | G_TX_NOMIRROR, 0, 0, G_TX_WRAP | G_TX_NOMIRROR, 0, 0),
 	gsDPLoadBlock(7, 0, 0, 63, 2048),
 	gsDPSetTile(G_IM_FMT_CI, G_IM_SIZ_4b, 1, 0, 0, 0, G_TX_WRAP | G_TX_NOMIRROR, 4, 0, G_TX_WRAP | G_TX_NOMIRROR, 4, 0),
@@ -230,8 +230,8 @@ Gfx mat_cylinder_cube_mat_1[] = {
 	gsSPEndDisplayList(),
 };
 
-Gfx mat_revert_cylinder_cube_mat_1[] = {
-	gsSPClearGeometryMode(G_ZBUFFER | G_SHADE | G_SHADING_SMOOTH | G_LIGHTING),
+Gfx mat_revert_cylinder_1_cube_mat_1[] = {
+	gsSPClearGeometryMode(G_LIGHTING | G_ZBUFFER | G_SHADING_SMOOTH | G_SHADE),
 	gsDPPipeSync(),
 	gsDPSetAlphaDither(G_AD_DISABLE),
 	gsDPSetTextureConvert(G_TC_CONV),
@@ -242,10 +242,10 @@ Gfx mat_revert_cylinder_cube_mat_1[] = {
 	gsSPEndDisplayList(),
 };
 
-Gfx cylinder_cylinder_mesh_layer_4_with_revert[] = {
-	gsSPDisplayList(mat_cylinder_cube_mat_1),
-	gsSPDisplayList(cylinder_cylinder_mesh_layer_4_tri_0),
-	gsSPDisplayList(mat_revert_cylinder_cube_mat_1),
+Gfx cylinder_1_cylinder_1_mesh_layer_4_with_revert[] = {
+	gsSPDisplayList(mat_cylinder_1_cube_mat_1),
+	gsSPDisplayList(cylinder_1_cylinder_1_mesh_layer_4_tri_0),
+	gsSPDisplayList(mat_revert_cylinder_1_cube_mat_1),
 	gsDPPipeSync(),
 	gsSPSetGeometryMode(G_LIGHTING),
 	gsSPClearGeometryMode(G_TEXTURE_GEN),

@@ -65,8 +65,9 @@ def write_model(base_shapes: list):
             "local Shapes = {}\n"
         )
         for i, shape in enumerate(base_shapes):
-            file.write(f"Shapes.SHAPE_{shape[0].upper()} = {i}\n")
-            file.write(f"Shapes[{i}] = " + "{\n")
+            shape_index = shape[0][-1]
+            file.write(f"Shapes.SHAPE_{shape[0][:-2].upper()} = {shape_index}\n")
+            file.write(f"Shapes[{shape_index}] = " + "{\n")
             file.write("    vertices = {\n")
             for vertex_group in shape[1]:
                 file.write("        {\n")
@@ -103,6 +104,7 @@ def write_collision(base_shapes: list):
     }
 
     for i, shape in enumerate(base_shapes):
+        shape_index = shape[0][-1]
         for surface_index in range(SURFACE_COUNT):
             for line in shape[3].splitlines():
                 line = line.strip()
@@ -110,7 +112,7 @@ def write_collision(base_shapes: list):
                     written_index = surface_index
                     if surface_index == 10:
                         written_index = 255
-                    write_collisions.append(f"const Collision mce_block_col_{written_index}_{i} = " + "{\n")
+                    write_collisions.append(f"const Collision mce_block_col_{written_index}_{shape_index} = " + "{\n")
                 elif line.startswith("COL_TRI_INIT"):
                     surface_param_end = line.find(",", 12)
                     surface_type = collision_lookup[surface_index]

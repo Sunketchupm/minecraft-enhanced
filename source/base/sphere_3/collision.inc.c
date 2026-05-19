@@ -1,4 +1,4 @@
-const Collision sphere_collision[] = {
+const Collision sphere_3_collision[] = {
 	COL_INIT(),
 	COL_VERTEX_INIT(42),
 	COL_VERTEX(0, -100, 0),

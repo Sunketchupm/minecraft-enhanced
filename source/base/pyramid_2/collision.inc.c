@@ -1,4 +1,4 @@
-const Collision pyramid_collision[] = {
+const Collision pyramid_2_collision[] = {
 	COL_INIT(),
 	COL_VERTEX_INIT(5),
 	COL_VERTEX(-100, -100, -100),
