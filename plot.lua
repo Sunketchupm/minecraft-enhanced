@@ -12,6 +12,8 @@ local MUSIC_DKC_AQUATIC_AQUARIUM = audio_stream_load("dkc-aquaticambience.ogg")
 local MUSIC_BOTW_ZORAS_DOMAIN = audio_stream_load("zelda-zorasdomainday.ogg")
 local MUSIC_DELTA_CASTLE_TOWN = audio_stream_load("delta-mycastletown.ogg")
 local MUSIC_SMG_SPACE_JUNK = audio_stream_load("smg-spacejunk.ogg")
+local MUSIC_ZELDA_ASTRAL_OBSERVATORY = audio_stream_load("zelda-astralobservatory.ogg")
+local MUSIC_MOTHER_GENTLE_RAIN = audio_stream_load("mother-gentlerain.ogg")
 
 -- alter to loop at certain points
 audio_stream_set_looping(MUSIC_CROSSCODE_TITLE, true)
@@ -19,8 +21,10 @@ audio_stream_set_looping(MUSIC_DKC_AQUATIC_AQUARIUM, true)
 audio_stream_set_looping(MUSIC_BOTW_ZORAS_DOMAIN, true)
 audio_stream_set_looping(MUSIC_DELTA_CASTLE_TOWN, true)
 audio_stream_set_looping(MUSIC_SMG_SPACE_JUNK, true)
+audio_stream_set_looping(MUSIC_ZELDA_ASTRAL_OBSERVATORY, true)
+audio_stream_set_looping(MUSIC_MOTHER_GENTLE_RAIN, true)
 
---[[ hook_event(HOOK_UPDATE, function()
+--[[hook_event(HOOK_UPDATE, function()
     djui_chat_message_create("SequenceID: " .. get_current_background_music())
 end) ]]
 
@@ -39,6 +43,8 @@ local function on_lvl_init()
             audio_stream_stop(MUSIC_CROSSCODE_TITLE)
             audio_stream_stop(MUSIC_DELTA_CASTLE_TOWN)
             audio_stream_stop(MUSIC_SMG_SPACE_JUNK)
+            audio_stream_stop(MUSIC_ZELDA_ASTRAL_OBSERVATORY)
+            audio_stream_stop(MUSIC_MOTHER_GENTLE_RAIN)
         end
     else
         audio_stream_stop(MUSIC_DKC_AQUATIC_AQUARIUM)
@@ -46,6 +52,8 @@ local function on_lvl_init()
         audio_stream_stop(MUSIC_CROSSCODE_TITLE)
         audio_stream_stop(MUSIC_DELTA_CASTLE_TOWN)
         audio_stream_stop(MUSIC_SMG_SPACE_JUNK)
+        audio_stream_stop(MUSIC_ZELDA_ASTRAL_OBSERVATORY)
+        audio_stream_stop(MUSIC_MOTHER_GENTLE_RAIN)
     end
 end
 
@@ -79,27 +87,31 @@ local function musicplot(msg) -- Various music for plots, can be used to add mor
         [17] = {name = "Crosscode - Title", composer = "Deniz Akbulut", song = MUSIC_CROSSCODE_TITLE},
         [18] = {name = "Deltarune - My Castle Town", composer = "Toby Fox", song = MUSIC_DELTA_CASTLE_TOWN},
         [19] = {name = "Super Mario Galaxy - Space Junk Galaxy", composer = "Mahito Yokota", song = MUSIC_SMG_SPACE_JUNK},
+        [20] = {name = "The Legned of Zelda: Majora's Mask - Astral Observatory", composer = "Koji Kondo", song = MUSIC_ZELDA_ASTRAL_OBSERVATORY},
+        [21] = {name = "Mother 3 - Gentle Rain", composer = "Shogo Sakai", song = MUSIC_MOTHER_GENTLE_RAIN},
     }
 
     local m64_music = {
-        [20] = {name = "Super Mario Sunshine - Sky & Sea", composer = "Shinobu Tanaka (ported by ???)", song = "03_Seq_sms_custom", soundfont = 0x25},
-        [21] = {name = "Chrono Trigger - Corridors of Time", composer = "Yasunori Mitsuda (ported by scuttlebug_raiser)", song = "0F_Seq_corridorsoftime_custom", soundfont = 0x2A},
-        [22] = {name = "Pokemon Platinum :Eterna Forest", composer = "Hitomi Sato (ported by Asbeth)", song = "10_Seq_eternaforest_custom", soundfont = 0x0C},
-        [23] = {name = "Animal Crossing: New Horizons - 12PM", composer = "Kazumi Totaka (ported by ???)", song = "11_Seq_nhorizons12pm_custom", soundfont = 0x11},
-        [24] = {name = "Kirby's Adventure - Orange Ocean", composer = "Hirokazu Ando (ported by ???)", song = "12_Seq_kirbyoraocea_custom", soundfont = 0x25},
-        [25] = {name = "Mario Kart 8 Deluxe - Results (Animal Crossing)", composer = "Atsuko Asahi (ported by ???)", song = "13_Seq_mk8acresults_custom", soundfont = 0x25},
+        [22] = {name = "Super Mario Sunshine - Sky & Sea", composer = "Shinobu Tanaka (ported by ???)", song = "03_Seq_sms_custom", soundfont = 0x25},
+        [23] = {name = "Chrono Trigger - Corridors of Time", composer = "Yasunori Mitsuda (ported by scuttlebug_raiser)", song = "0F_Seq_corridorsoftime_custom", soundfont = 0x2A},
+        [24] = {name = "Pokemon Platinum :Eterna Forest", composer = "Hitomi Sato (ported by Asbeth)", song = "10_Seq_eternaforest_custom", soundfont = 0x0C},
+        [25] = {name = "Animal Crossing: New Horizons - 12PM", composer = "Kazumi Totaka (ported by ???)", song = "11_Seq_nhorizons12pm_custom", soundfont = 0x11},
+        [26] = {name = "Kirby's Adventure - Orange Ocean", composer = "Hirokazu Ando (ported by ???)", song = "12_Seq_kirbyoraocea_custom", soundfont = 0x25},
+        [27] = {name = "Mario Kart 8 Deluxe - Results (Animal Crossing)", composer = "Atsuko Asahi (ported by ???)", song = "13_Seq_mk8acresults_custom", soundfont = 0x25},
+        [28] = {name = "Rhythm Heaven - Lockstep", composer = "Tsunku (ported by Mese_Insanity)", song = "14_Seq_rhlockstep_custom", soundfont = 0x11},
+        [29] = {name = "Super Mario World - Underwater", composer = "Koji Kondo (ported by ???)", song = "15_Seq_smwwater_custom", soundfont = 0x25},
 
-        [26] = {name = "Sonna Koto Ura no Mata Urabanashi desho?", composer = "Megumi Nakajima (ported by DaMemes)", song = "04_Seq_kotourasanop_custom", soundfont = 0x25},
-        [27] = {name = "Touhou 20: Fossilized Wonders - Golden Land of Prester John", composer = "ZUN (ported by DaMemes)", song = "05_Seq_th20stage3_custom", soundfont = 0x25},
-        [28] = {name = "Touhou 20: Fossilized Wonders - Might As Well Stake Your Life to Solve the Riddle", composer = "ZUN (ported by DaMemes)", song = "06_Seq_th20nareko_custom", soundfont = 0x25},
-        [29] = {name = "Touhou 11: Subterranean Animism - Walking the Streets of a Former Hell", composer = "ZUN (ported by DaMemes)", song = "07_Seq_th11stage3_custom", soundfont = 0x25},
-        [30] = {name = "Touhou 9: Phantasmagoria of Flower View - Ghostly Band ~ Phantom Ensemble (Touhoumon Version)", composer = "ZUN (ported by DaMemes)", song = "08_Seq_touhoumonprismriver_custom", soundfont = 0x25},
-        [31] = {name = "Touhou 16: Hidden Star in Four Seasons - Illusionary White Traveler", composer = "ZUN (ported by DaMemes)", song = "09_Seq_th16stage4r_custom", soundfont = 0x25},
-        [32] = {name = "Touhou 16: Hidden Star in Four Seasons - Secret God Matara ~ Hidden Star in All Seasons", composer = "ZUN (ported by DaMemes)", song = "0A_Seq_th16okina2_custom", soundfont = 0x25},
-        [33] = {name = "Xenoblade Chronicles - Gaur Plains (Day)", composer = "ACE+ (ported by Bubby64)", song = "0B_Seq_xenogaurday_custom", soundfont = 0x25},
-        [34] = {name = "Pokémon Mystery Dungeon: Explorers of Time/Darkness/Sky - Dialga's Fight to the Finish!", composer = "Arata Iiyoshi (ported by Bubby64)", song = "0C_Seq_pmddialgafight_custom", soundfont = 0x25},
-        [35] = {name = "Castlevania: Dawn of Sorrow - Cursed Clock Tower", composer = "Michiru Yamane (ported by Mosky2000)", song = "0D_Seq_castlevaniaclocktower_custom", soundfont = 0x25},
-        [36] = {name = "Final Fantasy 8 - The Man with the Machine Gun", composer = "Nobuo Uematsu (ported by Bubby64)", song = "0E_Seq_ff8machinegun_custom", soundfont = 0x25}
+        [30] = {name = "Sonna Koto Ura no Mata Urabanashi desho?", composer = "Megumi Nakajima (ported by DaMemes)", song = "04_Seq_kotourasanop_custom", soundfont = 0x25},
+        [31] = {name = "Touhou 20: Fossilized Wonders - Golden Land of Prester John", composer = "ZUN (ported by DaMemes)", song = "05_Seq_th20stage3_custom", soundfont = 0x25},
+        [32] = {name = "Touhou 20: Fossilized Wonders - Might As Well Stake Your Life to Solve the Riddle", composer = "ZUN (ported by DaMemes)", song = "06_Seq_th20nareko_custom", soundfont = 0x25},
+        [33] = {name = "Touhou 11: Subterranean Animism - Walking the Streets of a Former Hell", composer = "ZUN (ported by DaMemes)", song = "07_Seq_th11stage3_custom", soundfont = 0x25},
+        [34] = {name = "Touhou 9: Phantasmagoria of Flower View - Ghostly Band ~ Phantom Ensemble (Touhoumon Version)", composer = "ZUN (ported by DaMemes)", song = "08_Seq_touhoumonprismriver_custom", soundfont = 0x25},
+        [35] = {name = "Touhou 16: Hidden Star in Four Seasons - Illusionary White Traveler", composer = "ZUN (ported by DaMemes)", song = "09_Seq_th16stage4r_custom", soundfont = 0x25},
+        [36] = {name = "Touhou 16: Hidden Star in Four Seasons - Secret God Matara ~ Hidden Star in All Seasons", composer = "ZUN (ported by DaMemes)", song = "0A_Seq_th16okina2_custom", soundfont = 0x25},
+        [37] = {name = "Xenoblade Chronicles - Gaur Plains (Day)", composer = "ACE+ (ported by Bubby64)", song = "0B_Seq_xenogaurday_custom", soundfont = 0x25},
+        [38] = {name = "Pokémon Mystery Dungeon: Explorers of Time/Darkness/Sky - Dialga's Fight to the Finish!", composer = "Arata Iiyoshi (ported by Bubby64)", song = "0C_Seq_pmddialgafight_custom", soundfont = 0x25},
+        [39] = {name = "Castlevania: Dawn of Sorrow - Cursed Clock Tower", composer = "Michiru Yamane (ported by Mosky2000)", song = "0D_Seq_castlevaniaclocktower_custom", soundfont = 0x25},
+        [40] = {name = "Final Fantasy 8 - The Man with the Machine Gun", composer = "Nobuo Uematsu (ported by Bubby64)", song = "0E_Seq_ff8machinegun_custom", soundfont = 0x25}
     }
 
     if gNetworkPlayers[0].currLevelNum == LEVEL_PLOT then
@@ -114,6 +126,7 @@ local function musicplot(msg) -- Various music for plots, can be used to add mor
             audio_stream_stop(MUSIC_CROSSCODE_TITLE)
             audio_stream_stop(MUSIC_DELTA_CASTLE_TOWN)
             audio_stream_stop(MUSIC_SMG_SPACE_JUNK)
+            audio_stream_stop(MUSIC_ZELDA_ASTRAL_OBSERVATORY)
             smlua_audio_utils_reset_all()
             set_background_music(SEQ_PLAYER_LEVEL, selectionV.song, 0)
             return true
@@ -124,6 +137,7 @@ local function musicplot(msg) -- Various music for plots, can be used to add mor
             audio_stream_stop(MUSIC_CROSSCODE_TITLE)
             audio_stream_stop(MUSIC_DELTA_CASTLE_TOWN)
             audio_stream_stop(MUSIC_SMG_SPACE_JUNK)
+            audio_stream_stop(MUSIC_ZELDA_ASTRAL_OBSERVATORY)
             play_music(0, 0, 1)
             audio_stream_play(selectionO.song, true, 1)
             return true
@@ -134,6 +148,7 @@ local function musicplot(msg) -- Various music for plots, can be used to add mor
             audio_stream_stop(MUSIC_CROSSCODE_TITLE)
             audio_stream_stop(MUSIC_DELTA_CASTLE_TOWN)
             audio_stream_stop(MUSIC_SMG_SPACE_JUNK)
+            audio_stream_stop(MUSIC_ZELDA_ASTRAL_OBSERVATORY)
             smlua_audio_utils_replace_sequence(0x64, selectionM.soundfont, 75, selectionM.song)
             djui_popup_create("Be sure to save and reload your current plot to finalize your selection!", 2)
             return true
@@ -162,10 +177,11 @@ local function mario_update(m)
         audio_stream_pause(MUSIC_BOTW_ZORAS_DOMAIN)
         audio_stream_pause(MUSIC_DELTA_CASTLE_TOWN)
         audio_stream_pause(MUSIC_SMG_SPACE_JUNK)
+        audio_stream_pause(MUSIC_ZELDA_ASTRAL_OBSERVATORY)
     end
 end
 
-hook_chat_command("plot-music", "[1-36] | Changes what music plays while in a plot. Custom music requires you to reload your plot to apply changes.", musicplot)
+hook_chat_command("plot-music", "[1-40] | Changes what music plays while in a plot. Custom music requires you to reload your plot to apply changes.", musicplot)
 hook_chat_command("plot", "| Warp to a level with no textures or objects. Pass an argument to go to a specific act.", on_chat_command)
 hook_event(HOOK_MARIO_UPDATE, mario_update)
 hook_event(HOOK_ON_LEVEL_INIT, on_lvl_init)
