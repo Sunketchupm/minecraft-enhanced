@@ -79,8 +79,8 @@ local function save_command(msg)
 
     file:write_integer(MCE_MAGIC, INT_TYPE_U32)
     file:write_integer(MCE_SAVE_VERSION, INT_TYPE_U8)
-    for _, bhv_id in ipairs(gItemBhvIds) do
-        local obj = obj_get_first_with_behavior_id(bhv_id)
+    for _, obj in iterate_entire_item_list() do
+        local bhv_id = get_id_from_behavior(obj.behavior)
         ---@type NetworkPlayer
         local np = gNetworkPlayers[0]
         while obj do

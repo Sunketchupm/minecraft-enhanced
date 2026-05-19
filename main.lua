@@ -489,7 +489,7 @@ local function is_nearest_item_intersecting(pos)
 	---@type Object?
 	local nearest = nil
 	local nearest_dist = 0xFFFFFFFF
-	for obj in iterate_id_list(gItemBhvIds) do
+	for _, obj in iterate_entire_item_list() do
 		local dist = dist_between_object_and_point(obj, pos.x, pos.y, pos.z)
 		if dist < nearest_dist then
 			nearest = obj

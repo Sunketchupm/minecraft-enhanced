@@ -83,46 +83,49 @@ end
 
 ---@type Item?
 gCurrentItem = nil
+---@type { block: BehaviorId[], items: BehaviorId[], enemies: BehaviorId[] }
 gItemBhvIds = {}
 
-local sEnemyItemBehaviors = {}
 local sVanillaClearImmune = {}
 add_first_update(function ()
     ---@type Item
     gCurrentItem = get_default_item()
     ---@type BehaviorId[]
     gItemBhvIds = {
-        bhvMceBlock,
-        bhvMceStar,
-        bhvMceCoin,
-        bhvMceExclamationBox,
-        bhvMceTree,
-        bhvMceDoor,
-        bhvMceFlame,
-        bhvMce1Up,
-    }
-    ---@type BehaviorId[]
-    sEnemyItemBehaviors = {
-        id_bhvGoomba,
-        id_bhvBobomb,
-        id_bhvChuckya,
-        id_bhvCirclingAmp,
-        id_bhvMadPiano,
-        id_bhvSmallBully,
-        id_bhvKoopa,
-        --id_bhvSpiny,
-        id_bhvHeaveHo,
-        id_bhvSmallWhomp,
-        id_bhvThwomp,
-        id_bhvSpindrift,
-        id_bhvFlyGuy,
-        --id_bhvBoo,
-        --id_bhvPokey,
-        id_bhvScuttlebug,
-        id_bhvSwoop,
-        id_bhvSnufit,
-        id_bhvMrBlizzard,
-        id_bhvBulletBill,
+        blocks = {
+            bhvMceBlock,
+        },
+        items = {
+            bhvMceStar,
+            bhvMceCoin,
+            bhvMceExclamationBox,
+            bhvMceTree,
+            bhvMceDoor,
+            bhvMceFlame,
+            bhvMce1Up,
+        },
+        enemies = {
+            id_bhvGoomba,
+            id_bhvBobomb,
+            id_bhvChuckya,
+            id_bhvCirclingAmp,
+            id_bhvMadPiano,
+            id_bhvSmallBully,
+            id_bhvKoopa,
+            id_bhvHeaveHo,
+            id_bhvSmallWhomp,
+            id_bhvThwomp,
+            id_bhvSpindrift,
+            id_bhvFlyGuy,
+            id_bhvScuttlebug,
+            id_bhvSwoop,
+            id_bhvSnufit,
+            id_bhvMrBlizzard,
+            id_bhvBulletBill,
+            --id_bhvBoo,
+            --id_bhvPokey,
+            --id_bhvSpiny,
+        },
     }
     ---@type BehaviorId[]
     sVanillaClearImmune = {
@@ -633,38 +636,19 @@ function on_clear_chat_command(msg)
     local command = args[1] and args[1]:lower() or ""
 
     if command == "all" or command == "" then
-        for obj in iterate_id_list(gItemBhvIds) do
-            if object_removal_criteria(obj, args[2]) then
-                obj_mark_for_deletion(obj)
-            end
-        end
-        for obj in iterate_id_list(sEnemyItemBehaviors) do
-            if object_removal_criteria(obj, args[2]) then
+        for list, obj in iterate_entire_item_list() do
+            if list == "enemies" or object_removal_criteria(obj, args[2]) then
                 obj_mark_for_deletion(obj)
             end
         end
         djui_chat_message_create("Removed all placed objects")
-    elseif command == "blocks" then
-        for obj in iterate_id_list({bhvMceBlock}) do
+    elseif command == "blocks" or command == "items" or command == "enemies" then
+        for obj in iterate_item_list(gItemBhvIds[command]) do
             if object_removal_criteria(obj, args[2]) then
                 obj_mark_for_deletion(obj)
             end
         end
-        djui_chat_message_create("Removed all placed blocks")
-    elseif command == "items" then
-        for obj in iterate_id_list(gItemBhvIds) do
-            if obj_has_behavior_id(obj, bhvMceBlock) == 0 and object_removal_criteria(obj, args[2]) then
-                obj_mark_for_deletion(obj)
-            end
-        end
-        djui_chat_message_create("Removed all placed level items")
-    elseif command == "enemies" then
-        for obj in iterate_id_list(sEnemyItemBehaviors) do
-            if object_removal_criteria(obj, args[2]) then
-                obj_mark_for_deletion(obj)
-            end
-        end
-        djui_chat_message_create("Removed all placed enemies")
+        djui_chat_message_create("Removed all placed " .. command)
     elseif command == "vanilla" and network_is_privileged() then
         for i = OBJ_LIST_PLAYER + 1, NUM_OBJ_LISTS - 1, 1 do
             local obj = obj_get_first(i)
@@ -694,18 +678,18 @@ end
 function reset_all_items(override_free_move_check)
     local m = gMarioStates[0]
     if m.action == ACT_FREE_MOVE or override_free_move_check then
-        for obj in iterate_id_list(gItemBhvIds) do
-            if obj_has_behavior_id(obj, bhvMceBlock) == 0 then
+        for list, obj in iterate_entire_item_list() do
+            if list == "blocks" then
+                if obj.oAction ~= MCE_BLOCK_ACT_RESET then
+                    obj.oAction = MCE_BLOCK_ACT_RESET
+                end
+            else
                 local render_flags = obj.header.gfx.node.flags
                 if render_flags & GRAPH_RENDER_INVISIBLE ~= 0 or render_flags & GRAPH_RENDER_ACTIVE == 0 then
                     obj.header.gfx.node.flags = obj.header.gfx.node.flags &~ GRAPH_RENDER_INVISIBLE
                     obj.header.gfx.node.flags = obj.header.gfx.node.flags | GRAPH_RENDER_ACTIVE
                     obj_become_tangible(obj)
                     obj.oAction = 0
-                end
-            else
-                if obj.oAction ~= MCE_BLOCK_ACT_RESET then
-                    obj.oAction = MCE_BLOCK_ACT_RESET
                 end
             end
         end

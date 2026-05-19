@@ -72,8 +72,48 @@ end
 
 -------------------------------------------------------------
 
+function iterate_entire_item_list()
+    local current_index = 1
+    local current_obj = nil
+    local key, list = next(gItemBhvIds, nil)
+    return function ()
+        if not list then return nil end
+        if not current_obj then
+            current_obj = obj_get_first_with_behavior_id(list[current_index])
+        else
+            current_obj = obj_get_next_with_same_behavior_id(current_obj)
+        end
+
+        if not current_obj then
+            while not current_obj do
+                current_index = current_index + 1
+                if not list[current_index] then
+                    key, list = next(gItemBhvIds, key)
+                    if list then
+                        current_index = 1
+                        if list[current_index] then
+                            current_obj = obj_get_first_with_behavior_id(list[current_index])
+                        else
+                            current_obj = nil
+                        end
+                    else
+                        current_obj = nil
+                    end
+                    break
+                end
+                current_obj = obj_get_first_with_behavior_id(list[current_index])
+            end
+        end
+
+        if not current_obj then
+            return nil
+        end
+        return key, current_obj
+    end
+end
+
 ---@param id_list BehaviorId[]
-function iterate_id_list(id_list)
+function iterate_item_list(id_list)
     local current_index = 1
     local current_obj = nil
     return function ()
