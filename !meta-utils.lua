@@ -174,7 +174,8 @@ function point_is_intersecting_obj(point, intersectee)
         vec3f_normalize(intersector_rel_pos)
 
         local dot = vec3f_dot(surface.normal, intersector_rel_pos)
-        if dot > 0 then return false end
+        local rounded_dot = tonumber(string.format("%.2f", dot)) or dot
+        if rounded_dot > 0 then return false end
     end
     return true
 end
