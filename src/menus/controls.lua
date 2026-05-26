@@ -59,8 +59,10 @@ local function item_settings_tips()
         { X_BUTTON_TEX, "Close Menu" },
         { CONTROL_STICK_TEX, "Select Option / Move Slider" },
         { A_BUTTON_TEX, "Toggle Option" },
+        { B_BUTTON_TEX, "(Sliders) Fast Slide" },
+        { Z_TRIG_TEX, "(Sliders) Slow Slide" },
         { LR_JPAD_TEX, "Cycle Hotbar" },
-        { U_CBUTTON_TEX, D_CBUTTON_TEX, L_CBUTTON_TEX, R_CBUTTON_TEX, "Scroll" },
+        { U_CBUTTON_TEX, D_CBUTTON_TEX, "Scroll" },
         { L_TRIG_TEX, R_TRIG_TEX, "Next/Previous Tab" },
     }
 end
