@@ -2,8 +2,7 @@ MENU_TYPE_NONE = 0 -- Not in flying mode
 MENU_TYPE_CLOSED = 1 -- In flying mode
 MENU_TYPE_CREATIVE = 2
 MENU_TYPE_PAUSE = 3
-MENU_TYPE_SETTINGS = 4
-MENU_TYPE_WORLD = 5
+MENU_TYPE_WORLD = 4
 gCurrentMenu = MENU_TYPE_NONE
 
 WHITE = { r = 255, g = 255, b = 255, a = 255 }

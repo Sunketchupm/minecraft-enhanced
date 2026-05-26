@@ -2,18 +2,20 @@ local CommonMenu = require("../common_menu")
 local Utils = require("../utils")
 local Mouse = require("../mouse")
 
-local Settings = require("class") --[[@as SettingsMenu]]
+local Menu = require("class")
 local Surfaces = require("surfaces")
+
+local Settings = {}
 
 local function __mouse_input(rect, index)
     if Mouse.moved and Mouse.is_within(rect) then
-        Settings.option_index = index
+        Menu.settings.index = index
         audio_sample_play(SOUND_MCE_MOVE, gGlobalSoundSource, 1)
     end
 end
 
 ---@param rect Rectangle
----@param button SettingsMenuOption
+---@param button CreativeMenuOption
 ---@param last_height number
 ---@param index integer
 local function render_option(rect, button, last_height, index)
@@ -27,15 +29,15 @@ local function render_option(rect, button, last_height, index)
         __mouse_input(option_rect, index)
 
         local color = table.deepcopy(MAIN_RECT_COLORS)
-        if Settings.doing_inputs then
+        if Menu.settings.doing_inputs then
             color.normal = Utils.adjust_color(color.normal, { r = 0, g = 0, b = 0, a = -200 })
             color.shine = Utils.adjust_color(color.shine, { r = 0, g = 0, b = 0, a = -200 })
             color.shade = Utils.adjust_color(color.shade, { r = 0, g = 0, b = 0, a = -200 })
         end
         Utils.render_bordered_rectangle(option_rect, color, 0.008, false)
 
-        color = index == Settings.option_index and YELLOW or BLACK
-        if Settings.doing_inputs then
+        color = index == Menu.settings.index and YELLOW or BLACK
+        if Menu.settings.doing_inputs then
             color = Utils.adjust_color(color, { r = 0, g = 0, b = 0, a = -200 })
         end
         Utils.set_color_with_table(color)
@@ -54,14 +56,14 @@ local function render_option(rect, button, last_height, index)
         if val then
             color = GREEN
         end
-        if Settings.doing_inputs then
+        if Menu.settings.doing_inputs then
             color = Utils.adjust_color(color, { r = 0, g = 0, b = 0, a = -200 })
         end
         Utils.set_color_with_table(color)
         Utils.render_rect_from_rect(checkbox_rect)
 
-        color = index == Settings.option_index and YELLOW or BLACK
-        if Settings.doing_inputs then
+        color = index == Menu.settings.index and YELLOW or BLACK
+        if Menu.settings.doing_inputs then
             color = Utils.adjust_color(color, { r = 0, g = 0, b = 0, a = -200 })
         end
         Utils.set_color_with_table(color)
@@ -92,17 +94,17 @@ local function render_option(rect, button, last_height, index)
                 - bar.width * 0.5
         end
         local color = BLUE
-        if Settings.doing_inputs then
+        if Menu.settings.doing_inputs then
             color = Utils.adjust_color(color, { r = 0, g = 0, b = 0, a = -200 })
         end
         Utils.set_color_with_table(BLUE)
         Utils.render_rect_from_rect(bar)
 
         local text_y = option_rect.y + option_rect.height * 0.5 - 16
-        local formatted_name = button.name:format(val.val or 0)
+        local formatted_name = button.name:format(val and val.val or 0)
 
-        color = index == Settings.option_index and YELLOW or WHITE
-        if Settings.doing_inputs then
+        color = index == Menu.settings.index and YELLOW or WHITE
+        if Menu.settings.doing_inputs then
             color = Utils.adjust_color(color, { r = 0, g = 0, b = 0, a = -200 })
         end
         Utils.set_color_with_table(color)
@@ -111,8 +113,8 @@ local function render_option(rect, button, last_height, index)
         button.rect = option_rect
         y = y + height + padding
     elseif button.type == SETTINGS_OPTION_TYPE_ONLY_TEXT then
-        local color = index == Settings.option_index and YELLOW or BLACK
-        if Settings.doing_inputs then
+        local color = index == Menu.settings.index and YELLOW or BLACK
+        if Menu.settings.doing_inputs then
             color = Utils.adjust_color(color, { r = 0, g = 0, b = 0, a = -200 })
         end
         Utils.set_color_with_table(color)
@@ -127,11 +129,11 @@ local function render_option(rect, button, last_height, index)
 
         Utils.render_bordered_rectangle(surface_rect, MAIN_RECT_COLORS, 0.015, false)
 
-        color = index == Settings.option_index and YELLOW or BLACK
+        color = index == Menu.settings.index and YELLOW or BLACK
         Utils.set_color_with_table(color)
         Utils.render_centered_text(button.name, x, width, y, 1)
 
-        Surfaces.render_description_box(rect, Settings.option_index)
+        Surfaces.render_description_box(rect, Menu.settings.index)
 
         button.rect = surface_rect
         y = y + height + padding
@@ -139,12 +141,12 @@ local function render_option(rect, button, last_height, index)
     return y
 end
 
----@param buttons SettingsMenuTab
+---@param buttons CreativeMenuTab
 ---@param options_count integer
 local function __calibrate_scroll(rect, buttons, options_count)
     local heights = {}
     for i = 1, options_count, 1 do
-        local button = buttons[i]
+        local button = buttons[i] --[[@as CreativeMenuOption]]
         if button then
             heights[i] = render_option(rect, button, 0, i)
         end
@@ -170,41 +172,101 @@ local function __calibrate_scroll(rect, buttons, options_count)
     return last_index + 2
 end
 
----@param screen_width number
----@param screen_height number
-local function render(screen_width, screen_height)
-    djui_hud_set_font(FONT_SPECIAL)
-
-    local color = table.deepcopy(MAIN_RECT_COLORS)
-    if Settings.doing_inputs then
-        color.normal = Utils.adjust_color(color.normal, { r = 0, g = 0, b = 0, a = -200 })
-        color.shine = Utils.adjust_color(color.shine, { r = 0, g = 0, b = 0, a = -200 })
-        color.shade = Utils.adjust_color(color.shade, { r = 0, g = 0, b = 0, a = -200 })
+---@param rect Rectangle
+---@param tab CreativeMenuTab
+function Settings.render(rect, tab)
+    if Menu[Menu.tab].type ~= TAB_TYPE_SETTINGS then
+        return
     end
-    local rect = CommonMenu.render_main_rectangle(screen_width, screen_height, Settings, Settings.tab, color)
 
-    local last_height = rect.y + rect.height * 0.15
-    local options_count = #Settings[Settings.tab]
-    local buttons = Settings[Settings.tab]
-    if buttons.scroll.max == -1 then
-        buttons.scroll.max = __calibrate_scroll(rect, buttons, options_count)
+    djui_hud_set_color(63, 63, 63, 255)
+    local header_scale = 0.75
+    local text_y = rect.y + rect.height * 0.12
+    Utils.render_centered_text("This tab only affects the currently held item", rect.x, rect.width, text_y, header_scale)
+
+    local last_height = rect.y + rect.height * 0.18
+    if tab.scroll.max == -1 then
+        tab.scroll.max = __calibrate_scroll(rect, tab, #tab)
     end
 
     if Mouse.moved then
-        Settings.option_index = -1
+        Menu.settings.index = -1
     end
 
-    for i = buttons.scroll.index, options_count, 1 do
-        local button = buttons[i]
+    for i = tab.scroll.index, #tab, 1 do
+        local button = tab[i] --[[@as CreativeMenuOption]]
         if button then
             last_height = render_option(rect, button, last_height, i)
             if last_height > rect.y + rect.height * 0.9 then
-                Settings.rendered_max_index = i
+                Menu.settings.rendered_max_index = i
                 break
             end
         end
-        Settings.rendered_max_index = i
+        Menu.settings.rendered_max_index = i
     end
 end
 
-return render
+------------------------------------------------
+
+local __select_option = function (change, scroll)
+    if Menu.settings.index ~= -1 then
+        Menu.settings.index = Menu.settings.index + change
+        if Menu.settings.index < scroll.index then
+            scroll.index = Menu.settings.index
+        elseif Menu.settings.index > Menu.settings.rendered_max_index then
+            scroll.index = scroll.index + change
+        end
+    else
+        Menu.settings.index = scroll.index
+    end
+    Menu.settings.index = math.clamp(Menu.settings.index, scroll.index, Menu.settings.rendered_max_index)
+    audio_sample_play(SOUND_MCE_MOVE, gGlobalSoundSource, 1)
+end
+
+---@param m MarioState
+---@param inputs Inputs
+function Settings.inputs(m, inputs)
+    CommonMenu.menu_inputs(m, inputs, Menu, Menu.tab, {
+        tab = function (index)
+            Menu.tab = index
+            Menu.settings.index = 1
+            Menu.settings.rendered_max_index = 1
+        end,
+        scroll = function (direction)
+            if direction.up then
+                Menu.settings.index = Menu.settings.index - 1
+            elseif direction.down then
+                Menu.settings.index = Menu.settings.index + 1
+            end
+            Menu.settings.index = math.clamp(Menu.settings.index, 1, Menu.settings.rendered_max_index)
+        end,
+    })
+    if Menu[Menu.tab].type ~= TAB_TYPE_SETTINGS then
+        return
+    end
+
+    local current_options = Menu[Menu.tab]
+    local current_option = current_options[Menu.settings.index]
+
+    if inputs.stick.up and Menu.settings.index > 1 then
+        __select_option(-1, current_options.scroll)
+    elseif inputs.stick.down and Menu.settings.index < #current_options then
+        __select_option(1, current_options.scroll)
+    end
+
+    if current_option then
+        if Mouse.moved and Mouse.down and Mouse.pressed.left then
+            inputs.buttons.pressed = inputs.buttons.pressed | A_BUTTON
+        end
+        current_option.action(inputs)
+    end
+
+    Menu.settings.doing_inputs = true
+    if Menu.tab == CREATIVE_TAB_BLOCK_SURFACES or
+    (not Mouse.moved and inputs.buttons.down & ~(C_BUTTONS | L_TRIG | R_TRIG) == 0) or
+    (Mouse.moved and not (Mouse.down.left or Mouse.down.middle)) then
+        Menu.settings.doing_inputs = false
+    end
+end
+
+return Settings

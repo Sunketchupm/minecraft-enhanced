@@ -1,5 +1,6 @@
 local Utils = require("../utils")
 local Mouse = require("../mouse")
+local CommonMenu = require("../common_menu")
 
 local Hotbar = require("../hotbar/class")
 
@@ -41,9 +42,9 @@ local function calculate_slots(width, height)
 end
 
 ---@param rect Rectangle
----@param items MenuItemLink
+---@param items CreativeMenuTab
 ---@param scroll MenuScroll
-function Grid.render(rect, items, scroll)
+local function render_item_grid(rect, items, scroll)
     local row_count, column_count, slot_width, slot_height = calculate_slots(rect.width, rect.height)
 
     local items_per_page = column_count * row_count
@@ -70,7 +71,7 @@ function Grid.render(rect, items, scroll)
         local slot_rect = Utils.into_rect(slot_x, slot_y, slot_width, slot_height)
 
         if Mouse.moved and Mouse.is_within(slot_rect) then
-            Menu.item.index = absolute_index
+            Menu.grid.item.index = absolute_index
             if sCurrentMouseSlot ~= absolute_index then
                 audio_sample_play(SOUND_MCE_MOVE, gGlobalSoundSource, 1)
             end
@@ -78,7 +79,7 @@ function Grid.render(rect, items, scroll)
             mouse_on_grid = true
         end
 
-        if absolute_index == Menu.item.index then
+        if absolute_index == Menu.grid.item.index then
             djui_hud_set_color(255, 255, 255, 150)
             djui_hud_render_rect(slot_x, slot_y, slot_width, slot_height)
         end
@@ -86,7 +87,7 @@ function Grid.render(rect, items, scroll)
         List.render_on_rect(slot_rect, items[absolute_index + 1].icon)
     end
     if Mouse.moved and not mouse_on_grid then
-        Menu.item.index = -1
+        Menu.grid.item.index = -1
     end
 
     -- Render lines
@@ -104,64 +105,211 @@ function Grid.render(rect, items, scroll)
     end
 end
 
+local Y_BUTTON_TEX = get_texture_info("Ybutton")
+local sPrevResetBarWidth = 0
+
+---@param rect Rectangle
+local function render_reset_button(rect)
+    local reset_rect = {}
+    reset_rect.height = rect.height * 0.1
+    reset_rect.y = rect.y + rect.height * 0.925 - reset_rect.height * 0.5
+
+    local reset_text_scale = 1
+    local y_tex_scale = 2
+    local reset_text = "Remove Item / Reset Hotbar"
+    local total_size = (Y_BUTTON_TEX.width * y_tex_scale) + 16 + (djui_hud_measure_text(reset_text) * reset_text_scale)
+    local reset_line_texture_x = rect.x + rect.width * 0.5 - total_size * 0.5
+    local reset_line_text_x = reset_line_texture_x + (Y_BUTTON_TEX.width * y_tex_scale) + 16
+    local reset_line_y = reset_rect.y + reset_rect.height * 0.5 - (Y_BUTTON_TEX.height * y_tex_scale) * 0.5
+
+    reset_rect.width = total_size + 10
+    reset_rect.x = rect.x + rect.width * 0.5 - reset_rect.width * 0.5
+
+    local color = Menu.grid.reset.active and SELECTED_BUTTON_COLORS or MAIN_RECT_COLORS
+    Utils.render_bordered_rectangle(reset_rect, color, 0.01, false)
+
+    Utils.set_color_with_table(WHITE)
+    djui_hud_render_texture(Y_BUTTON_TEX, reset_line_texture_x, reset_line_y, y_tex_scale, y_tex_scale)
+    local reset_text_color = Menu.grid.reset.active and YELLOW or WHITE
+    Utils.render_shadowed_text(reset_text, reset_line_text_x, reset_line_y, reset_text_scale, reset_text_color)
+
+    local reset_bar_width = math.lerp(0, reset_rect.width, Menu.grid.reset.progress / 90)
+
+    Utils.set_color_with_table(GREEN)
+    djui_hud_render_rect_interpolated(
+        reset_rect.x, reset_rect.y + reset_rect.height, sPrevResetBarWidth, 10,
+        reset_rect.x, reset_rect.y + reset_rect.height, reset_bar_width, 10)
+    sPrevResetBarWidth = reset_bar_width
+
+    if not Menu.grid.item.link and Mouse.moved and Mouse.is_within(reset_rect) then
+        if Mouse.pressed.left then
+            Hotbar[Hotbar.index].link = nil
+        elseif Mouse.down.left then
+            Menu.grid.reset.progress = Menu.grid.reset.progress + 1
+        end
+    end
+end
+
+---@param rect Rectangle
+---@param tab CreativeMenuTab
+local function render_interior_rectangle(rect, tab)
+    local interior_rect = {
+        x = rect.x + rect.width * 0.05,
+        y = rect.y + rect.height * 0.15,
+        width = rect.width * 0.8,
+        height = rect.height * 0.7
+    }
+    local new_color = Utils.adjust_color(MAIN_RECT_COLORS.normal, { r = -40, g = -40, b = -40, a = 0 })
+    Utils.set_color_with_table(new_color)
+    Utils.render_rect_from_rect(interior_rect)
+
+    render_item_grid(interior_rect, tab, tab.scroll)
+    render_reset_button(rect)
+end
+
+---@param rect Rectangle
+---@param tab CreativeMenuTab
+function Grid.render(rect, tab)
+    if Menu[Menu.tab].type ~= TAB_TYPE_GRID then
+        return
+    end
+
+    render_interior_rectangle(rect, tab)
+
+    local link = Menu.grid.item.link
+    if link then
+        if Mouse.moved then
+            List.render_on_pos(Mouse.pos, link.icon)
+        else
+            List.render_on_rect(Hotbar[Hotbar.index].rect, link.icon)
+        end
+    end
+end
+
 -------------------------------------------------------------------------------------------
+
+local sResetCooldown = 0
+local sPrevProgress = 0
+
+local function handle_reset_hotbar_state()
+    if sResetCooldown > 0 then
+        Menu.grid.reset.active = false
+        Menu.grid.reset.progress = 0
+        Menu.grid.reset.leniency = 0
+        sResetCooldown = sResetCooldown - 1
+    else
+        if sPrevProgress ~= Menu.grid.reset.progress then
+            Menu.grid.reset.leniency = 0
+            if Menu.grid.reset.progress >= 90 then
+                for i = 1, HOTBAR_SIZE, 1 do
+                    Hotbar[i].link = nil
+                end
+                Menu.grid.reset.progress = 0
+                Menu.grid.reset.leniency = 0
+                sResetCooldown = 39
+            end
+            Menu.grid.reset.active = true
+            play_sound(SOUND_MENU_COLLECT_SECRET + (math.floor((Menu.grid.reset.progress / 90) * 5) << 16), gGlobalSoundSource)
+        elseif Menu.grid.reset.progress > 0 then
+            Menu.grid.reset.leniency = Menu.grid.reset.leniency + 1
+            if Menu.grid.reset.leniency > 10 then
+                Menu.grid.reset.progress = 0
+                Menu.grid.reset.leniency = 0
+            end
+            Menu.grid.reset.active = false
+        end
+        sPrevProgress = Menu.grid.reset.progress
+    end
+end
 
 ---@param inputs Inputs
 local function handle_holding_inputs(inputs)
-    if Menu.item.link and (Mouse.released.left or inputs.buttons.released & A_BUTTON ~= 0) then
-        ---@type MenuItemLink
-        local link = table.deepcopy(Menu.item.link)
+    if Menu.grid.item.link and (Mouse.released.left or inputs.buttons.released & A_BUTTON ~= 0) then
+        ---@type CreativeMenuItemLink
+        local link = table.deepcopy(Menu.grid.item.link)
         if Menu.tab == CREATIVE_TAB_BUILDING_BLOCKS_COLORS then
             mce_block_toggle_flag(link.item, MCE_BLOCK_FLAG_COLORED)
         end
         Hotbar[Hotbar.index].link = link
-        Menu.item.link = nil
+        Menu.grid.item.link = nil
         audio_sample_play(SOUND_MCE_PRESS, gGlobalSoundSource, 1)
     end
 end
 
-local function __select_item(change)
+local function select_item(change)
     local scroll = Menu[Menu.tab].scroll
-    Menu.item.index = Menu.item.index + change
-    if Menu.item.index < Grid.begin_index then
+    Menu.grid.item.index = Menu.grid.item.index + change
+    if Menu.grid.item.index < Grid.begin_index then
         scroll.index = scroll.index - 1
-    elseif Menu.item.index > Grid.end_index - 1 then
+    elseif Menu.grid.item.index > Grid.end_index - 1 then
         scroll.index = scroll.index + 1
     end
-    Menu.item.index = math.clamp(Menu.item.index, 0, #Menu[Menu.tab].grid - 1)
+    Menu.grid.item.index = math.clamp(Menu.grid.item.index, 0, #Menu[Menu.tab] - 1)
     scroll.index = math.clamp(scroll.index, 1, scroll.max)
     audio_sample_play(SOUND_MCE_MOVE, gGlobalSoundSource, 1)
 end
 
 ---@param inputs Inputs
 local function handle_selection_inputs(inputs)
-    if Menu.item.link then return end
+    if Menu.grid.item.link then return end
     if inputs.stick.left then
-        __select_item(-1)
+        select_item(-1)
     elseif inputs.stick.right then
-        __select_item(1)
+        select_item(1)
     end
 
     if inputs.stick.up then
-        __select_item(-Grid.column_count)
+        select_item(-Grid.column_count)
     elseif inputs.stick.down then
-        __select_item(Grid.column_count)
+        select_item(Grid.column_count)
     end
 
     if Mouse.pressed.left or (not Mouse.moved and inputs.buttons.pressed & A_BUTTON ~= 0) then
-        local selected_item = Menu[Menu.tab].grid[Menu.item.index + 1]
+        local selected_item = Menu[Menu.tab][Menu.grid.item.index + 1]
         if selected_item then
-            Menu.item.link = selected_item
+            Menu.grid.item.link = selected_item --[[@as CreativeMenuItemLink]]
         end
     end
 end
 
 ----------------------------------------------
 
+---@param m MarioState
 ---@param inputs Inputs
-function Grid.inputs(inputs)
+function Grid.inputs(m, inputs)
+    CommonMenu.menu_inputs(m, inputs, Menu, Menu.tab, {
+        tab = function (index)
+            Menu.tab = index
+            Menu.grid.item.index = 0
+        end,
+        scroll = function (direction, index)
+            if direction.up then
+                Menu.grid.item.index = (Menu.grid.item.index - Grid.column_count)
+            elseif direction.down then
+                Menu.grid.item.index = (Menu.grid.item.index + Grid.column_count)
+            elseif direction.left then
+                Menu[Menu.tab].scroll.index = index - Grid.row_count
+                Menu.grid.item.index = Menu.grid.item.index - (Grid.row_count * Grid.column_count)
+            elseif direction.right then
+                Menu[Menu.tab].scroll.index = index + Grid.row_count
+                Menu.grid.item.index = Menu.grid.item.index + (Grid.row_count * Grid.column_count)
+            end
+            Menu.grid.item.index = math.clamp(Menu.grid.item.index, 0, #Menu[Menu.tab] - 1)
+        end
+    })
+    if Menu[Menu.tab].type ~= TAB_TYPE_GRID then
+        return
+    end
+
     handle_selection_inputs(inputs)
     handle_holding_inputs(inputs)
+    handle_reset_hotbar_state()
+
+    if inputs.buttons.pressed & Y_BUTTON ~= 0 then
+        Hotbar[Hotbar.index].link = nil
+    elseif inputs.buttons.down & Y_BUTTON ~= 0 then
+        Menu.grid.reset.progress = Menu.grid.reset.progress + 1
+    end
 end
 
 return Grid

@@ -1,5 +1,6 @@
 local Utils = require("utils")
 
+local Creative = require("creative/class")
 local Pause = require("pause/class")
 
 local A_BUTTON_TEX = get_texture_info("Abutton")
@@ -27,14 +28,28 @@ local PAGE_DOWN_TEX = get_texture_info("page_down")
 -----------------------------------------------------------------------
 
 local function creative_menu_tips()
-    return {
-        { X_BUTTON_TEX, "Close Menu" },
-        { CONTROL_STICK_TEX, "Select Item" },
-        { A_BUTTON_TEX, "Pick Item" },
-        { LR_JPAD_TEX, "Cycle Hotbar" },
-        { U_CBUTTON_TEX, D_CBUTTON_TEX, L_CBUTTON_TEX, R_CBUTTON_TEX, "Scroll" },
-        { L_TRIG_TEX, R_TRIG_TEX, "Next/Previous Tab" },
-    }
+    local tab_type = Creative[Creative.tab].type
+    if tab_type == TAB_TYPE_GRID then
+        return {
+            { X_BUTTON_TEX, "Close Menu" },
+            { CONTROL_STICK_TEX, "Select Item" },
+            { A_BUTTON_TEX, "Pick Item" },
+            { LR_JPAD_TEX, "Cycle Hotbar" },
+            { U_CBUTTON_TEX, D_CBUTTON_TEX, L_CBUTTON_TEX, R_CBUTTON_TEX, "Scroll" },
+            { L_TRIG_TEX, R_TRIG_TEX, "Next/Previous Tab" },
+        }
+    elseif tab_type == TAB_TYPE_SETTINGS then
+        return {
+            { X_BUTTON_TEX, "Close Menu" },
+            { CONTROL_STICK_TEX, "Select Option / Move Slider" },
+            { A_BUTTON_TEX, "Toggle Option" },
+            { B_BUTTON_TEX, "(Sliders) Fast Slide" },
+            { Z_TRIG_TEX, "(Sliders) Slow Slide" },
+            { LR_JPAD_TEX, "Cycle Hotbar" },
+            { U_CBUTTON_TEX, D_CBUTTON_TEX, "Scroll" },
+            { L_TRIG_TEX, R_TRIG_TEX, "Next/Previous Tab" },
+        }
+    end
 end
 
 local function pause_menu_tips()
@@ -54,25 +69,11 @@ local function pause_menu_tips()
     end
 end
 
-local function item_settings_tips()
-    return {
-        { X_BUTTON_TEX, "Close Menu" },
-        { CONTROL_STICK_TEX, "Select Option / Move Slider" },
-        { A_BUTTON_TEX, "Toggle Option" },
-        { B_BUTTON_TEX, "(Sliders) Fast Slide" },
-        { Z_TRIG_TEX, "(Sliders) Slow Slide" },
-        { LR_JPAD_TEX, "Cycle Hotbar" },
-        { U_CBUTTON_TEX, D_CBUTTON_TEX, "Scroll" },
-        { L_TRIG_TEX, R_TRIG_TEX, "Next/Previous Tab" },
-    }
-end
-
 -----------------------------------------------------------------------
 
 local sMenuSpecificTips = {
     [MENU_TYPE_CREATIVE] = creative_menu_tips,
     [MENU_TYPE_PAUSE] = pause_menu_tips,
-    [MENU_TYPE_SETTINGS] = item_settings_tips,
 }
 
 ---@param screen { width: number, height: number } 
@@ -148,6 +149,7 @@ local function render(screen_width, screen_height)
         else
             if not gCurrentItem then
                 group = {
+                    { X_BUTTON_TEX, "Open Menu" },
                     { B_BUTTON_TEX, "Slow Flying" },
                 }
             else

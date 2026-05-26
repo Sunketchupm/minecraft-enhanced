@@ -3,14 +3,14 @@ local BlockTextures = require("../../block/textures")
 
 local List = {}
 
----@return MenuItemLink
+---@return CreativeMenuItemLink
 local __get_default_item_link = function ()
-    ---@type MenuItemLink
+    ---@type CreativeMenuItemLink
     return { item = get_default_item(), icon = { texture = nil, color = WHITE }, held = true }
 end
 
 ---@param tex_info TextureInfo
----@return MenuItemLink
+---@return CreativeMenuItemLink
 local function add_block(tex_info)
     local link = __get_default_item_link()
     link.icon.texture = tex_info
@@ -18,7 +18,7 @@ local function add_block(tex_info)
 end
 
 ---@param color DjuiColor
----@return MenuItemLink
+---@return CreativeMenuItemLink
 local function add_color_block(color)
     local link = __get_default_item_link()
     link.icon.color = color
@@ -33,7 +33,7 @@ end
 ---@param model ModelExtendedId
 ---@param preview ItemPreview?
 ---@param params ItemParameters?
----@return MenuItemLink
+---@return CreativeMenuItemLink
 local function add_behavior_with_params(texture, color, behavior, model, preview, params)
     ---@type Item
     local item = get_default_item()
@@ -52,7 +52,7 @@ local function add_behavior_with_params(texture, color, behavior, model, preview
         end
     end
 
-    ---@type MenuItemLink
+    ---@type CreativeMenuItemLink
     local link = { item = item, icon = { texture = texture, color = color }, held = false }
     return link
 end

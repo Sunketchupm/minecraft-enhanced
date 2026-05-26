@@ -32,7 +32,7 @@ local function render(screen_width, screen_height)
 
         if index == Hotbar.index then
             djui_hud_set_color(255, 255, 255, 150)
-            if CreativeMenu.item.link and CreativeMenu.item.link.held then
+            if CreativeMenu.grid.item.link and CreativeMenu.grid.item.link.held then
                 djui_hud_set_color(255, 255, 127, 150)
             end
             djui_hud_render_rect(slot_rect.x, slot_y, slot_width, slot_height)
@@ -43,8 +43,8 @@ local function render(screen_width, screen_height)
         end
 
         if index == Hotbar.index and not Mouse.moved then
-            if CreativeMenu.item.link and CreativeMenu.item.link.held then
-                Items.render_on_rect(slot_rect, CreativeMenu.item.link.icon)
+            if CreativeMenu.grid.item.link and CreativeMenu.grid.item.link.held then
+                Items.render_on_rect(slot_rect, CreativeMenu.grid.item.link.icon)
             end
         end
         djui_hud_set_color(128, 128, 128, 255)

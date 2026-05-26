@@ -83,9 +83,9 @@ local sSurfaceDescriptions = {
 function Surfaces.render_description_box(rect, index)
     local description_rect = {
         x = rect.x + rect.width * 0.36,
-        y = rect.y + rect.height * 0.15,
+        y = rect.y + rect.height * 0.18,
         width = rect.width * 0.5,
-        height = rect.height * 0.8
+        height = rect.height * 0.78
     }
     local rect_colors = {
         normal = { r = 0, g = 16, b = 69, a = 255 },

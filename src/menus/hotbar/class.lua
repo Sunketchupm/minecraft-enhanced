@@ -6,7 +6,7 @@
     ---@field [integer] HotbarSlot
 
 ---@class HotbarSlot
-    ---@field link MenuItemLink?
+    ---@field link CreativeMenuItemLink?
     ---@field rect Rectangle
 
 ---@type Hotbar

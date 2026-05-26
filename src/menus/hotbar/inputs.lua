@@ -19,7 +19,7 @@ local function handle_inputs(m, inputs)
         end
     end
 
-    if gCurrentMenu == MENU_TYPE_CREATIVE and CreativeMenu.item.link then
+    if gCurrentMenu == MENU_TYPE_CREATIVE and CreativeMenu.grid.item.link then
         if inputs.stick.left then
             Hotbar.index = Hotbar.index - 1
             if Hotbar.index < 1 then

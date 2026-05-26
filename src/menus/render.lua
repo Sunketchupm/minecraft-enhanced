@@ -7,7 +7,6 @@ local renders = {
 
 local behind_renders = {
     [MENU_TYPE_CREATIVE] = require("creative/render"),
-    [MENU_TYPE_SETTINGS] = require("settings/render"),
     --[MENU_TYPE_WORLD] = require("world/render"),
 }
 

@@ -117,10 +117,11 @@ end
 
 ----------------------------------------------------
 
+local Creative = require("creative/class")
+
 local sMenuInputs = {
     [MENU_TYPE_CREATIVE] = require("creative/inputs"),
     [MENU_TYPE_PAUSE] = require("pause/inputs"),
-    [MENU_TYPE_SETTINGS] = require("settings/inputs")
 }
 
 local HotbarInputs = require("hotbar/inputs")
@@ -128,11 +129,11 @@ local HotbarInputs = require("hotbar/inputs")
 ---@param m MarioState
 local function handle_menuless_inputs(m)
     if gInBuildMode then
-        if gCurrentItem and gCurrentMenu == MENU_TYPE_CLOSED and sInputs.buttons.down & L_TRIG ~= 0 and sInputs.buttons.pressed & X_BUTTON ~= 0 then
-            gCurrentMenu = MENU_TYPE_SETTINGS
-            sInputs.buttons.pressed = sInputs.buttons.pressed & ~X_BUTTON
-        elseif gCurrentMenu == MENU_TYPE_CLOSED and sInputs.buttons.pressed & X_BUTTON ~= 0 then
+        if gCurrentMenu == MENU_TYPE_CLOSED and sInputs.buttons.pressed & X_BUTTON ~= 0 then
             gCurrentMenu = MENU_TYPE_CREATIVE
+            if sInputs.buttons.down & L_TRIG ~= 0 then
+                Creative.tab = CREATIVE_TAB_ITEM_SETTINGS
+            end
             sInputs.buttons.pressed = sInputs.buttons.pressed & ~X_BUTTON
         end
 
