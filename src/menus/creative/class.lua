@@ -216,26 +216,38 @@ local function __color_slider(name, color)
     ---@param inputs Inputs
     ret.action = function (inputs)
         if gCurrentItem then
-            local slowdown = inputs.buttons.down & Z_TRIG ~= 0
-            local speedup = inputs.buttons.down & B_BUTTON ~= 0
-            local normal = 5
-            local fast = 15
-            local slow = 1
-            local speed = normal
-            if slowdown then
-                speed = slow
-            elseif speedup then
-                speed = fast
-            end
+            if Mouse.moved and (Mouse.down.left or Mouse.down.middle) then
+                local current_option = Menu[Menu.tab][Menu.settings.index]
+                local invlerp_min, invlerp_max = current_option.rect.x, current_option.rect.x + current_option.rect.width
+                local invlerp = math.invlerp(invlerp_min, invlerp_max, Mouse.pos.x)
+                local scale = 255
+                local final_val = invlerp * scale
+                if Mouse.down.middle then
+                    final_val = ((final_val // 5) * 5)
+                end
+                gCurrentItem.params.color[color] = math.clamp(math.round(final_val), 0, 255)
+            else
+                local slowdown = inputs.buttons.down & Z_TRIG ~= 0
+                local speedup = inputs.buttons.down & B_BUTTON ~= 0
+                local normal = 5
+                local fast = 15
+                local slow = 1
+                local speed = normal
+                if slowdown then
+                    speed = slow
+                elseif speedup then
+                    speed = fast
+                end
 
-            if inputs.stick.left then
-                gCurrentItem.params.color[color] = gCurrentItem.params.color[color] - speed
-                audio_sample_play(SOUND_MCE_MOVE, gGlobalSoundSource, 1)
-            elseif inputs.stick.right then
-                gCurrentItem.params.color[color] = gCurrentItem.params.color[color] + speed
-                audio_sample_play(SOUND_MCE_MOVE, gGlobalSoundSource, 1)
+                if inputs.stick.left then
+                    gCurrentItem.params.color[color] = gCurrentItem.params.color[color] - speed
+                    audio_sample_play(SOUND_MCE_MOVE, gGlobalSoundSource, 1)
+                elseif inputs.stick.right then
+                    gCurrentItem.params.color[color] = gCurrentItem.params.color[color] + speed
+                    audio_sample_play(SOUND_MCE_MOVE, gGlobalSoundSource, 1)
+                end
+                gCurrentItem.params.color[color] = math.clamp(gCurrentItem.params.color[color], 0, 255)
             end
-            gCurrentItem.params.color[color] = math.clamp(gCurrentItem.params.color[color], 0, 255)
         end
     end
     ret.update = function ()
