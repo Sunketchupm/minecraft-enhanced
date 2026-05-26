@@ -1,13 +1,9 @@
--- localize functions to improve performance
-local mario_set_forward_vel,perform_air_step,set_character_animation,queue_rumble_data_mario,check_fall_damage_or_get_stuck,set_mario_action,mario_bonk_reflection,lava_boost_on_wall,check_wall_kick,play_knockback_sound,common_air_knockback_step,update_air_without_turn = mario_set_forward_vel,perform_air_step,set_character_animation,queue_rumble_data_mario,check_fall_damage_or_get_stuck,set_mario_action,mario_bonk_reflection,lava_boost_on_wall,check_wall_kick,play_knockback_sound,common_air_knockback_step,update_air_without_turn
-
 ACT_FREE_MOVE = allocate_mario_action(ACT_GROUP_AUTOMATIC | ACT_FLAG_INTANGIBLE | ACT_FLAG_INVULNERABLE)
 
 local sSavedMarioYaw = 0
-local sPrevRomhackCamState = camera_get_romhack_override()
 ---@param m MarioState
 local function act_free_move(m)
-    if gMenu.open or gPauseMenu.is_paused then return false end
+    if m.playerIndex == 0 and gCurrentMenu > MENU_TYPE_CLOSED then return false end
 
     m.peakHeight = m.pos.y
     m.health = 0x880
@@ -52,7 +48,7 @@ local function act_free_move(m)
         m.vel.y = 0
     end
 
-    if m.controller.buttonPressed & L_TRIG ~= 0 then
+    if m.playerIndex == 0 and m.controller.buttonPressed & L_TRIG ~= 0 then
         sSavedMarioYaw = m.faceAngle.y
     end
     m.faceAngle.y = lHeld and sSavedMarioYaw or m.intendedYaw
@@ -86,9 +82,6 @@ local function act_free_move(m)
         vec3f_copy(m.pos, next_pos)
     end
 
-    --if m.pos.y < m.floorHeight then
-    --    m.pos.y = m.floorHeight
-    --end
     vec3f_zero(m.vel)
 
     vec3f_copy(m.marioObj.header.gfx.pos, m.pos)
@@ -97,7 +90,7 @@ end
 
 ---@param m MarioState
 local function allow_interact(m)
-    if m.action == ACT_FREE_MOVE then
+    if gInBuildMode then
         return false
     end
 end
@@ -108,7 +101,7 @@ gRespawnAngle = 0
 
 ---@param m MarioState
 local function on_death(m)
-    if m.action == ACT_FREE_MOVE then
+    if gInBuildMode then
         m.marioBodyState.modelState = m.marioBodyState.modelState | MODEL_STATE_NOISE_ALPHA
         return false
     end
@@ -139,12 +132,12 @@ end
 
 ---@param m MarioState
 local function allow_force_water_action(m)
-    if m.action == ACT_FREE_MOVE then return false end
+    if gInBuildMode then return false end
 end
 
 ---@param m MarioState
 local function allow_hazard_surface(m)
-    if m.action == ACT_FREE_MOVE then return false end
+    if gInBuildMode then return false end
 end
 
 ---@param m MarioState
@@ -165,10 +158,15 @@ end
 
 local sFlyingWindow = 0
 local sStartFlyingWindow = false
+local sRomhackCameraSettings = {
+    override = camera_get_romhack_override(),
+    dpad = camera_romhack_get_allow_dpad_usage(),
+    collisions = camera_romhack_get_collisions()
+}
 ---@param m MarioState
 local function mario_update(m)
     if m.playerIndex ~= 0 then return end
-    if gPauseMenu.is_paused then return end
+    if gCurrentMenu > MENU_TYPE_CLOSED then return end
 
     if sStartFlyingWindow then
         sFlyingWindow = sFlyingWindow + 1
@@ -187,19 +185,23 @@ local function mario_update(m)
                 m.squishTimer = 1
             end
 
-            if m.action ~= ACT_FREE_MOVE then
-                sPrevRomhackCamState = camera_get_romhack_override()
-            end
-            local next_action = m.action == ACT_FREE_MOVE and ACT_FREEFALL or ACT_FREE_MOVE
+            local next_action = gInBuildMode and ACT_FREEFALL or ACT_FREE_MOVE
             if next_action == ACT_FREE_MOVE then
-                camera_set_romhack_override(RCO_ALL_INCLUDING_VANILLA)
+                sRomhackCameraSettings.override = camera_get_romhack_override()
+                sRomhackCameraSettings.dpad = camera_romhack_get_allow_dpad_usage()
+                sRomhackCameraSettings.collisions = camera_romhack_get_collisions()
+                camera_romhack_allow_dpad_usage(0)
+                camera_romhack_set_collisions(0)
+                set_camera_mode(m.area.camera, CAMERA_MODE_ROM_HACK, 0)
             else
-                if sPrevRomhackCamState == RCO_NONE or
-                    (level_is_vanilla_level(gNetworkPlayers[0].currLevelNum) and sPrevRomhackCamState == RCO_ALL or sPrevRomhackCamState == RCO_ALL_EXCEPT_BOWSER) then
-                    camera_set_romhack_override(RCO_DISABLE)
-                else
-                    camera_set_romhack_override(sPrevRomhackCamState)
+                local override = sRomhackCameraSettings.override
+                if override == RCO_NONE or override == RCO_DISABLE or
+                    (level_is_vanilla_level(gNetworkPlayers[0].currLevelNum) and (override == RCO_ALL or override == RCO_ALL_EXCEPT_BOWSER)) then
+                    override = RCO_DISABLE
                 end
+                camera_set_romhack_override(override)
+                camera_romhack_allow_dpad_usage(sRomhackCameraSettings.dpad)
+                camera_romhack_set_collisions(sRomhackCameraSettings.collisions)
             end
             drop_and_set_mario_action(m, next_action, 0)
         else

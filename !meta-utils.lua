@@ -1,3 +1,5 @@
+require("src/block/settings")
+
 local __djui_chat_message_create = djui_chat_message_create
 function djui_chat_message_create(...)
     local args = {...}
@@ -74,34 +76,26 @@ end
 
 function iterate_entire_item_list()
     local current_index = 1
-    local current_obj = nil
     local key, list = next(gItemBhvIds, nil)
+    local current_obj = nil
     return function ()
-        if not list then return nil end
-        if not current_obj then
-            current_obj = obj_get_first_with_behavior_id(list[current_index])
-        else
-            current_obj = obj_get_next_with_same_behavior_id(current_obj)
-        end
-
-        if not current_obj then
-            while not current_obj do
-                current_index = current_index + 1
-                if not list[current_index] then
-                    key, list = next(gItemBhvIds, key)
-                    if list then
-                        current_index = 1
-                        if list[current_index] then
-                            current_obj = obj_get_first_with_behavior_id(list[current_index])
-                        else
-                            current_obj = nil
-                        end
-                    else
-                        current_obj = nil
-                    end
-                    break
+        ::restart::
+        if list then
+            if list[current_index] then
+                if current_obj then
+                    current_obj = obj_get_next_with_same_behavior_id(current_obj)
+                else
+                    current_obj = obj_get_first_with_behavior_id(list[current_index])
                 end
-                current_obj = obj_get_first_with_behavior_id(list[current_index])
+
+                if not current_obj then
+                    current_index = current_index + 1
+                    goto restart
+                end
+            else
+                current_index = 1
+                key, list = next(gItemBhvIds, key)
+                goto restart
             end
         end
 
@@ -188,6 +182,51 @@ function obj_is_intersecting_obj(obj, intersectee)
     local pos = gVec3fZero()
     object_pos_to_vec3f(pos, obj)
     return point_is_intersecting_obj(pos, intersectee)
+end
+
+-------------------------------------------------------------
+
+---@param t table
+---@param val string
+---@param key string
+---@param min number
+---@param max number
+---@param is_integer boolean
+---@return number
+function parse_dimension(t, val, key, min, max, is_integer)
+    if val == "_" then
+        return t[key]
+    end
+
+    local symbol = val:sub(1, 1)
+    if symbol == "+" or symbol == "-" then
+        local new_val = 0
+        local is_hex = val:sub(2, 3) == "0x"
+        local base = is_hex and 16 or nil
+        local start = is_hex and 4 or 2
+        local number = val:sub(start)
+        if symbol == "-" then
+            number = "-" .. number
+        end
+
+        local addend = tonumber(number, base --[[@as number]]) or 0
+        new_val = t[key] + addend
+        new_val = math.clamp(new_val, min, max)
+        if is_integer then
+            new_val = math.floor(new_val)
+        end
+        return math.clamp(new_val, min, max)
+    end
+    local is_hex = val:sub(1, 2) == "0x"
+    local base = is_hex and 16 or nil
+    local start = is_hex and 3 or 1
+    local number = val:sub(start)
+
+    local new_val = math.clamp(tonumber(number, base --[[@as number]]) or t[key], min, max)
+    if is_integer then
+        new_val = math.floor(new_val)
+    end
+    return new_val
 end
 
 -------------------------------------------------------------

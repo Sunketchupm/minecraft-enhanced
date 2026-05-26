@@ -3,17 +3,15 @@ local Mouse = {
     prev = { x = 0, y = 0 },
     pos = { x = 0, y = 0 },
     pressed = { left = false, right = false, middle = false },
-    held = { left = false, right = false, middle = false },
+    down = { left = false, right = false, middle = false },
     released = { left = false, right = false, middle = false },
     scroll = {
         x = 0,
         y = 0
     },
-    menu = {
-        clickedTabIndex = 0,
-        hoveringSurfaceTip = false,
-    }
 }
+
+local MOUSE_TEX = get_texture_info("mousecursor")
 
 Mouse.has_moved = function()
     return djui_hud_get_mouse_buttons_pressed() ~= 0 or
@@ -28,14 +26,14 @@ Mouse.get_inputs = function()
         Mouse.moved = true
     end
 
-    Mouse.scroll.x = djui_hud_get_mouse_scroll_x()
-    Mouse.scroll.y = djui_hud_get_mouse_scroll_y()
+    Mouse.scroll.x = djui_hud_get_mouse_scroll_x() * (GlobalSettings.invert_mouse_scroll and -1 or 1)
+    Mouse.scroll.y = djui_hud_get_mouse_scroll_y() * (GlobalSettings.invert_mouse_scroll and -1 or 1)
     Mouse.pressed.left = djui_hud_get_mouse_buttons_pressed() & 1 ~= 0
     Mouse.pressed.middle = djui_hud_get_mouse_buttons_pressed() & 2 ~= 0
     Mouse.pressed.right = djui_hud_get_mouse_buttons_pressed() & 4 ~= 0
-    Mouse.held.left = djui_hud_get_mouse_buttons_down() & 1 ~= 0
-    Mouse.held.middle = djui_hud_get_mouse_buttons_down() & 2 ~= 0
-    Mouse.held.right = djui_hud_get_mouse_buttons_down() & 4 ~= 0
+    Mouse.down.left = djui_hud_get_mouse_buttons_down() & 1 ~= 0
+    Mouse.down.middle = djui_hud_get_mouse_buttons_down() & 2 ~= 0
+    Mouse.down.right = djui_hud_get_mouse_buttons_down() & 4 ~= 0
     Mouse.released.left = djui_hud_get_mouse_buttons_released() & 1 ~= 0
     Mouse.released.middle = djui_hud_get_mouse_buttons_released() & 2 ~= 0
     Mouse.released.right = djui_hud_get_mouse_buttons_released() & 4 ~= 0
@@ -58,14 +56,14 @@ end
 ---@param rect Rectangle
 ---@return boolean
 Mouse.is_within = function(rect)
-    local start_x, start_y, width, height = from_rect(rect)
-    local end_x = start_x + width
-    local end_y = start_y + height
-    return Mouse.pos.x > start_x and Mouse.pos.y > start_y and Mouse.pos.x < end_x and Mouse.pos.y < end_y
+    local end_x = rect.x + rect.width
+    local end_y = rect.y + rect.height
+    return Mouse.pos.x > rect.x and Mouse.pos.y > rect.y and Mouse.pos.x < end_x and Mouse.pos.y < end_y
 end
 
 ------------------------------------------------------
 
+--[[
 -- Used by render.lua
 Mouse.handle_open_settings_inputs = function()
     --gCurrentTab = TAB_TO_SETTINGS[gCurrentTab] or gCurrentTab
@@ -81,5 +79,6 @@ Mouse.handle_open_settings_inputs = function()
     end
     return true
 end
+]]
 
 return Mouse

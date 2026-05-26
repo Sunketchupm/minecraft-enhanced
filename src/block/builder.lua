@@ -198,5 +198,26 @@ local function on_warp()
     vtx_delete_all()
 end
 
+local sTimer = 0
+local CLEAN_TIME = 30 * 60 * 10
+local function update()
+    sTimer = sTimer + 1
+    if sTimer > CLEAN_TIME then
+        gfx_delete_all()
+        vtx_delete_all()
+        djui_chat_message_create("Automatically cleaned up gtx/vtx lists")
+        sTimer = 0
+    end
+end
+
+local function on_clean_chat_command()
+    gfx_delete_all()
+    vtx_delete_all()
+    return true
+end
+
 hook_event(HOOK_ON_OBJECT_UNLOAD, on_object_unload)
 hook_event(HOOK_ON_WARP, on_warp)
+hook_event(HOOK_UPDATE, update)
+
+hook_chat_command("clean", "| Cleans up all created gtx/vtx lists. Use this if you're experiencing bad performance or memory leaks", on_clean_chat_command)

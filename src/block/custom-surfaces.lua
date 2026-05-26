@@ -1,3 +1,5 @@
+require("src/block/settings")
+
 local sActionsCanWallkick = {
     [ACT_JUMP] = true,
     [ACT_HOLD_JUMP] = true,
@@ -267,7 +269,7 @@ local function custom_surface_before_mario_update(m)
             m.vel.y = 100
         end
 
-        if surface_properties & MCE_BLOCK_PROPERTY_NO_A ~= 0 and not gMenu.open then
+        if surface_properties & MCE_BLOCK_PROPERTY_NO_A ~= 0 and gCurrentMenu < MENU_TYPE_CREATIVE then
             m.controller.buttonPressed = m.controller.buttonPressed & ~A_BUTTON
         end
     end

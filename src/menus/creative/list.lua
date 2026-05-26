@@ -1,12 +1,12 @@
-local BlockTextures = require("../block/textures")
+local Utils = require("../utils")
+local BlockTextures = require("../../block/textures")
 
-local Items = {}
+local List = {}
 
 ---@return MenuItemLink
 local __get_default_item_link = function ()
     ---@type MenuItemLink
-    local link = { item = get_default_item(), icon = { texture = nil, color = WHITE }, held = true }
-    return link
+    return { item = get_default_item(), icon = { texture = nil, color = WHITE }, held = true }
 end
 
 ---@param tex_info TextureInfo
@@ -57,14 +57,14 @@ local function add_behavior_with_params(texture, color, behavior, model, preview
     return link
 end
 
-Items.fill_item_lists = function()
+List.fill_item_lists = function()
 
-Items.block_textured_link = {}
+List.block_textured_link = {}
 for _, texture in ipairs(BlockTextures) do
-    table.insert(Items.block_textured_link, add_block(texture))
+    table.insert(List.block_textured_link, add_block(texture))
 end
 
-Items.block_colored_link = {
+List.block_colored_link = {
     add_color_block({r = 0, g = 0, b = 0, a = 255}),
     add_color_block({r = 10, g = 10, b = 10, a = 255}),
     add_color_block({r = 20, g = 20, b = 20, a = 255}),
@@ -186,7 +186,50 @@ local __set_item_params = function (param)
     }
 end
 
-Items.level_objects_link = {
+local SLOT_GOOMBA_TEX = get_texture_info("goombaslot")
+local SLOT_BOBOMB_TEX = get_texture_info("bobombslot")
+local SLOT_CHUCKYA_TEX = get_texture_info("chuckyaslot")
+local SLOT_1UP_TEX = get_texture_info("1upslot")
+local SLOT_AMP_TEX = get_texture_info("ampslot")
+local SLOT_BOO_TEX = get_texture_info("booslot")
+local SLOT_BULLETBILL_TEX = get_texture_info("bulletbillslot")
+local SLOT_BULLY_TEX = get_texture_info("bullyslot")
+local SLOT_CHAINCHOMP_TEX = get_texture_info("chainchompslot") -- Unused
+local SLOT_CHILLBULLY_TEX = get_texture_info("chillbullyslot")
+local SLOT_RED_FLAME_TEX = get_texture_info("redflameslot")
+local SLOT_BLUE_FLAME_TEX = get_texture_info("blueflameslot")
+local SLOT_FLYGUY_TEX = get_texture_info("flyguyslot")
+local SLOT_HEAVEHO_TEX = get_texture_info("heavehoslot")
+local SLOT_KOOPA_TEX = get_texture_info("koopaslot")
+local SLOT_LAKITU_TEX = get_texture_info("lakituslot") -- Unused
+local SLOT_MADPIANO_TEX = get_texture_info("madpianoslot")
+local SLOT_MRBLIZZARD_TEX = get_texture_info("mrblizzardslot")
+local SLOT_MRI_TEX = get_texture_info("mrislot") -- Unused
+local SLOT_POKEY_TEX = get_texture_info("pokeyslot")
+local SLOT_SCUTTLEBUG_TEX = get_texture_info("scuttlebugslot")
+local SLOT_SMALLWHOMP_TEX = get_texture_info("smallwhompslot")
+local SLOT_SNUFIT_TEX = get_texture_info("snufitslot")
+local SLOT_SPINDRIFT_TEX = get_texture_info("spindriftslot")
+local SLOT_SPINY_TEX = get_texture_info("spinyslot")
+local SLOT_SWOOP_TEX = get_texture_info("swoopslot")
+local SLOT_THWOMP_TEX = get_texture_info("thwompslot")
+local SLOT_STAR_TEX = get_texture_info("starslot")
+local SLOT_COIN_TEX = get_texture_info("coin_seg3_texture_03005780")
+local SLOT_EXCLAMATION_BOX_VANISH = get_texture_info("exclamation_box_seg8_texture_08012E28")
+local SLOT_EXCLAMATION_BOX_METAL = get_texture_info("exclamation_box_seg8_texture_08014628")
+local SLOT_EXCLAMATION_BOX_WING = get_texture_info("exclamation_box_seg8_texture_08015E28")
+local SLOT_EXCLAMATION_BOX_NORMAL = get_texture_info("exclamation_box_seg8_texture_08017628")
+local SLOT_BUBBLY_TREE = get_texture_info("tree_seg3_texture_0302DE28")
+local SLOT_SPIKEY_TREE = get_texture_info("tree_seg3_texture_0302FF60")
+local SLOT_SNOWY_TREE = get_texture_info("tree_seg3_texture_03031048")
+local SLOT_PALM_TREE = get_texture_info("tree_seg3_texture_03032218")
+local SLOT_CASTLE_DOOR = get_texture_info("door_seg3_texture_03009D10")
+local SLOT_WOODEN_DOOR = get_texture_info("door_seg3_texture_0300BD10")
+local SLOT_METAL_DOOR = get_texture_info("door_seg3_texture_0300D510")
+local SLOT_MURAL_DOOR = get_texture_info("door_seg3_texture_0300ED10")
+local SLOT_BBH_DOOR = get_texture_info("door_seg3_texture_03010510")
+
+List.level_objects_link = {
     add_behavior_with_params(SLOT_STAR_TEX, WHITE, bhvMceStar, E_MODEL_STAR,
         { animate = { faceAngleYaw = 0x800 } }
     ),
@@ -253,7 +296,7 @@ Items.level_objects_link = {
     ),
 }
 
-Items.enemies_link = {
+List.enemies_link = {
     add_behavior_with_params(SLOT_GOOMBA_TEX, WHITE, id_bhvGoomba, E_MODEL_GOOMBA,
         { animate = { animation = gObjectAnimations.goomba_seg8_anims_0801DA4C, animIndex = 0 } }
     ),
@@ -314,7 +357,7 @@ end
 ------------------------------------------------------------
 
 ---@param icon TextureInfo
-Items.rescale_icon = function(icon)
+List.rescale_icon = function(icon)
     local texture_width = icon.width
     local texture_height = icon.height
     local item_scale_x = 1
@@ -337,14 +380,14 @@ end
 
 ---@param rect Rectangle
 ---@param icon Icon
-Items.render = function(rect, icon)
-    local x, y, width, height = from_rect(rect)
+List.render_on_rect = function(rect, icon)
+    local x, y, width, height = Utils.from_rect(rect)
     if icon.texture then
         local texture = icon.texture --[[@as TextureInfo]]
         local texture_width = texture.width
         local texture_height = texture.height
         local texture_scale = 1.5
-        local item_scale_x, item_scale_y = Items.rescale_icon(texture)
+        local item_scale_x, item_scale_y = List.rescale_icon(texture)
         item_scale_x = item_scale_x * texture_scale
         item_scale_y = item_scale_y * texture_scale
         local item_x = (x + width * 0.5) - (texture_width * 0.5 * item_scale_x)
@@ -365,4 +408,33 @@ Items.render = function(rect, icon)
     end
 end
 
-return Items
+---@param pos Vec2f
+---@param icon Icon
+List.render_on_pos = function(pos, icon)
+    if icon.texture then
+        local texture = icon.texture --[[@as TextureInfo]]
+        local texture_width = texture.width
+        local texture_height = texture.height
+        local texture_scale = 1.5
+        local item_scale_x, item_scale_y = List.rescale_icon(texture)
+        item_scale_x = item_scale_x * texture_scale
+        item_scale_y = item_scale_y * texture_scale
+        local item_x = pos.x - (texture_width * 0.5 * item_scale_x)
+        local item_y = pos.y - (texture_height * 0.5 * item_scale_y)
+
+        local color = icon.color
+        djui_hud_set_color(color.r, color.g, color.b, color.a)
+        djui_hud_render_texture(texture, item_x, item_y, item_scale_x, item_scale_y)
+    else
+        local rect_width = 48
+        local rect_height = 48
+        local rect_x = pos.x - 24
+        local rect_y = pos.y - 24
+
+        local color = icon.color
+        djui_hud_set_color(color.r, color.g, color.b, color.a)
+        djui_hud_render_rect(rect_x, rect_y, rect_width, rect_height)
+    end
+end
+
+return List

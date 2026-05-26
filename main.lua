@@ -1,6 +1,8 @@
 -- name: \\#31db02\\Minecraft \\#1dcff2\\Enhanced \\#dcdcdc\\[WIP]
 -- description: An improved version of the Minecraft mod, originally by zKevin.\n\nMod made by Teru. Texture help by Sherbie. Minecraft+ made by Bene360 (which isn't used in this mod, but their effort shouldn't be wasted).
 
+require("src/menus/globals")
+
 gLevelValues.fixCollisionBugs = true
 gLevelValues.fixCollisionBugsFalseLedgeGrab = false
 gLevelValues.fixCollisionBugsGroundPoundBonks = false
@@ -8,7 +10,7 @@ gLevelValues.fixCollisionBugsGroundPoundBonks = false
 gServerSettings.stayInLevelAfterStar = 1
 gLevelValues.fixInvalidShellRides = false
 
-gCanBuild = true
+gInBuildMode = true
 gMiscSettings = {
 	show_arrow = true,
 	angle_increment = 15,
@@ -43,31 +45,6 @@ local __to_grid = function (num, grid)
 	end
 end
 
----@param item Item
----@param size string
----@param key string
----@return number
-local __parse_size = function (item, size, key)
-    if size == "_" then
-        return item.dimensions.grid[key]
-    end
-
-    local new_size = 0
-    local symbol = size:sub(1, 1)
-    if symbol == "+" or symbol == "-" then
-        local number = size:sub(2)
-        if symbol == "-" then
-            number = "-" .. number
-        end
-        if tonumber(number) then
-            new_size = size + number
-			return math.clamp(new_size, 0.01, 25)
-        end
-    end
-
-    return math.clamp(tonumber(size) or item.dimensions.grid[key], 0.01, 25)
-end
-
 ---@param msg string
 local function on_grid_size_chat_command(msg)
 	if not gCurrentItem then
@@ -97,6 +74,8 @@ local function on_grid_size_chat_command(msg)
 		djui_chat_message_create("Usage: [num] or [x|y|z]")
 		return true
 	end
+
+	local __parse_size = function (item, size, key) return parse_dimension(item.dimensions.grid, size, key, 0, 25, false) end
 
 	if sizes_count == 1 then
 		local new_size = __parse_size(current_item, sizes[1], "x")
@@ -445,11 +424,8 @@ local function set_item_rotation(m)
 	elseif pressed & R_JPAD ~= 0 then
 		item_rotation.z = math.wrap(item_rotation.z - gMiscSettings.angle_increment, -180, 180)
 	end
-	if pressed & X_BUTTON ~= 0 then
-		gCurrentItem.dimensions.rotation = gVec3sZero()
-	end
 
-	m.controller.buttonPressed = m.controller.buttonPressed & ~(U_CBUTTONS | L_CBUTTONS | D_CBUTTONS | R_CBUTTONS | X_BUTTON)
+	m.controller.buttonPressed = m.controller.buttonPressed & ~(U_CBUTTONS | L_CBUTTONS | D_CBUTTONS | R_CBUTTONS)
 end
 
 ---@param m MarioState
@@ -551,7 +527,7 @@ local function builder_mario_update(m)
 		sAutoBuildType = built and ONLY_PLACE or ONLY_DELETE
     end
 	if gMiscSettings.auto_build and m.controller.buttonDown & Y_BUTTON ~= 0 then
-		if sAutoBuildTimer < 5 then
+		if sAutoBuildTimer < 0 then
 			sAutoBuildTimer = sAutoBuildTimer + 1
 			return
 		else
@@ -576,15 +552,20 @@ end
 ---@param m MarioState
 local function before_mario_update(m)
 	if m.playerIndex ~= 0 then return end
-	if gCanBuild then
-		if not gMenu.open and not gPauseMenu.is_paused then
+	if gInBuildMode then
+		if gCurrentMenu == MENU_TYPE_CLOSED then
 			builder_mario_update(m)
 		end
 	else
 		delete_outline()
 	end
 
-	gCanBuild = m.action == ACT_FREE_MOVE
+	gInBuildMode = m.action == ACT_FREE_MOVE
+	if gInBuildMode and gCurrentMenu == MENU_TYPE_NONE then
+		gCurrentMenu = MENU_TYPE_CLOSED
+	elseif not gInBuildMode and gCurrentMenu ~= MENU_TYPE_NONE and gCurrentMenu ~= MENU_TYPE_PAUSE then
+		gCurrentMenu = MENU_TYPE_NONE
+	end
 end
 
 

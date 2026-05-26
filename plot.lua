@@ -5,7 +5,7 @@ gLevelValues.cellHeightLimit = 32767
 
 smlua_audio_utils_replace_sequence(0x64, 0x25, 75, "03_Seq_sms_custom")
 
-LEVEL_PLOT = level_register("level_plot_entry", COURSE_CAKE_END, "Plot", "plot", 20000, 0x28, 0x28, 0x28)
+LEVEL_PLOT = level_register("level_plot_entry", COURSE_NONE, "Plot", "plot", 20000, 0x28, 0x28, 0x28)
 
 local MUSIC_CROSSCODE_TITLE = audio_stream_load("crosscode-title.ogg")
 local MUSIC_DKC_AQUATIC_AQUARIUM = audio_stream_load("dkc-aquaticambience.ogg")
@@ -25,10 +25,6 @@ audio_stream_set_looping(MUSIC_SMG_SPACE_JUNK, true)
 audio_stream_set_looping(MUSIC_ZELDA_ASTRAL_OBSERVATORY, true)
 audio_stream_set_looping(MUSIC_MOTHER_GENTLE_RAIN, true)
 audio_stream_set_looping(MUSIC_PVZ_LIVING_MICE, true)
-
---[[hook_event(HOOK_UPDATE, function()
-    djui_chat_message_create("SequenceID: " .. get_current_background_music())
-end) ]]
 
 local function on_chat_command(msg)
     local act = math.clamp(tonumber(msg) or 0, 0, 255)

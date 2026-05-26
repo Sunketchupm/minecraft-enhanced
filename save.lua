@@ -83,26 +83,23 @@ local function save_command(msg)
         local bhv_id = get_id_from_behavior(obj.behavior)
         ---@type NetworkPlayer
         local np = gNetworkPlayers[0]
-        while obj do
-            if save_all or obj.oOwner == np.globalIndex + 1 then
-                file:write_integer(bhv_id, INT_TYPE_U16)
-                file:write_integer(obj_get_model_id_extended(obj), INT_TYPE_U16)
-                file:write_number(obj.oPosX, FLOAT_TYPE_F32)
-                file:write_number(obj.oPosY, FLOAT_TYPE_F32)
-                file:write_number(obj.oPosZ, FLOAT_TYPE_F32)
-                file:write_integer(obj.oAnimState, INT_TYPE_S32)
-                file:write_integer(obj.oItemParams, INT_TYPE_U32)
-                file:write_number(obj.header.gfx.scale.x, FLOAT_TYPE_F32)
-                file:write_number(obj.header.gfx.scale.y, FLOAT_TYPE_F32)
-                file:write_number(obj.header.gfx.scale.z, FLOAT_TYPE_F32)
-                file:write_integer(obj.oFaceAnglePitch, INT_TYPE_S16)
-                file:write_integer(obj.oFaceAngleYaw, INT_TYPE_S16)
-                file:write_integer(obj.oFaceAngleRoll, INT_TYPE_S16)
-                file:write_integer(obj.oItemFlags, INT_TYPE_U32)
-                file:write_integer(obj.oColor, INT_TYPE_U32)
-                file:write_integer(obj.oOpacity, INT_TYPE_S32)
-            end
-            obj = obj_get_next_with_same_behavior_id(obj)
+        if save_all or obj.oOwner == np.globalIndex + 1 then
+            file:write_integer(bhv_id, INT_TYPE_U16)
+            file:write_integer(obj_get_model_id_extended(obj), INT_TYPE_U16)
+            file:write_number(obj.oPosX, FLOAT_TYPE_F32)
+            file:write_number(obj.oPosY, FLOAT_TYPE_F32)
+            file:write_number(obj.oPosZ, FLOAT_TYPE_F32)
+            file:write_integer(obj.oAnimState, INT_TYPE_S32)
+            file:write_integer(obj.oItemParams, INT_TYPE_U32)
+            file:write_number(obj.header.gfx.scale.x, FLOAT_TYPE_F32)
+            file:write_number(obj.header.gfx.scale.y, FLOAT_TYPE_F32)
+            file:write_number(obj.header.gfx.scale.z, FLOAT_TYPE_F32)
+            file:write_integer(obj.oFaceAnglePitch, INT_TYPE_S16)
+            file:write_integer(obj.oFaceAngleYaw, INT_TYPE_S16)
+            file:write_integer(obj.oFaceAngleRoll, INT_TYPE_S16)
+            file:write_integer(obj.oItemFlags, INT_TYPE_U32)
+            file:write_integer(obj.oColor, INT_TYPE_U32)
+            file:write_integer(obj.oOpacity, INT_TYPE_S32)
         end
     end
 
