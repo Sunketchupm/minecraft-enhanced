@@ -26,10 +26,67 @@ audio_stream_set_looping(MUSIC_ZELDA_ASTRAL_OBSERVATORY, true)
 audio_stream_set_looping(MUSIC_MOTHER_GENTLE_RAIN, true)
 audio_stream_set_looping(MUSIC_PVZ_LIVING_MICE, true)
 
+---@param name string
+---@return integer?
+local function get_player_index_from_name(name)
+    local np = gNetworkPlayers
+    for i = 0, MAX_PLAYERS - 1, 1 do
+        if get_uncolored_string(np[i].name):lower() == get_uncolored_string(name):lower() then
+            return network_global_index_from_local(i)
+        end
+    end
+end
+
+local sInvitedBy = {}
+for i = 0, MAX_PLAYERS - 1, 1 do
+    sInvitedBy[i] = false
+end
+
+---@param msg string
 local function on_chat_command(msg)
-    local act = math.clamp(tonumber(msg) or 0, 0, 255)
-    warp_to_warpnode(LEVEL_PLOT, 1, act, 0xA)
+    local commands = msg:split(" ")
+    if tonumber(commands[1]) then
+        local act = math.clamp(tonumber(commands[1]) or 0, 0, 255)
+        if act >= 100 and act <= 100 + MAX_PLAYERS - 1 then
+            djui_chat_message_create("This is a reserved plot. Cannot teleport")
+            return true
+        end
+        warp_to_warpnode(LEVEL_PLOT, 1, act, 0xA)
+    elseif commands[1] == "private" then
+        ---@type NetworkPlayer
+        local np = gNetworkPlayers[0]
+        local act = 100 + np.globalIndex
+        warp_to_warpnode(LEVEL_PLOT, 1, act, 0xA)
+    elseif commands[1] == "invite" then
+        local index = tonumber(commands[2]) or get_player_index_from_name(commands[2])
+        if not index then
+            djui_chat_message_create("Could not find player: " .. tostring(commands[2]))
+            return true
+        end
+        network_send_to(network_local_index_from_global(index), true, { invite = true, index = gNetworkPlayers[0].globalIndex })
+    elseif commands[1] == "join" then
+        local index = tonumber(commands[2]) or get_player_index_from_name(commands[2])
+        if not index then
+            djui_chat_message_create("Could not find player: " .. tostring(commands[2]))
+            return true
+        end
+        local np = network_player_from_global_index(index)
+        if np.currActNum >= 100 and np.currActNum <= 100 + MAX_PLAYERS - 1 and not sInvitedBy[index] then
+            djui_chat_message_create("You have not been invited to this plot")
+            return true
+        end
+        warp_to_warpnode(LEVEL_PLOT, 1, np.currActNum, 0xA)
+    end
     return true
+end
+
+local function on_packet_recieve(data)
+    if data.invite then
+        sInvitedBy[data.index] = true
+        local np = network_player_from_global_index(data.index)
+        local message = "You have been invited to " .. np.name .. "\\#dcdcdc\\ (" .. data.index .. ")" .. "'s private plot"
+        djui_chat_message_create(message)
+    end
 end
 
 local function on_lvl_init()
@@ -191,7 +248,8 @@ local function mario_update(m)
 end
 
 hook_chat_command("plot-music", "[1-42] | Changes what music plays while in a plot. Custom music requires you to reload your plot to apply changes.", musicplot)
-hook_chat_command("plot", "| Warp to a level with no textures or objects. Pass an argument to go to a specific act.", on_chat_command)
+hook_chat_command("plot", "[<act>|private|invite [<player name/index>]|join [<player name/index>]] | Warp to a level with no textures or objects. Pass an argument to go to a specific act.", on_chat_command)
+hook_event(HOOK_ON_PACKET_RECEIVE, on_packet_recieve)
 hook_event(HOOK_MARIO_UPDATE, mario_update)
 hook_event(HOOK_ON_LEVEL_INIT, on_lvl_init)
 hook_event(HOOK_ON_PAUSE_EXIT, on_pause_exit)
