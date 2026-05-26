@@ -159,6 +159,9 @@ local function __item_slider(name, key, dimension)
                         (math.round(final_val * 10) * 0.1)
                 end
                 gCurrentItem.dimensions[key][dimension] = final_val
+                if key == "size" then
+                    gCurrentItem.dimensions.grid[dimension] = gCurrentItem.dimensions.size[dimension]
+                end
             else
                 local slowdown = inputs.buttons.down & Z_TRIG ~= 0
                 local speedup = inputs.buttons.down & B_BUTTON ~= 0
